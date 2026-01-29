@@ -29,13 +29,13 @@
             try {
                 if (window.isLoginMode) {
                     const res = await signInWithEmailAndPassword(auth, email, pass);
-                    if (!res.user.emailVerified) { alert("Verify Email First!"); await signOut(auth); }
+                    if (!res.user.emailVerified) { alert("Verify Email!"); await signOut(auth); }
                 } else {
                     const res = await createUserWithEmailAndPassword(auth, email, pass);
                     await sendEmailVerification(res.user);
-                    const refID = "AV" + Math.floor(Math.random()*99999);
+                    const refID = "AV" + Math.floor(1000 + Math.random() * 9000);
                     await setDoc(doc(db, "users", res.user.uid), { balance: 500, email: email, referral: refID });
-                    alert("Verification email sent!");
+                    alert("Verification link sent!");
                 }
             } catch (e) { alert(e.message); }
         };
@@ -45,13 +45,21 @@
                 document.getElementById('auth-screen').style.display = 'none';
                 const d = await getDoc(doc(db, "users", user.uid));
                 window.wallet = d.data().balance;
-                document.getElementById('ref-id').innerText = d.data().referral;
+                // Referral Link with Unique ID
+                const link = window.location.origin + "?ref=" + d.data().referral;
+                document.getElementById('ref-link-display').innerText = link;
                 window.updateUI();
-            } else { document.getElementById('auth-screen').style.display = 'flex'; }
+            } else { 
+                document.getElementById('auth-screen').style.display = 'flex'; 
+            }
         });
 
-        window.logoutUser = () => { signOut(auth).then(() => { localStorage.clear(); location.reload(); }); };
-        window.syncWallet = async () => { if(auth.currentUser) await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: window.wallet }); };
+        window.logoutUser = () => { 
+            signOut(auth).then(() => {
+                sessionStorage.clear();
+                location.reload(); 
+            });
+        };
 
         window.submitDeposit = async () => {
             const amt = parseFloat(document.getElementById('d-amt').value);
@@ -63,129 +71,140 @@
     </script>
 
     <style>
-        :root { --bg: #0a0e17; --panel: #161d2b; --green: #28a745; --red: #d11348; --orange: #d97706; }
-        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; overflow: hidden; user-select: none; }
+        :root { --bg: #0a0e17; --panel: #161d2b; --green: #28a745; --orange: #d97706; }
+        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; overflow-x: hidden; user-select: none; }
+        
+        /* Nav & Results */
         .top-nav { background: #0f1521; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
         .balance-box { border: 2px solid var(--green); padding: 5px 15px; border-radius: 20px; color: var(--green); font-weight: bold; }
-        
-        /* Dropdown style results */
-        .history-bar { background: #080c14; padding: 5px; overflow-x: auto; display: flex; gap: 5px; border-bottom: 1px solid #222; }
-        .hist-chip { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: #1c2538; color: #9d50ff; border: 1px solid #333; }
+        .history-dropdown { background: #080c14; padding: 6px; overflow-x: auto; display: flex; gap: 6px; border-bottom: 1px solid #222; }
+        .hist-chip { font-size: 11px; padding: 3px 10px; border-radius: 12px; background: #1c2538; color: #9d50ff; border: 1px solid #333; flex-shrink: 0; }
 
+        /* Game Area */
         .display-area { position: relative; height: 180px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 70%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; overflow: hidden; }
-        #multiplier { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 3.5rem; font-weight: 900; z-index: 5; }
+        #multiplier { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 4rem; font-weight: 900; z-index: 10; }
 
-        .bet-grid { display: flex; gap: 10px; padding: 0 10px; }
-        .bet-card { background: var(--panel); padding: 8px; border-radius: 12px; width: 50%; border: 1px solid #252f44; }
-        .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 5px 0; }
-        .p-btn { background: #000; border: 1px solid #333; color: #ccc; font-size: 9px; padding: 4px; border-radius: 4px; text-align: center; }
-        .auto-row { display: flex; justify-content: space-between; font-size: 9px; margin-top: 5px; align-items: center; }
-        .main-btn { width: 100%; margin-top: 5px; height: 40px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
+        /* Bet Section */
+        .bet-section { display: flex; gap: 10px; padding: 10px; }
+        .bet-card { background: var(--panel); padding: 10px; border-radius: 15px; width: 50%; border: 1px solid #252f44; }
+        .input-row { display: flex; align-items: center; justify-content: space-between; background: #000; border-radius: 20px; padding: 2px 8px; border: 1px solid #333; }
+        .input-row button { background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 0 10px; }
+        .input-row input { background: none; border: none; color: white; width: 50px; text-align: center; font-weight: bold; }
+        
+        .presets { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin: 8px 0; }
+        .p-btn { background: #000; border: 1px solid #333; color: #ccc; font-size: 10px; padding: 4px; border-radius: 5px; text-align: center; }
+        
+        .auto-row { display: flex; justify-content: space-between; font-size: 10px; color: #999; margin-bottom: 5px; }
+        .main-btn { width: 100%; height: 40px; border: none; border-radius: 8px; color: white; font-weight: bold; background: var(--green); cursor: pointer; }
 
-        .live-list { margin: 10px; background: var(--panel); border-radius: 10px; font-size: 10px; height: 150px; overflow-y: auto; }
-        .live-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr; padding: 5px 10px; border-bottom: 1px solid #222; }
-
-        #side-menu { position: fixed; top: 0; right: -100%; width: 75%; height: 100%; background: #0f1521; z-index: 5000; transition: 0.4s; padding: 20px; }
-        .menu-item { padding: 12px; background: var(--panel); border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 6000; justify-content: center; align-items: center; }
-        .modal-box { background: var(--panel); padding: 20px; border-radius: 15px; width: 85%; max-width: 300px; text-align: center; }
+        #side-menu { position: fixed; top: 0; right: -100%; width: 80%; height: 100%; background: #0f1521; z-index: 5000; transition: 0.4s; padding: 20px; border-left: 1px solid #252f44; }
+        .menu-item { padding: 15px; background: var(--panel); border-radius: 10px; margin-bottom: 10px; font-size: 14px; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 6000; justify-content: center; align-items: center; }
+        .modal-box { background: var(--panel); padding: 20px; border-radius: 15px; width: 90%; max-width: 320px; text-align: center; }
     </style>
 </head>
 <body>
 
 <div id="auth-screen" style="position:fixed; inset:0; background:black; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center;">
     <h2 id="atitle">LOGIN</h2>
-    <input type="email" id="auth-email" placeholder="Email" style="padding:12px; margin:5px; width:80%; border-radius:8px;">
-    <input type="password" id="auth-pass" placeholder="Password" style="padding:12px; margin:5px; width:80%; border-radius:8px;">
+    <input type="email" id="auth-email" placeholder="Email" style="padding:12px; margin:5px; width:80%; border-radius:8px; background:#111; border:1px solid #333; color:white;">
+    <input type="password" id="auth-pass" placeholder="Password" style="padding:12px; margin:5px; width:80%; border-radius:8px; background:#111; border:1px solid #333; color:white;">
     <button onclick="handleAuth()" style="padding:12px; width:80%; background:var(--green); border:none; color:white; border-radius:8px; margin-top:10px; font-weight:bold;">CONTINUE</button>
-    <p onclick="window.isLoginMode=!window.isLoginMode; document.getElementById('atitle').innerText=window.isLoginMode?'LOGIN':'REGISTER'" style="color:gray; font-size:12px; margin-top:15px;">Switch Login/Register</p>
+    <p onclick="window.isLoginMode=!window.isLoginMode; document.getElementById('atitle').innerText=window.isLoginMode?'LOGIN':'REGISTER'" style="color:gray; font-size:12px; margin-top:15px; cursor:pointer;">Switch Login/Register</p>
 </div>
 
 <div class="top-nav">
-    <div style="color:#ff0055; font-weight:900; font-size:20px;">AVIATOR</div>
+    <div style="color:#ff0055; font-weight:900; font-size:22px;">AVIATOR</div>
     <div style="display:flex; gap:10px; align-items:center;">
         <div class="balance-box">₹<span id="bal">0.00</span></div>
-        <div onclick="toggleM()" style="font-size:25px; cursor:pointer;">☰</div>
+        <div onclick="toggleM()" style="font-size:28px; cursor:pointer;">☰</div>
     </div>
 </div>
 
-<div class="history-bar" id="hist"></div>
+<div class="history-dropdown" id="hist-row"></div>
 
 <div class="display-area">
     <div id="multiplier">1.00x</div>
-    <div id="status" style="position:absolute; bottom:15px; width:100%; text-align:center; color:var(--green); font-weight:bold;">WAITING FOR NEXT ROUND...</div>
+    <div id="status" style="position:absolute; bottom:15px; width:100%; text-align:center; color:var(--green); font-weight:bold; font-size:14px;">WAITING FOR NEXT ROUND...</div>
 </div>
 
-<div class="bet-grid">
+<div class="bet-section">
     <div class="bet-card">
-        <input type="number" id="amt-1" value="100" style="width:100%; background:#000; border:1px solid #333; color:white; text-align:center; border-radius:8px; padding:4px;">
+        <div class="input-row">
+            <button onclick="adj(1, -10)">-</button>
+            <input type="number" id="amt-1" value="100">
+            <button onclick="adj(1, 10)">+</button>
+        </div>
         <div class="presets">
             <div class="p-btn" onclick="setA(1,10)">10</div><div class="p-btn" onclick="setA(1,50)">50</div><div class="p-btn" onclick="setA(1,100)">100</div>
             <div class="p-btn" onclick="setA(1,200)">200</div><div class="p-btn" onclick="setA(1,500)">500</div><div class="p-btn" onclick="setA(1,1000)">1k</div>
         </div>
         <div class="auto-row">
-            <span>Auto <input type="checkbox" id="ap1"></span>
-            <span>@ <input type="number" id="ac1" value="2.0" style="width:35px; background:none; border:1px solid #444; color:white; font-size:10px;"></span>
+            <span>Auto Play <input type="checkbox" id="ap1"></span>
+            <span>@ <input type="number" id="ac1" value="2.0" style="width:30px; background:none; border:1px solid #444; color:white;"></span>
         </div>
-        <button id="btn-1" onclick="hBet(1)" class="main-btn" style="background:var(--green);">BET</button>
+        <button id="btn-1" onclick="hBet(1)" class="main-btn">BET</button>
     </div>
+
     <div class="bet-card">
-        <input type="number" id="amt-2" value="100" style="width:100%; background:#000; border:1px solid #333; color:white; text-align:center; border-radius:8px; padding:4px;">
+        <div class="input-row">
+            <button onclick="adj(2, -10)">-</button>
+            <input type="number" id="amt-2" value="100">
+            <button onclick="adj(2, 10)">+</button>
+        </div>
         <div class="presets">
             <div class="p-btn" onclick="setA(2,10)">10</div><div class="p-btn" onclick="setA(2,50)">50</div><div class="p-btn" onclick="setA(2,100)">100</div>
             <div class="p-btn" onclick="setA(2,200)">200</div><div class="p-btn" onclick="setA(2,500)">500</div><div class="p-btn" onclick="setA(2,1000)">1k</div>
         </div>
         <div class="auto-row">
-            <span>Auto <input type="checkbox" id="ap2"></span>
-            <span>@ <input type="number" id="ac2" value="2.0" style="width:35px; background:none; border:1px solid #444; color:white; font-size:10px;"></span>
+            <span>Auto Play <input type="checkbox" id="ap2"></span>
+            <span>@ <input type="number" id="ac2" value="2.0" style="width:30px; background:none; border:1px solid #444; color:white;"></span>
         </div>
-        <button id="btn-2" onclick="hBet(2)" class="main-btn" style="background:var(--green);">BET</button>
+        <button id="btn-2" onclick="hBet(2)" class="main-btn">BET</button>
     </div>
 </div>
 
-<div class="live-list" id="live"></div>
-
 <div id="side-menu">
     <div onclick="toggleM()" style="text-align:right; font-size:25px;">✕</div>
-    <div class="menu-item">Referral ID: <b id="ref-id" style="color:gold;">...</b></div>
+    <div class="menu-item" style="font-size:11px; word-break:break-all;">Referral Link: <br><b id="ref-link-display" style="color:gold;">Loading...</b></div>
     <div class="menu-item" onclick="openP('dep')">💰 Deposit</div>
-    <div class="menu-item" onclick="logoutUser()" style="color:red;">🚪 Logout</div>
+    <div class="menu-item" onclick="logoutUser()" style="color:red; font-weight:bold;">🚪 Logout</div>
 </div>
 
 <div id="dep" class="modal">
     <div class="modal-box">
         <h3>DEPOSIT</h3>
-        <p style="font-size:11px; color:gray;">UPI: deepakmi569-1@oksbi</p>
-        <input type="number" id="d-amt" placeholder="Amount" style="width:90%; padding:10px; margin:5px 0;">
-        <input type="text" id="d-utr" placeholder="12-digit UTR" style="width:90%; padding:10px; margin:5px 0;">
-        <button onclick="submitDeposit()" style="width:90%; padding:10px; background:var(--green); border:none; color:white; font-weight:bold; border-radius:5px;">SUBMIT</button>
-        <p onclick="closePop('dep')" style="color:red; cursor:pointer; font-size:12px;">Cancel</p>
+        <p style="font-size:12px; color:gray;">UPI: deepakmi569-1@oksbi</p>
+        <input type="number" id="d-amt" placeholder="Amount" style="width:90%; padding:10px; margin:5px 0; border-radius:5px;">
+        <input type="text" id="d-utr" placeholder="12-digit UTR" style="width:90%; padding:10px; margin:5px 0; border-radius:5px;">
+        <button onclick="submitDeposit()" style="width:90%; padding:12px; background:var(--green); border:none; color:white; font-weight:bold; border-radius:5px;">SUBMIT DEPOSIT</button>
+        <p onclick="closePop('dep')" style="color:red; cursor:pointer; margin-top:10px;">Close</p>
     </div>
 </div>
 
 <script>
-    let mult = 1.0, flying = false, logs = [1.2, 2.5, 1.05, 3.8, 1.15], bets = { 1: null, 2: null }, fakes = [];
+    let mult = 1.0, flying = false, logs = [1.54, 2.10, 1.05, 4.20, 1.12], bets = { 1: null, 2: null };
     window.wallet = 0; window.isLoginMode = true;
 
     function toggleM() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
     function openP(id) { document.getElementById(id).style.display = 'flex'; }
     function closePop(id) { document.getElementById(id).style.display = 'none'; }
     function setA(p, v) { document.getElementById('amt-'+p).value = v; }
+    function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value) + v); }
 
     window.updateUI = function() {
         document.getElementById('bal').innerText = window.wallet.toFixed(2);
-        document.getElementById('hist').innerHTML = logs.slice(0, 15).map(r => `<div class="hist-chip">${r}x</div>`).join('');
+        document.getElementById('hist-row').innerHTML = logs.slice(0, 15).map(r => `<div class="hist-chip">${r}x</div>`).join('');
         [1,2].forEach(p => {
             let b = document.getElementById('btn-'+p);
             if (bets[p] && flying && !bets[p].cashed) {
-                b.innerText = "CASH OUT " + (bets[p].amt * mult).toFixed(1);
+                b.innerText = "CASH OUT\n₹" + (bets[p].amt * mult).toFixed(1);
                 b.style.background = "var(--orange)";
             } else {
                 b.innerText = bets[p] && !flying ? "WAITING" : "BET";
                 b.style.background = bets[p] && !flying ? "#444" : "var(--green)";
             }
         });
-        renderFakes();
     }
 
     function hBet(p) {
@@ -195,23 +214,18 @@
             if(bets[p]) { window.wallet += bets[p].amt; bets[p] = null; }
             else if(a <= window.wallet) { window.wallet -= a; bets[p] = { amt: a, cashed: false }; }
         }
-        window.updateUI(); window.syncWallet();
+        window.updateUI();
     }
 
     function cash(p) {
         if(!bets[p] || bets[p].cashed) return;
         window.wallet += bets[p].amt * mult; bets[p].cashed = true;
-        window.updateUI(); window.syncWallet();
-    }
-
-    function renderFakes() {
-        document.getElementById('live').innerHTML = fakes.map(f => `<div class="live-row" style="${f.c ? 'color:var(--green);' : ''}"><span>${f.u}</span><span>₹${f.a}</span><span>${f.c ? f.m+'x' : '-'}</span></div>`).join('');
+        window.updateUI();
     }
 
     function start() {
         flying = false; mult = 1.0;
         document.getElementById('multiplier').style.display = 'none';
-        fakes = Array.from({length:10}, () => ({u:"User_"+Math.floor(1000+Math.random()*9000), a:Math.floor(50+Math.random()*500), m:(1.1+Math.random()*3).toFixed(2), c:false}));
         let t = 5;
         let timer = setInterval(() => {
             document.getElementById('status').innerText = "NEXT ROUND IN "+t+"s";
@@ -228,20 +242,20 @@
         flying = true;
         document.getElementById('status').innerText = "";
         document.getElementById('multiplier').style.display = 'block';
-        let crash = (1.0 + Math.pow(Math.random(), 3) * 10).toFixed(2);
+        let crash = (1.0 + Math.pow(Math.random(), 3) * 8).toFixed(2);
         let anim = () => {
             if(!flying) return;
             if(mult >= crash) {
-                flying = false; logs.unshift(mult.toFixed(2)); bets = { 1: null, 2: null };
+                flying = false; logs.unshift(parseFloat(mult.toFixed(2))); 
+                bets = { 1: null, 2: null };
                 start(); return;
             }
-            mult += 0.005;
+            mult += (mult < 2 ? 0.003 : 0.007);
             document.getElementById('multiplier').innerText = mult.toFixed(2) + "x";
             [1,2].forEach(p => {
                 let target = parseFloat(document.getElementById('ac'+p).value);
                 if(bets[p] && !bets[p].cashed && mult >= target) cash(p);
             });
-            fakes.forEach(f => { if(!f.c && mult >= f.m) f.c = true; });
             window.updateUI(); requestAnimationFrame(anim);
         };
         requestAnimationFrame(anim);
