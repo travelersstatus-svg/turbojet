@@ -23,7 +23,6 @@
         const auth = getAuth();
         const db = getFirestore();
 
-        // Auth Logic
         window.handleAuth = async () => {
             const email = document.getElementById('auth-email').value;
             const pass = document.getElementById('auth-pass').value;
@@ -51,7 +50,6 @@
             }
         });
 
-        // Sync Wallet to Firebase
         window.syncWallet = async () => {
             if(auth.currentUser) await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: window.wallet });
         };
@@ -62,7 +60,6 @@
         * { box-sizing: border-box; }
         body { background: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; padding: 0; overflow-x: hidden; -webkit-user-select: none; user-select: none; }
         
-        /* Auth Screen */
         #auth-screen { position: fixed; inset: 0; background: var(--bg-dark); z-index: 9999; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--panel-bg); padding: 25px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; border: 1px solid #252f44; }
 
@@ -107,6 +104,7 @@
         .live-section { margin: 25px 10px 10px 10px; background: var(--panel-bg); border-radius: 15px; font-size: 10px; border: 1px solid #252f44; min-height: 220px; }
         .live-header { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; padding: 8px 10px; background: #0f1521; font-weight: bold; border-bottom: 1px solid #333; }
         .live-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; padding: 6px 10px; border-bottom: 1px solid #1a2233; }
+        .win-row { color: var(--win-green); background: rgba(40, 167, 69, 0.1); }
     </style>
 </head>
 <body>
@@ -115,9 +113,9 @@
     <div class="auth-card">
         <h2 id="auth-title">LOGIN</h2>
         <input type="email" id="auth-email" class="modal-input" placeholder="Email Address">
-        <input type="password" id="auth-pass" class="modal-input" placeholder="Password (6+ chars)">
+        <input type="password" id="auth-pass" class="modal-input" placeholder="Password">
         <button class="main-btn" onclick="handleAuth()">CONTINUE</button>
-        <p onclick="window.isLoginMode = !window.isLoginMode; document.getElementById('auth-title').innerText = window.isLoginMode ? 'LOGIN' : 'REGISTER';" style="cursor:pointer; font-size:12px; margin-top:10px;">Switch Login/Register</p>
+        <p onclick="window.isLoginMode = !window.isLoginMode; document.getElementById('auth-title').innerText = window.isLoginMode ? 'LOGIN' : 'REGISTER';" style="cursor:pointer; font-size:12px; margin-top:10px; color:#999;">Switch Login/Register</p>
     </div>
 </div>
 
@@ -125,8 +123,6 @@
     <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>HOME MENU</b> <span onclick="toggleMenu()" style="cursor:pointer">✕</span></div>
     <div class="menu-item" onclick="openPop('dep')">💰 Deposit <span>❯</span></div>
     <div class="menu-item" onclick="openPop('wit')">🏦 Withdrawal <span>❯</span></div>
-    <div class="menu-item" onclick="toggleSub('ref-c')">👥 Referral <span>▼</span></div>
-    <div id="ref-c" class="history-content">Code: <b>AVIATOR100</b></div>
     <div class="menu-item" onclick="toggleSub('trans-content')">📑 Transactions <span>▼</span></div>
     <div id="trans-content" class="history-content" style="padding: 10px;">No History</div>
 </div>
@@ -134,7 +130,7 @@
 <div id="dep" class="modal-overlay">
     <div class="modal-content">
         <h3>DEPOSIT</h3>
-        <p style="font-size:12px; color:var(--text-gray)">Pay to UPI: <b>admin@upi</b></p>
+        <p style="font-size:12px; color:var(--text-gray)">Pay to UPI: <b>deepakmi569-1@oksbi</b></p>
         <input type="number" id="d-amt" class="modal-input" placeholder="Amount (₹)">
         <input type="text" id="d-utr" class="modal-input" placeholder="12-digit UTR">
         <button class="main-btn" onclick="alert('Sent to Admin for approval'); closePop('dep')">SUBMIT</button>
@@ -212,7 +208,7 @@
     planeImg.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNmZjAwNDQ7c3RvcC1vcGFjaXR5OjEiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiM4MDAwMDA7c3RvcC1vcGFjaXR5OjEiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cGF0aCBkPSJNMzIgMjU2TDE2MCAxOTJMMjI0IDMyTDI4OCAxOTJMNTAwIDI1NkwyODggMzI0TDIyNCA0ODBMMTYwIDMyNEwzMiAyNTZ6IiBmaWxsPSJ1cmwoI2EpIi8+PHBhdGggZD0iTTIyNCAzMkwyODggMTkyTDUwMCAyNTZMMjg4IDMyNEwyMjQgNDgwTDI0MCAzMjRMMzIwIDI1NkwyNDAgMTkyeiIgZmlsbD0icmdiYSgwLDAsMCwwLjMpIi8+PHBhdGggZD0iTTMyIDI1NkwxNjAgMTkyTDIyNCAzMkwyMDggMTkyTDEwMCAyNTZMMjA4IDMyNEwyMjQgNDgwTDE2MCAzMjR6IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMikiLz48Y2lyY2xlIGN4PSIyNDAiIGN5PSIyNTYiIHI9IjE1IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuOCkiLz48L3N2Zz4=";
 
     window.wallet = 0; window.isLoginMode = true;
-    let multiplier = 1.0, isFlying = false;
+    let multiplier = 1.0, isFlying = false, fakeUsers = [];
     let results = [1.2, 3.5, 1.05, 2.3, 1.8];
     let activeBets = { 1: null, 2: null }, queuedBets = { 1: null, 2: null };
 
@@ -250,18 +246,36 @@
                 }
             }
         });
+        renderFakeUsers();
     }
 
     function getChipClass(val) { if(val >= 10) return 'chip-gold'; if(val >= 2) return 'chip-green'; return ''; }
     function toggleFullHist() { const f = document.getElementById('full-history'); f.style.display = (f.style.display === 'block') ? 'none' : 'block'; f.innerHTML = results.map(r => `<span class="hist-chip ${getChipClass(r)}" style="margin:2px">${r}x</span>`).join(''); }
 
-    function updateFakeBets() {
-        let bots = "";
-        for(let i=0; i<8; i++) {
-            let bAmt = (Math.random()*500 + 100).toFixed(0);
-            bots += `<div class="live-row"><span>User_${Math.floor(Math.random()*9999)}</span><span>₹${bAmt}</span><span>-</span><span>-</span></div>`;
+    function generateFakeUsers() {
+        fakeUsers = [];
+        for(let i=0; i<15; i++) {
+            fakeUsers.push({
+                user: "User_" + Math.floor(1000 + Math.random() * 9000),
+                bet: (Math.random() * 1000 + 50).toFixed(0),
+                cashAt: (1.1 + Math.random() * 5).toFixed(2),
+                cashed: false
+            });
         }
-        document.getElementById('live-list').innerHTML = bots;
+    }
+
+    function renderFakeUsers() {
+        let html = "";
+        fakeUsers.forEach(u => {
+            let isWin = u.cashed;
+            html += `<div class="live-row ${isWin ? 'win-row' : ''}">
+                <span>${u.user}</span>
+                <span>₹${u.bet}</span>
+                <span>${isWin ? u.cashAt + 'x' : '-'}</span>
+                <span>${isWin ? '₹' + (u.bet * u.cashAt).toFixed(0) : '-'}</span>
+            </div>`;
+        });
+        document.getElementById('live-list').innerHTML = html;
     }
 
     function handleBet(p) {
@@ -289,6 +303,7 @@
         document.getElementById('multiplier-text').style.display = 'none';
         document.getElementById('countdown').style.display = 'block';
         
+        generateFakeUsers();
         [1,2].forEach(p => {
             if(queuedBets[p]) { activeBets[p] = { amt: queuedBets[p].amt, cashed: false }; queuedBets[p] = null; }
             if (document.getElementById('auto-play-'+p).checked && !activeBets[p]) {
@@ -297,7 +312,7 @@
             }
         });
 
-        window.updateUI(); updateFakeBets();
+        window.updateUI();
         let t = 5;
         let timer = setInterval(() => {
             document.getElementById('countdown').innerText = "NEXT ROUND IN "+t+"s";
@@ -323,6 +338,11 @@
             multiplier += 0.0015; 
             document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
             
+            // Fake Users Cashout logic
+            fakeUsers.forEach(u => {
+                if(!u.cashed && multiplier >= u.cashAt && u.cashAt < crashPoint) { u.cashed = true; }
+            });
+
             [1,2].forEach(p => {
                 if(document.getElementById('auto-cash-tick-'+p).checked && activeBets[p] && !activeBets[p].cashed && multiplier >= parseFloat(document.getElementById('auto-cash-val-'+p).value)) cashOut(p);
             });
