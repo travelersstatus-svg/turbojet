@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviator Pro Max - Official</title>
+    <title>Aviator Pro Max</title>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -29,13 +29,13 @@
             try {
                 if (window.isLoginMode) {
                     const res = await signInWithEmailAndPassword(auth, email, pass);
-                    if (!res.user.emailVerified) { alert("Verify Email!"); await signOut(auth); }
+                    if (!res.user.emailVerified) { alert("Verify Email First!"); await signOut(auth); }
                 } else {
                     const res = await createUserWithEmailAndPassword(auth, email, pass);
                     await sendEmailVerification(res.user);
-                    const refID = "REF" + Math.floor(1000 + Math.random() * 9000);
+                    const refID = "AV" + Math.floor(Math.random()*99999);
                     await setDoc(doc(db, "users", res.user.uid), { balance: 500, email: email, referral: refID });
-                    alert("Verification link sent!");
+                    alert("Verification email sent!");
                 }
             } catch (e) { alert(e.message); }
         };
@@ -45,207 +45,208 @@
                 document.getElementById('auth-screen').style.display = 'none';
                 const d = await getDoc(doc(db, "users", user.uid));
                 window.wallet = d.data().balance;
-                document.getElementById('ref-id-display').innerText = d.data().referral || "N/A";
+                document.getElementById('ref-id').innerText = d.data().referral;
                 window.updateUI();
             } else { document.getElementById('auth-screen').style.display = 'flex'; }
         });
+
+        window.logoutUser = () => { signOut(auth).then(() => { localStorage.clear(); location.reload(); }); };
+        window.syncWallet = async () => { if(auth.currentUser) await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: window.wallet }); };
 
         window.submitDeposit = async () => {
             const amt = parseFloat(document.getElementById('d-amt').value);
             const utr = document.getElementById('d-utr').value;
             if(!amt || utr.length < 12) return alert("Enter 12-digit UTR");
-            try {
-                await setDoc(doc(collection(db, "deposits")), {
-                    uid: auth.currentUser.uid, email: auth.currentUser.email,
-                    amt: amt, utr: utr, status: "pending", time: Date.now()
-                });
-                alert("Deposit Request Sent to Admin!"); closePop('dep');
-            } catch(e) { alert("Database Error: " + e.message); }
+            await setDoc(doc(collection(db, "deposits")), { uid: auth.currentUser.uid, email: auth.currentUser.email, amt: amt, utr: utr, status: "pending", time: Date.now() });
+            alert("Sent to Admin!"); closePop('dep');
         };
-        
-        window.logoutUser = () => { signOut(auth).then(() => location.reload()); };
-        window.syncWallet = async () => { if(auth.currentUser) await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: window.wallet }); };
     </script>
 
     <style>
-        :root { --bg-dark: #0a0e17; --panel-bg: #161d2b; --win-green: #28a745; --accent-red: #d11348; --btn-orange: #d97706; }
-        body { background: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; padding: 0; overflow: hidden; }
+        :root { --bg: #0a0e17; --panel: #161d2b; --green: #28a745; --red: #d11348; --orange: #d97706; }
+        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; overflow: hidden; user-select: none; }
         .top-nav { background: #0f1521; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
-        .balance-box { border: 2px solid var(--win-green); padding: 5px 15px; border-radius: 20px; color: var(--win-green); font-weight: bold; }
+        .balance-box { border: 2px solid var(--green); padding: 5px 15px; border-radius: 20px; color: var(--green); font-weight: bold; }
         
-        .history-container { background: #080c14; padding: 5px; overflow-x: auto; display: flex; gap: 5px; border-bottom: 1px solid #222; }
+        /* Dropdown style results */
+        .history-bar { background: #080c14; padding: 5px; overflow-x: auto; display: flex; gap: 5px; border-bottom: 1px solid #222; }
         .hist-chip { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: #1c2538; color: #9d50ff; border: 1px solid #333; }
 
-        .display-area { position: relative; height: 180px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 70%); margin: 10px; border-radius: 15px; overflow: hidden; border: 1px solid #252f44; }
-        #multiplier-text { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 3.5rem; font-weight: 900; }
+        .display-area { position: relative; height: 180px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 70%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; overflow: hidden; }
+        #multiplier { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 3.5rem; font-weight: 900; z-index: 5; }
 
-        .bet-section { display: flex; justify-content: space-between; padding: 5px 10px; gap: 10px; }
-        .bet-card { background: var(--panel-bg); padding: 8px; border-radius: 12px; width: 50%; border: 1px solid #252f44; }
-        .preset-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 5px 0; }
-        .preset-btn { background: #000; border: 1px solid #333; color: #ccc; font-size: 9px; padding: 3px; border-radius: 4px; text-align: center; }
-        .auto-row { display: flex; justify-content: space-between; font-size: 9px; margin-top: 5px; color: #999; }
-        
+        .bet-grid { display: flex; gap: 10px; padding: 0 10px; }
+        .bet-card { background: var(--panel); padding: 8px; border-radius: 12px; width: 50%; border: 1px solid #252f44; }
+        .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 5px 0; }
+        .p-btn { background: #000; border: 1px solid #333; color: #ccc; font-size: 9px; padding: 4px; border-radius: 4px; text-align: center; }
+        .auto-row { display: flex; justify-content: space-between; font-size: 9px; margin-top: 5px; align-items: center; }
+        .main-btn { width: 100%; margin-top: 5px; height: 40px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
+
+        .live-list { margin: 10px; background: var(--panel); border-radius: 10px; font-size: 10px; height: 150px; overflow-y: auto; }
+        .live-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr; padding: 5px 10px; border-bottom: 1px solid #222; }
+
         #side-menu { position: fixed; top: 0; right: -100%; width: 75%; height: 100%; background: #0f1521; z-index: 5000; transition: 0.4s; padding: 20px; }
-        .menu-item { padding: 12px; background: #161d2b; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 6000; justify-content: center; align-items: center; }
-        .modal-content { background: #161d2b; padding: 20px; border-radius: 15px; width: 85%; max-width: 300px; text-align: center; }
+        .menu-item { padding: 12px; background: var(--panel); border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 6000; justify-content: center; align-items: center; }
+        .modal-box { background: var(--panel); padding: 20px; border-radius: 15px; width: 85%; max-width: 300px; text-align: center; }
     </style>
 </head>
 <body>
 
 <div id="auth-screen" style="position:fixed; inset:0; background:black; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-    <h2 id="auth-title">LOGIN</h2>
-    <input type="email" id="auth-email" placeholder="Email" style="padding:10px; margin:5px; width:80%; border-radius:5px;">
-    <input type="password" id="auth-pass" placeholder="Password" style="padding:10px; margin:5px; width:80%; border-radius:5px;">
-    <button onclick="handleAuth()" style="padding:10px; width:80%; background:var(--win-green); border:none; color:white; border-radius:5px; margin-top:10px;">CONTINUE</button>
-    <p onclick="window.isLoginMode = !window.isLoginMode; document.getElementById('auth-title').innerText=window.isLoginMode?'LOGIN':'REGISTER'" style="color:gray; font-size:12px; margin-top:15px; cursor:pointer;">Switch Login/Register</p>
+    <h2 id="atitle">LOGIN</h2>
+    <input type="email" id="auth-email" placeholder="Email" style="padding:12px; margin:5px; width:80%; border-radius:8px;">
+    <input type="password" id="auth-pass" placeholder="Password" style="padding:12px; margin:5px; width:80%; border-radius:8px;">
+    <button onclick="handleAuth()" style="padding:12px; width:80%; background:var(--green); border:none; color:white; border-radius:8px; margin-top:10px; font-weight:bold;">CONTINUE</button>
+    <p onclick="window.isLoginMode=!window.isLoginMode; document.getElementById('atitle').innerText=window.isLoginMode?'LOGIN':'REGISTER'" style="color:gray; font-size:12px; margin-top:15px;">Switch Login/Register</p>
 </div>
 
 <div class="top-nav">
-    <div style="color:#ff0055; font-weight:900; font-size:18px;">AVIATOR</div>
-    <div style="display:flex; gap:8px; align-items:center;">
-        <div class="balance-box">₹<span id="bal-text">0.00</span></div>
-        <div onclick="toggleMenu()" style="font-size:22px; cursor:pointer;">☰</div>
+    <div style="color:#ff0055; font-weight:900; font-size:20px;">AVIATOR</div>
+    <div style="display:flex; gap:10px; align-items:center;">
+        <div class="balance-box">₹<span id="bal">0.00</span></div>
+        <div onclick="toggleM()" style="font-size:25px; cursor:pointer;">☰</div>
     </div>
 </div>
 
-<div class="history-container" id="hist-row"></div>
+<div class="history-bar" id="hist"></div>
 
 <div class="display-area">
-    <div id="multiplier-text" style="display:none; z-index:10;">1.00x</div>
-    <div id="countdown" style="position:absolute; bottom:15px; width:100%; text-align:center; color:#28a745; font-weight:bold;">WAITING FOR NEXT ROUND...</div>
+    <div id="multiplier">1.00x</div>
+    <div id="status" style="position:absolute; bottom:15px; width:100%; text-align:center; color:var(--green); font-weight:bold;">WAITING FOR NEXT ROUND...</div>
 </div>
 
-<div class="bet-section">
+<div class="bet-grid">
     <div class="bet-card">
-        <input type="number" id="amt-1" value="100" style="width:100%; background:#000; border:1px solid #333; color:white; text-align:center; border-radius:10px; padding:3px;">
-        <div class="preset-grid">
-            <div class="preset-btn" onclick="setAmt(1,10)">10</div><div class="preset-btn" onclick="setAmt(1,50)">50</div><div class="preset-btn" onclick="setAmt(1,100)">100</div>
-            <div class="preset-btn" onclick="setAmt(1,200)">200</div><div class="preset-btn" onclick="setAmt(1,500)">500</div><div class="preset-btn" onclick="setAmt(1,1000)">1k</div>
+        <input type="number" id="amt-1" value="100" style="width:100%; background:#000; border:1px solid #333; color:white; text-align:center; border-radius:8px; padding:4px;">
+        <div class="presets">
+            <div class="p-btn" onclick="setA(1,10)">10</div><div class="p-btn" onclick="setA(1,50)">50</div><div class="p-btn" onclick="setA(1,100)">100</div>
+            <div class="p-btn" onclick="setA(1,200)">200</div><div class="p-btn" onclick="setA(1,500)">500</div><div class="p-btn" onclick="setA(1,1000)">1k</div>
         </div>
         <div class="auto-row">
-            <span>Auto <input type="checkbox" id="auto-p1"></span>
-            <span>@ <input type="number" id="cash-v1" value="2.0" style="width:30px; background:none; border:1px solid #444; color:white; font-size:9px;"></span>
+            <span>Auto <input type="checkbox" id="ap1"></span>
+            <span>@ <input type="number" id="ac1" value="2.0" style="width:35px; background:none; border:1px solid #444; color:white; font-size:10px;"></span>
         </div>
-        <button id="btn-1" onclick="handleBet(1)" style="width:100%; margin-top:5px; height:35px; background:var(--win-green); border:none; border-radius:8px; color:white; font-weight:bold; font-size:12px;">BET</button>
+        <button id="btn-1" onclick="hBet(1)" class="main-btn" style="background:var(--green);">BET</button>
     </div>
     <div class="bet-card">
-        <input type="number" id="amt-2" value="100" style="width:100%; background:#000; border:1px solid #333; color:white; text-align:center; border-radius:10px; padding:3px;">
-        <div class="preset-grid">
-            <div class="preset-btn" onclick="setAmt(2,10)">10</div><div class="preset-btn" onclick="setAmt(2,50)">50</div><div class="preset-btn" onclick="setAmt(2,100)">100</div>
-            <div class="preset-btn" onclick="setAmt(2,200)">200</div><div class="preset-btn" onclick="setAmt(2,500)">500</div><div class="preset-btn" onclick="setAmt(2,1000)">1k</div>
+        <input type="number" id="amt-2" value="100" style="width:100%; background:#000; border:1px solid #333; color:white; text-align:center; border-radius:8px; padding:4px;">
+        <div class="presets">
+            <div class="p-btn" onclick="setA(2,10)">10</div><div class="p-btn" onclick="setA(2,50)">50</div><div class="p-btn" onclick="setA(2,100)">100</div>
+            <div class="p-btn" onclick="setA(2,200)">200</div><div class="p-btn" onclick="setA(2,500)">500</div><div class="p-btn" onclick="setA(2,1000)">1k</div>
         </div>
         <div class="auto-row">
-            <span>Auto <input type="checkbox" id="auto-p2"></span>
-            <span>@ <input type="number" id="cash-v2" value="2.0" style="width:30px; background:none; border:1px solid #444; color:white; font-size:9px;"></span>
+            <span>Auto <input type="checkbox" id="ap2"></span>
+            <span>@ <input type="number" id="ac2" value="2.0" style="width:35px; background:none; border:1px solid #444; color:white; font-size:10px;"></span>
         </div>
-        <button id="btn-2" onclick="handleBet(2)" style="width:100%; margin-top:5px; height:35px; background:var(--win-green); border:none; border-radius:8px; color:white; font-weight:bold; font-size:12px;">BET</button>
+        <button id="btn-2" onclick="hBet(2)" class="main-btn" style="background:var(--green);">BET</button>
     </div>
 </div>
+
+<div class="live-list" id="live"></div>
 
 <div id="side-menu">
-    <div onclick="toggleMenu()" style="text-align:right; font-size:20px;">✕</div>
-    <div class="menu-item">Referral ID: <b id="ref-id-display" style="color:gold;">...</b></div>
-    <div class="menu-item" onclick="openPop('dep')">💰 Deposit</div>
-    <div class="menu-item" onclick="openPop('wit')">🏦 Withdrawal</div>
+    <div onclick="toggleM()" style="text-align:right; font-size:25px;">✕</div>
+    <div class="menu-item">Referral ID: <b id="ref-id" style="color:gold;">...</b></div>
+    <div class="menu-item" onclick="openP('dep')">💰 Deposit</div>
     <div class="menu-item" onclick="logoutUser()" style="color:red;">🚪 Logout</div>
 </div>
 
-<div id="dep" class="modal-overlay">
-    <div class="modal-content">
+<div id="dep" class="modal">
+    <div class="modal-box">
         <h3>DEPOSIT</h3>
-        <p style="font-size:11px; color:gray;">UPI: <b>deepakmi569-1@oksbi</b></p>
-        <input type="number" id="d-amt" placeholder="Amount" style="width:90%; padding:8px; margin:5px 0;">
-        <input type="text" id="d-utr" placeholder="12-digit UTR" style="width:90%; padding:8px; margin:5px 0;">
-        <button onclick="submitDeposit()" style="width:90%; padding:10px; background:var(--win-green); color:white; border:none; border-radius:5px;">SUBMIT</button>
-        <p onclick="closePop('dep')" style="color:red; cursor:pointer; font-size:12px; margin-top:10px;">Cancel</p>
+        <p style="font-size:11px; color:gray;">UPI: deepakmi569-1@oksbi</p>
+        <input type="number" id="d-amt" placeholder="Amount" style="width:90%; padding:10px; margin:5px 0;">
+        <input type="text" id="d-utr" placeholder="12-digit UTR" style="width:90%; padding:10px; margin:5px 0;">
+        <button onclick="submitDeposit()" style="width:90%; padding:10px; background:var(--green); border:none; color:white; font-weight:bold; border-radius:5px;">SUBMIT</button>
+        <p onclick="closePop('dep')" style="color:red; cursor:pointer; font-size:12px;">Cancel</p>
     </div>
 </div>
 
 <script>
-    let multiplier = 1.0, isFlying = false, results = [1.5, 2.8, 1.02, 5.4, 1.2];
-    let activeBets = { 1: null, 2: null };
+    let mult = 1.0, flying = false, logs = [1.2, 2.5, 1.05, 3.8, 1.15], bets = { 1: null, 2: null }, fakes = [];
     window.wallet = 0; window.isLoginMode = true;
 
-    function toggleMenu() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
-    function openPop(id) { document.getElementById(id).style.display = 'flex'; }
+    function toggleM() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
+    function openP(id) { document.getElementById(id).style.display = 'flex'; }
     function closePop(id) { document.getElementById(id).style.display = 'none'; }
-    function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
+    function setA(p, v) { document.getElementById('amt-'+p).value = v; }
 
     window.updateUI = function() {
-        document.getElementById('bal-text').innerText = window.wallet.toFixed(2);
-        document.getElementById('hist-row').innerHTML = results.slice(0, 12).map(r => `<div class="hist-chip">${r}x</div>`).join('');
+        document.getElementById('bal').innerText = window.wallet.toFixed(2);
+        document.getElementById('hist').innerHTML = logs.slice(0, 15).map(r => `<div class="hist-chip">${r}x</div>`).join('');
         [1,2].forEach(p => {
-            let btn = document.getElementById('btn-'+p);
-            if (activeBets[p] && isFlying && !activeBets[p].cashed) {
-                btn.innerText = "CASH OUT " + (activeBets[p].amt * multiplier).toFixed(1);
-                btn.style.background = "var(--btn-orange)";
+            let b = document.getElementById('btn-'+p);
+            if (bets[p] && flying && !bets[p].cashed) {
+                b.innerText = "CASH OUT " + (bets[p].amt * mult).toFixed(1);
+                b.style.background = "var(--orange)";
             } else {
-                btn.innerText = activeBets[p] && !isFlying ? "WAITING" : "BET";
-                btn.style.background = activeBets[p] && !isFlying ? "#444" : "var(--win-green)";
+                b.innerText = bets[p] && !flying ? "WAITING" : "BET";
+                b.style.background = bets[p] && !flying ? "#444" : "var(--green)";
             }
         });
+        renderFakes();
     }
 
-    function handleBet(p) {
-        let amt = parseInt(document.getElementById('amt-'+p).value);
-        if (isFlying) { if(activeBets[p] && !activeBets[p].cashed) cashOut(p); }
+    function hBet(p) {
+        let a = parseInt(document.getElementById('amt-'+p).value);
+        if (flying) { if(bets[p] && !bets[p].cashed) cash(p); }
         else {
-            if(activeBets[p]) { window.wallet += activeBets[p].amt; activeBets[p] = null; }
-            else if(amt <= window.wallet) { window.wallet -= amt; activeBets[p] = { amt, cashed: false }; }
+            if(bets[p]) { window.wallet += bets[p].amt; bets[p] = null; }
+            else if(a <= window.wallet) { window.wallet -= a; bets[p] = { amt: a, cashed: false }; }
         }
         window.updateUI(); window.syncWallet();
     }
 
-    function cashOut(p) {
-        if(!activeBets[p] || activeBets[p].cashed) return;
-        window.wallet += activeBets[p].amt * multiplier;
-        activeBets[p].cashed = true;
+    function cash(p) {
+        if(!bets[p] || bets[p].cashed) return;
+        window.wallet += bets[p].amt * mult; bets[p].cashed = true;
         window.updateUI(); window.syncWallet();
     }
 
-    function startLoop() {
-        isFlying = false; multiplier = 1.0;
-        document.getElementById('multiplier-text').style.display = 'none';
+    function renderFakes() {
+        document.getElementById('live').innerHTML = fakes.map(f => `<div class="live-row" style="${f.c ? 'color:var(--green);' : ''}"><span>${f.u}</span><span>₹${f.a}</span><span>${f.c ? f.m+'x' : '-'}</span></div>`).join('');
+    }
+
+    function start() {
+        flying = false; mult = 1.0;
+        document.getElementById('multiplier').style.display = 'none';
+        fakes = Array.from({length:10}, () => ({u:"User_"+Math.floor(1000+Math.random()*9000), a:Math.floor(50+Math.random()*500), m:(1.1+Math.random()*3).toFixed(2), c:false}));
         let t = 5;
         let timer = setInterval(() => {
-            document.getElementById('countdown').innerText = "NEXT ROUND IN "+t+"s";
+            document.getElementById('status').innerText = "NEXT ROUND IN "+t+"s";
             if(t <= 0) { 
                 clearInterval(timer); 
-                // Auto Play Check
-                [1,2].forEach(p => { if(document.getElementById('auto-p'+p).checked && !activeBets[p]) handleBet(p); });
-                runFlight(); 
+                [1,2].forEach(p => { if(document.getElementById('ap'+p).checked && !bets[p]) hBet(p); });
+                run(); 
             }
             t--;
         }, 1000);
     }
 
-    function runFlight() {
-        isFlying = true;
-        document.getElementById('countdown').innerText = "";
-        document.getElementById('multiplier-text').style.display = 'block';
-        let crashPoint = (1.0 + Math.random() * 4).toFixed(2);
+    function run() {
+        flying = true;
+        document.getElementById('status').innerText = "";
+        document.getElementById('multiplier').style.display = 'block';
+        let crash = (1.0 + Math.pow(Math.random(), 3) * 10).toFixed(2);
         let anim = () => {
-            if(!isFlying) return;
-            if(multiplier >= crashPoint) {
-                isFlying = false; results.unshift(multiplier.toFixed(2));
-                activeBets = { 1: null, 2: null };
-                startLoop(); return;
+            if(!flying) return;
+            if(mult >= crash) {
+                flying = false; logs.unshift(mult.toFixed(2)); bets = { 1: null, 2: null };
+                start(); return;
             }
-            multiplier += 0.006;
-            document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
-            
-            // Auto Cashout Check
+            mult += 0.005;
+            document.getElementById('multiplier').innerText = mult.toFixed(2) + "x";
             [1,2].forEach(p => {
-                let target = parseFloat(document.getElementById('cash-v'+p).value);
-                if(activeBets[p] && !activeBets[p].cashed && multiplier >= target) cashOut(p);
+                let target = parseFloat(document.getElementById('ac'+p).value);
+                if(bets[p] && !bets[p].cashed && mult >= target) cash(p);
             });
-
+            fakes.forEach(f => { if(!f.c && mult >= f.m) f.c = true; });
             window.updateUI(); requestAnimationFrame(anim);
         };
         requestAnimationFrame(anim);
     }
-    startLoop();
+    start();
 </script>
 </body>
 </html>
