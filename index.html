@@ -10,6 +10,7 @@
       import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut, reload } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
       import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+      // ✅ CONFIG FIXED BY GEMINI
       const firebaseConfig = {
         apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc",
         authDomain: "myaviatoregame.firebaseapp.com",
@@ -25,6 +26,7 @@
 
       window.isLoginMode = true;
 
+      // --- AUTH LOGIC ---
       window.toggleAuthMode = () => {
         window.isLoginMode = !window.isLoginMode;
         document.getElementById('auth-title').innerText = window.isLoginMode ? "LOGIN" : "REGISTER";
@@ -50,8 +52,7 @@
           } else {
             const res = await createUserWithEmailAndPassword(auth, email, pass);
             await sendEmailVerification(res.user);
-            const refID = "AV" + Math.floor(1000 + Math.random() * 9000);
-            await setDoc(doc(db, "users", res.user.uid), { balance: 0, email: email, referralID: refID });
+            await setDoc(doc(db, "users", res.user.uid), { balance: 0, email: email });
             alert("Verification link sent! Verify and then Login.");
             window.toggleAuthMode();
             await signOut(auth);
@@ -59,22 +60,15 @@
         } catch (err) { alert(err.message); }
       };
 
+      // --- DATA SYNC ---
       async function loadUserData(user) {
           const docRef = doc(db, "users", user.uid);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
               window.wallet = docSnap.data().balance;
-              const refID = docSnap.data().referralID || "N/A";
-              document.getElementById('ref-display-id').innerText = refID;
-              window.fullRefLink = window.location.origin + "?ref=" + refID;
               window.updateUI();
           }
       }
-
-      window.copyRef = () => {
-          navigator.clipboard.writeText(window.fullRefLink);
-          alert("Referral Link Copied!");
-      };
 
       window.syncBalance = async () => {
           if (auth.currentUser) {
@@ -82,6 +76,7 @@
           }
       };
 
+      // --- DEPOSIT & WITHDRAW ---
       window.submitDeposit = async () => {
           const amt = document.getElementById('d-amt').value;
           const utr = document.getElementById('d-utr').value;
@@ -92,25 +87,31 @@
               email: auth.currentUser.email,
               amt: parseFloat(amt),
               utr: utr,
-              status: "pending",
               time: new Date()
           });
-          alert("Sent! Admin will approve after verification.");
+          alert("Request sent to Admin!");
           closePop('dep');
       };
 
       window.submitWithdraw = async () => {
           const amt = parseFloat(document.getElementById('w-amt').value);
-          if(!amt || amt > wallet) return alert("Invalid Amount!");
+          const name = document.getElementById('w-name').value;
+          const acc = document.getElementById('w-acc').value;
+          const ifsc = document.getElementById('w-ifsc').value;
+
+          if(!amt || amt > wallet || !acc) return alert("Invalid Details or Low Balance!");
+
           wallet -= amt;
           window.updateUI();
           await window.syncBalance();
+
           await addDoc(collection(db, "withdrawals"), {
               uid: auth.currentUser.uid,
               email: auth.currentUser.email,
               amt: amt,
-              acc: document.getElementById('w-acc').value,
-              status: "pending",
+              name: name,
+              acc: acc,
+              ifsc: ifsc,
               time: new Date()
           });
           alert("Withdrawal Request Sent!");
@@ -121,12 +122,8 @@
         if (user && user.emailVerified) {
             document.getElementById('auth-screen').style.display = 'none';
             loadUserData(user);
-        } else {
-            document.getElementById('auth-screen').style.display = 'flex';
         }
       });
-
-      window.logoutUser = () => { signOut(auth).then(() => location.reload()); };
     </script>
 
     <style>
@@ -186,11 +183,9 @@
     <div class="menu-item" onclick="openPop('dep')">💰 Deposit <span>❯</span></div>
     <div class="menu-item" onclick="openPop('wit')">🏦 Withdrawal <span>❯</span></div>
     <div class="menu-item" onclick="toggleSub('ref-c')">👥 Referral <span>▼</span></div>
-    <div id="ref-c" class="history-content">
-        ID: <b id="ref-display-id">...</b><br>
-        <button onclick="copyRef()" style="margin-top:5px; background:var(--win-green); border:none; color:white; padding:5px; border-radius:5px; width:100%;">Copy Referral Link</button>
-    </div>
-    <div class="menu-item" onclick="logoutUser()" style="color:red">🚪 Logout <span>❯</span></div>
+    <div id="ref-c" class="history-content">Code: <b>AVIATOR100</b></div>
+    <div class="menu-item" onclick="toggleSub('trans-content')">📑 Transactions <span>▼</span></div>
+    <div id="trans-content" class="history-content" style="padding: 10px;">No History</div>
 </div>
 
 <div id="dep" class="modal-overlay">
@@ -208,7 +203,9 @@
     <div class="modal-content">
         <h3 style="color:var(--btn-orange)">WITHDRAWAL</h3>
         <input type="number" id="w-amt" class="modal-input" placeholder="Amount (₹)">
+        <input type="text" id="w-name" class="modal-input" placeholder="Account Holder Name">
         <input type="number" id="w-acc" class="modal-input" placeholder="Bank Account Number">
+        <input type="text" id="w-ifsc" class="modal-input" placeholder="IFSC Code">
         <button class="main-btn" style="background:var(--btn-orange)" onclick="submitWithdraw()">WITHDRAW NOW</button>
         <p onclick="closePop('wit')" style="color:red; margin-top:10px; cursor:pointer">Close</p>
     </div>
