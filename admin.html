@@ -1,114 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Aviator Pro</title>
-    <style>
-        body { background: #0a0e17; color: white; font-family: sans-serif; padding: 20px; }
-        h1 { color: #ff0055; text-align: center; }
-        .section { background: #161d2b; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #252f44; }
-        .item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333; font-size: 14px; }
-        button { background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
-        .reject { background: #d11348; margin-left: 5px; }
-        #auth-status { text-align: center; color: yellow; margin-bottom: 10px; }
-    </style>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc",
-            authDomain: "myaviatoregame.firebaseapp.com",
-            projectId: "myaviatoregame",
-            storageBucket: "myaviatoregame.firebasestorage.app",
-            messagingSenderId: "286687400349",
-            appId: "1:286687400349:web:e01e2cff439a3267de1f74"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth();
-        const db = getFirestore();
-
-        // ✅ IMPORTANT: Login Check Function
-        onAuthStateChanged(auth, (user) => {
-            if (user && user.email === "travelersstatus@gmail.com") {
-                document.getElementById('auth-status').innerText = "Admin Verified: " + user.email;
-                loadData();
+// ✅ Fixed Login/Logout Logic
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Check agar sahi admin email hai
+                if (user.email === "travelersstatus@gmail.com") {
+                    document.getElementById('auth-status').innerText = "Admin Verified: " + user.email;
+                    loadData(); // Data load karein
+                } else {
+                    // Agar koi galat user login hai toh use turant logout kar do
+                    alert("Access Denied! You are not the Admin.");
+                    await signOut(auth); 
+                    window.location.href = "index.html";
+                }
             } else {
-                document.getElementById('auth-status').innerText = "Access Denied! Please login as Admin on the main page.";
-                alert("Please login with travelersstatus@gmail.com on the main site first!");
-                window.location.href = "index.html"; // Redirect to login
+                // Agar koi bhi login nahi hai
+                document.getElementById('auth-status').innerText = "Please Login as Admin first.";
+                setTimeout(() => {
+                    window.location.href = "index.html"; 
+                }, 2000);
             }
         });
 
-        function loadData() {
-            // Load Deposits
-            onSnapshot(collection(db, "deposits"), (snapshot) => {
-                let html = "";
-                snapshot.forEach(docSnap => {
-                    const d = docSnap.data();
-                    html += `<div class="item">
-                        <span>${d.email} - ₹${d.amt} (UTR: ${d.utr})</span>
-                        <div>
-                            <button onclick="approveDep('${docSnap.id}', '${d.uid}', ${d.amt})">Approve</button>
-                            <button class="reject" onclick="deleteDocById('deposits', '${docSnap.id}')">Delete</button>
-                        </div>
-                    </div>`;
-                });
-                document.getElementById('dep-list').innerHTML = html || "No pending deposits";
-            });
-
-            // Load Users
-            onSnapshot(collection(db, "users"), (snapshot) => {
-                let html = "";
-                snapshot.forEach(docSnap => {
-                    const u = docSnap.data();
-                    html += `<div class="item">
-                        <span>${u.email} - Bal: ₹${u.balance}</span>
-                        <button onclick="addBonus('${docSnap.id}', ${u.balance})">+₹100 Bonus</button>
-                    </div>`;
-                });
-                document.getElementById('user-list').innerHTML = html || "No users found";
-            });
-        }
-
-        // Helper Functions
-        window.approveDep = async (id, uid, amt) => {
-            const userRef = doc(db, "users", uid);
-            const userSnap = await getDoc(userRef);
-            if(userSnap.exists()){
-                const newBal = (userSnap.data().balance || 0) + amt;
-                await updateDoc(userRef, { balance: newBal });
-                await deleteDoc(doc(db, "deposits", id));
-                alert("Deposit Approved!");
-            }
+        // Logout function jo aap button mein laga sakte hain
+        window.adminLogout = async () => {
+            await signOut(auth);
+            alert("Logged out successfully");
+            window.location.href = "index.html";
         };
-
-        window.addBonus = async (id, currentBal) => {
-            await updateDoc(doc(db, "users", id), { balance: currentBal + 100 });
-            alert("Bonus Added!");
-        };
-
-        window.deleteDocById = async (coll, id) => {
-            if(confirm("Are you sure?")) await deleteDoc(doc(db, coll, id));
-        };
-    </script>
-</head>
-<body>
-    <h1>ADMIN DASHBOARD</h1>
-    <div id="auth-status">Checking Authentication...</div>
-
-    <div class="section">
-        <h3>💰 PENDING DEPOSITS</h3>
-        <div id="dep-list">Loading...</div>
-    </div>
-
-    <div class="section">
-        <h3>👥 REGISTERED USERS</h3>
-        <div id="user-list">Loading...</div>
-    </div>
-</body>
-</html>
