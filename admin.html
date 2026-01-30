@@ -3,11 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aviator Admin - Control Center</title>
-    
+    <title>Admin Dashboard - Aviator Pro</title>
+    <style>
+        body { background: #0a0e17; color: white; font-family: sans-serif; padding: 20px; }
+        h1 { color: #ff0055; text-align: center; }
+        .section { background: #161d2b; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #252f44; }
+        .item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333; font-size: 14px; }
+        button { background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .reject { background: #d11348; margin-left: 5px; }
+        #auth-status { text-align: center; color: yellow; margin-bottom: 10px; }
+    </style>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, doc, updateDoc, deleteDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc",
@@ -19,122 +29,86 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
         const db = getFirestore();
 
-        window.accessAdmin = () => {
-            const pass = document.getElementById('admin-pass').value;
-            if(pass === "7648954487Dkd@#") {
-                document.getElementById('login-box').style.display = 'none';
-                document.getElementById('admin-content').style.display = 'block';
-                startRealtimeUpdates();
-            } else { alert("Wrong Password!"); }
-        };
+        // ✅ IMPORTANT: Login Check Function
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.email === "travelersstatus@gmail.com") {
+                document.getElementById('auth-status').innerText = "Admin Verified: " + user.email;
+                loadData();
+            } else {
+                document.getElementById('auth-status').innerText = "Access Denied! Please login as Admin on the main page.";
+                alert("Please login with travelersstatus@gmail.com on the main site first!");
+                window.location.href = "index.html"; // Redirect to login
+            }
+        });
 
-        function startRealtimeUpdates() {
+        function loadData() {
+            // Load Deposits
             onSnapshot(collection(db, "deposits"), (snapshot) => {
                 let html = "";
-                snapshot.forEach((dDoc) => {
-                    const data = dDoc.data();
-                    html += `<div class="card item-row" style="border-left: 4px solid #00d4ff">
-                        <div><b>Deposit: ₹${data.amt}</b><br><small>UTR: ${data.utr}</small><br><small>User: ${data.email}</small></div>
+                snapshot.forEach(docSnap => {
+                    const d = docSnap.data();
+                    html += `<div class="item">
+                        <span>${d.email} - ₹${d.amt} (UTR: ${d.utr})</span>
                         <div>
-                            <button class="btn btn-save" onclick="approveDeposit('${dDoc.id}', '${data.uid}', ${data.amt})">Approve</button>
-                            <button class="btn btn-reject" onclick="deleteReq('deposits', '${dDoc.id}')">Reject</button>
+                            <button onclick="approveDep('${docSnap.id}', '${d.uid}', ${d.amt})">Approve</button>
+                            <button class="reject" onclick="deleteDocById('deposits', '${docSnap.id}')">Delete</button>
                         </div>
                     </div>`;
                 });
-                document.getElementById('deposit-list').innerHTML = html || "No pending deposits.";
+                document.getElementById('dep-list').innerHTML = html || "No pending deposits";
             });
 
-            onSnapshot(collection(db, "withdrawals"), (snapshot) => {
-                let html = "";
-                snapshot.forEach((wDoc) => {
-                    const data = wDoc.data();
-                    html += `<div class="card item-row" style="border-left: 4px solid #d97706">
-                        <div><b>Withdraw: ₹${data.amt}</b><br><small>A/C: ${data.acc} | IFSC: ${data.ifsc}</small><br><small>Name: ${data.name} (${data.email})</small></div>
-                        <div>
-                            <button class="btn btn-save" style="background:#d97706" onclick="deleteReq('withdrawals', '${wDoc.id}', 'Paid Successfully')">Mark Paid</button>
-                            <button class="btn btn-reject" onclick="deleteReq('withdrawals', '${wDoc.id}', 'Rejected')">Reject</button>
-                        </div>
-                    </div>`;
-                });
-                document.getElementById('withdraw-list').innerHTML = html || "No pending withdrawals.";
-            });
-
+            // Load Users
             onSnapshot(collection(db, "users"), (snapshot) => {
                 let html = "";
-                snapshot.forEach((userDoc) => {
-                    const data = userDoc.data();
-                    html += `<div class="card item-row">
-                        <div><b>${data.email}</b><br><span style="color:#28a745">Bal: ₹${(data.balance || 0).toFixed(2)}</span></div>
-                        <div>
-                            <input type="number" id="amt-${userDoc.id}" placeholder="Set Bal" style="width:70px">
-                            <button class="btn btn-save" onclick="updateBalance('${userDoc.id}')">Set</button>
-                        </div>
+                snapshot.forEach(docSnap => {
+                    const u = docSnap.data();
+                    html += `<div class="item">
+                        <span>${u.email} - Bal: ₹${u.balance}</span>
+                        <button onclick="addBonus('${docSnap.id}', ${u.balance})">+₹100 Bonus</button>
                     </div>`;
                 });
-                document.getElementById('user-list').innerHTML = html || "No users.";
+                document.getElementById('user-list').innerHTML = html || "No users found";
             });
         }
 
-        window.approveDeposit = async (docId, uid, amount) => {
-            try {
-                const userRef = doc(db, "users", uid);
-                const userSnap = await getDoc(userRef);
-                if (userSnap.exists()) {
-                    const newBal = (userSnap.data().balance || 0) + parseFloat(amount);
-                    await updateDoc(userRef, { balance: newBal });
-                    await deleteDoc(doc(db, "deposits", docId));
-                    alert("Deposit Approved!");
-                }
-            } catch (e) { alert(e.message); }
-        };
-
-        window.updateBalance = async (uid) => {
-            const val = parseFloat(document.getElementById('amt-'+uid).value);
-            if(isNaN(val)) return alert("Enter amount");
-            await updateDoc(doc(db, "users", uid), { balance: val });
-            alert("User balance updated!");
-        };
-
-        window.deleteReq = async (col, id, msg = "Action Done") => {
-            if(confirm("Confirm this action?")) {
-                await deleteDoc(doc(db, col, id));
-                alert(msg);
+        // Helper Functions
+        window.approveDep = async (id, uid, amt) => {
+            const userRef = doc(db, "users", uid);
+            const userSnap = await getDoc(userRef);
+            if(userSnap.exists()){
+                const newBal = (userSnap.data().balance || 0) + amt;
+                await updateDoc(userRef, { balance: newBal });
+                await deleteDoc(doc(db, "deposits", id));
+                alert("Deposit Approved!");
             }
         };
+
+        window.addBonus = async (id, currentBal) => {
+            await updateDoc(doc(db, "users", id), { balance: currentBal + 100 });
+            alert("Bonus Added!");
+        };
+
+        window.deleteDocById = async (coll, id) => {
+            if(confirm("Are you sure?")) await deleteDoc(doc(db, coll, id));
+        };
     </script>
-    <style>
-        :root { --bg: #0a0e17; --card-bg: #161d2b; --primary: #ff0055; --green: #28a745; --blue: #00d4ff; }
-        body { background: var(--bg); color: white; font-family: sans-serif; padding: 20px; margin: 0; }
-        .container { max-width: 900px; margin: auto; }
-        .card { background: var(--card-bg); padding: 15px; border-radius: 10px; border: 1px solid #252f44; margin-bottom: 10px; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-        h2 { border-bottom: 2px solid #252f44; padding-bottom: 10px; font-size: 18px; margin-top: 30px; color: var(--blue); }
-        input { background: #000; border: 1px solid #333; color: white; padding: 8px; border-radius: 5px; outline: none; }
-        .btn { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-save { background: var(--green); color: white; }
-        .btn-reject { background: #dc3545; color: white; }
-        #login-box { text-align: center; margin-top: 100px; max-width: 400px; margin-inline: auto; }
-        h1 { color: var(--primary); text-align: center; }
-    </style>
 </head>
 <body>
-<div class="container">
-    <div id="login-box" class="card">
-        <h1>ADMIN ACCESS</h1>
-        <input type="password" id="admin-pass" placeholder="Enter Password" style="width:80%"><br><br>
-        <button class="btn btn-save" style="width:85%" onclick="accessAdmin()">LOGIN</button>
+    <h1>ADMIN DASHBOARD</h1>
+    <div id="auth-status">Checking Authentication...</div>
+
+    <div class="section">
+        <h3>💰 PENDING DEPOSITS</h3>
+        <div id="dep-list">Loading...</div>
     </div>
-    <div id="admin-content" style="display:none;">
-        <h1>ADMIN DASHBOARD</h1>
-        <h2>💰 PENDING DEPOSITS</h2>
-        <div id="deposit-list">Loading...</div>
-        <h2>🏦 WITHDRAWAL REQUESTS</h2>
-        <div id="withdraw-list">Loading...</div>
-        <h2>👥 REGISTERED USERS</h2>
+
+    <div class="section">
+        <h3>👥 REGISTERED USERS</h3>
         <div id="user-list">Loading...</div>
     </div>
-</div>
 </body>
 </html>
