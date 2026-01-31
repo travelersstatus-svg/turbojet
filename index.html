@@ -10,7 +10,6 @@
       import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
       import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-      // --- APKA CONFIG ---
       const firebaseConfig = {
         apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc",
         authDomain: "myaviatoregame.firebaseapp.com",
@@ -25,106 +24,70 @@
       const db = getFirestore();
 
       window.isLoginMode = true;
-      window.wallet = 0; // Initial
+      window.wallet = 0;
 
-      // --- AUTH LOGIC ---
-      window.toggleAuthMode = () => {
-        window.isLoginMode = !window.isLoginMode;
-        document.getElementById('auth-title').innerText = window.isLoginMode ? "LOGIN" : "REGISTER";
-        document.getElementById('auth-switch').innerText = window.isLoginMode ? "Don't have an account? Register" : "Already have an account? Login";
-      };
-
+      // --- AUTH ---
       window.handleAuth = async () => {
         const email = document.getElementById('auth-email').value;
         const pass = document.getElementById('auth-pass').value;
-        if(!email || pass.length < 6) return alert("Enter valid Email & Password (min 6 chars)");
-
         try {
           if (window.isLoginMode) {
             const res = await signInWithEmailAndPassword(auth, email, pass);
-            if (res.user.emailVerified) {
+            if (res.user.emailVerified) { 
                 document.getElementById('auth-screen').style.display = 'none';
-                startBalanceListener(res.user.uid);
-            } else {
-                alert("Please verify your email! Check your inbox.");
-                await signOut(auth);
-            }
+                startSync(res.user.uid);
+            } else { alert("Verify Email!"); await signOut(auth); }
           } else {
             const res = await createUserWithEmailAndPassword(auth, email, pass);
             await sendEmailVerification(res.user);
-            // Create user doc in DB
             await setDoc(doc(db, "users", res.user.uid), { balance: 0, email: email });
-            alert("Verification link sent! Verify and then Login.");
-            window.toggleAuthMode();
-            await signOut(auth);
+            alert("Verify link sent!"); window.toggleAuthMode();
           }
         } catch (err) { alert(err.message); }
       };
 
-      // --- REAL-TIME SYNC ---
-      function startBalanceListener(uid) {
-        onSnapshot(doc(db, "users", uid), (docSnap) => {
-          if (docSnap.exists()) {
-            window.wallet = docSnap.data().balance;
-            document.getElementById('bal-text').innerText = window.wallet.toFixed(2);
+      function startSync(uid) {
+        onSnapshot(doc(db, "users", uid), (d) => {
+          if(d.exists()) { 
+            window.wallet = d.data().balance; 
+            window.updateUI(); 
           }
         });
       }
 
-      // --- GAME ACTIONS ---
       window.handleBet = async (p) => {
         const amt = parseFloat(document.getElementById('amt-' + p).value);
-        if(amt > window.wallet || amt <= 0) return alert("Invalid Balance/Amount");
-
-        try {
-          // Subtract locally for speed
-          const newBal = window.wallet - amt;
-          // Update in Firebase for security
-          await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: newBal });
-          alert("Bet Placed: ₹" + amt);
-        } catch (e) {
-          alert("Error placing bet. Try again.");
-        }
+        if(amt > window.wallet || amt <= 0) return alert("Low Balance");
+        const newBal = window.wallet - amt;
+        await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: newBal });
       };
 
       window.submitDeposit = async () => {
           const amt = document.getElementById('d-amt').value;
           const utr = document.getElementById('d-utr').value;
-          if(!amt || utr.length < 12) return alert("Enter Amount & 12-digit UTR");
-          await addDoc(collection(db, "deposits"), { 
-              uid: auth.currentUser.uid, 
-              email: auth.currentUser.email, 
-              amt: parseFloat(amt), 
-              utr: utr, 
-              time: new Date(),
-              status: "pending" 
-          });
-          alert("Deposit request sent to Admin!");
-          document.getElementById('dep-modal').style.display = 'none';
+          await addDoc(collection(db, "deposits"), { uid: auth.currentUser.uid, email: auth.currentUser.email, amt: parseFloat(amt), utr: utr, status: "pending", time: new Date() });
+          alert("Sent!"); document.getElementById('dep-modal').style.display='none';
       };
 
-      onAuthStateChanged(auth, (user) => {
-        if (user && user.emailVerified) {
-            document.getElementById('auth-screen').style.display = 'none';
-            startBalanceListener(user.uid);
-        }
-      });
+      onAuthStateChanged(auth, (u) => { if(u && u.emailVerified) { document.getElementById('auth-screen').style.display='none'; startSync(u.uid); }});
     </script>
 
     <style>
-        :root { --bg-dark: #0a0e17; --panel-bg: #161d2b; --win-green: #28a745; --accent-red: #d11348; --btn-orange: #d97706; --text-gray: #9ea0a3; }
-        body { background: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; padding: 0; overflow: hidden; }
-        #auth-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); z-index: 10000; display: flex; justify-content: center; align-items: center; }
-        .auth-card { background: var(--panel-bg); padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; border: 1px solid #252f44; }
-        .top-nav { background: #0f1521; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
-        .balance-box { background: #000; border: 2px solid var(--win-green); padding: 6px 18px; border-radius: 20px; color: var(--win-green); font-weight: bold; cursor: pointer; }
-        .display-area { position: relative; height: 250px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 70%); margin: 10px; border-radius: 15px; overflow: hidden; border: 1px solid #252f44; display: flex; align-items: center; justify-content: center; }
-        #multiplier-text { font-size: 3.5rem; font-weight: 900; color: white; text-shadow: 0 0 20px rgba(255,255,255,0.5); }
-        .bet-container { display: flex; gap: 8px; padding: 10px; }
-        .bet-card { background: var(--panel-bg); padding: 15px; border-radius: 15px; width: 50%; border: 1px solid #252f44; }
-        .main-btn { width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--win-green); color: white; font-weight: bold; cursor: pointer; }
-        .modal-input { width: 90%; padding: 10px; margin: 10px 0; background: #000; border: 1px solid #333; color: #fff; border-radius: 5px; }
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9000; justify-content: center; align-items: center; }
+        :root { --bg-dark: #0a0e17; --panel-bg: #161d2b; --win-green: #28a745; --accent-red: #d11348; }
+        body { background: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; overflow-x: hidden; }
+        #auth-screen { position: fixed; inset: 0; background: var(--bg-dark); z-index: 10000; display: flex; justify-content: center; align-items: center; }
+        .auth-card { background: var(--panel-bg); padding: 25px; border-radius: 15px; width: 85%; max-width: 350px; text-align: center; }
+        .top-nav { background: #0f1521; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .balance-box { background: #000; border: 2px solid var(--win-green); padding: 5px 15px; border-radius: 20px; color: var(--win-green); cursor: pointer; }
+        .display-area { height: 200px; background: radial-gradient(circle at bottom left, #1a2a44, #05080f); margin: 10px; border-radius: 15px; display: flex; align-items: center; justify-content: center; position: relative; }
+        #multiplier-text { font-size: 3rem; font-weight: 900; }
+        .bet-container { display: flex; gap: 10px; padding: 10px; }
+        .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 12px; width: 50%; border: 1px solid #252f44; }
+        .main-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--win-green); color: white; font-weight: bold; }
+        .modal-input { width: 90%; padding: 8px; margin: 8px 0; background: #000; border: 1px solid #333; color: #fff; }
+        /* Fake Players List Style */
+        .fake-list { height: 150px; overflow-y: hidden; margin: 10px; background: #0f1521; border-radius: 10px; font-size: 11px; padding: 5px; }
+        .fake-row { display: flex; justify-content: space-between; padding: 4px; border-bottom: 1px solid #1a2233; color: #9ea0a3; }
     </style>
 </head>
 <body>
@@ -132,15 +95,15 @@
 <div id="auth-screen">
     <div class="auth-card">
         <h2 id="auth-title" style="color:#ff0055">LOGIN</h2>
-        <input type="email" id="auth-email" class="modal-input" placeholder="Email Address">
+        <input type="email" id="auth-email" class="modal-input" placeholder="Email">
         <input type="password" id="auth-pass" class="modal-input" placeholder="Password">
         <button class="main-btn" onclick="handleAuth()">PROCEED</button>
-        <p id="auth-switch" onclick="toggleAuthMode()" style="cursor:pointer; font-size:12px; margin-top:10px; color: var(--text-gray);">Don't have an account? Register</p>
+        <p onclick="window.isLoginMode=!window.isLoginMode; document.getElementById('auth-title').innerText=window.isLoginMode?'LOGIN':'REGISTER'" style="cursor:pointer; font-size:12px; margin-top:10px;">Switch Login/Register</p>
     </div>
 </div>
 
 <div class="top-nav">
-    <div style="color:#ff0055; font-weight:900; font-size:20px;">AVIATOR</div>
+    <div style="color:#ff0055; font-weight:900; font-size:18px;">AVIATOR</div>
     <div class="balance-box" onclick="document.getElementById('dep-modal').style.display='flex'">₹<span id="bal-text">0.00</span></div>
 </div>
 
@@ -149,26 +112,41 @@
 </div>
 
 <div class="bet-container">
-    <div class="bet-card">
-        <input type="number" id="amt-1" value="100" class="modal-input" style="width: 80%;">
-        <button id="btn-1" class="main-btn" onclick="handleBet(1)">BET</button>
-    </div>
-    <div class="bet-card">
-        <input type="number" id="amt-2" value="100" class="modal-input" style="width: 80%;">
-        <button id="btn-2" class="main-btn" onclick="handleBet(2)">BET</button>
+    <div class="bet-card"><input type="number" id="amt-1" value="100" class="modal-input"><button class="main-btn" onclick="handleBet(1)">BET</button></div>
+    <div class="bet-card"><input type="number" id="amt-2" value="100" class="modal-input"><button class="main-btn" onclick="handleBet(2)">BET</button></div>
+</div>
+
+<div style="padding: 0 10px; font-size: 12px; color: #555;">LIVE BETS</div>
+<div id="fake-players" class="fake-list"></div>
+
+<div id="dep-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9000; justify-content:center; align-items:center;">
+    <div class="auth-card">
+        <h3>Deposit</h3>
+        <input type="number" id="d-amt" class="modal-input" placeholder="Amount">
+        <input type="text" id="d-utr" class="modal-input" placeholder="UTR">
+        <button class="main-btn" onclick="submitDeposit()">Submit</button>
+        <button onclick="document.getElementById('dep-modal').style.display='none'">Close</button>
     </div>
 </div>
 
-<div id="dep-modal" class="modal-overlay">
-    <div class="auth-card">
-        <h3>Deposit Money</h3>
-        <p style="font-size: 12px; color: #999;">Pay to UPI: <b>example@upi</b></p>
-        <input type="number" id="d-amt" class="modal-input" placeholder="Amount">
-        <input type="text" id="d-utr" class="modal-input" placeholder="12 Digit UTR Number">
-        <button class="main-btn" onclick="submitDeposit()">Submit Request</button>
-        <button class="main-btn" style="background:#444; margin-top:5px;" onclick="document.getElementById('dep-modal').style.display='none'">Close</button>
-    </div>
-</div>
+<script>
+    // --- UI Update ---
+    window.updateUI = () => {
+        document.getElementById('bal-text').innerText = window.wallet.toFixed(2);
+    };
+
+    // --- Fake Players Logic (Bina Game Badle) ---
+    const names = ["Rahul", "Amit", "Sonia", "Vijay", "Priya", "Arjun", "Karan", "Deepak"];
+    function addFakeBet() {
+        const list = document.getElementById('fake-players');
+        const name = names[Math.floor(Math.random() * names.length)] + "****";
+        const amt = (Math.random() * 500 + 100).toFixed(0);
+        const row = `<div class="fake-row"><span>${name}</span><span>₹${amt}</span><span style="color:#28a745">Placed</span></div>`;
+        list.insertAdjacentHTML('afterbegin', row);
+        if(list.children.length > 10) list.lastElementChild.remove();
+    }
+    setInterval(addFakeBet, 3000); // Har 3 second mein naya fake player
+</script>
 
 </body>
 </html>
