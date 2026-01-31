@@ -25,83 +25,58 @@
 
       window.wallet = 0;
       let multiplier = 1.00;
-      let gameInterval;
+      let resultsHistory = [];
       let isFlying = false;
-      let currentBet = { active: false, amount: 0 };
 
-      // --- AUTH & SYNC ---
-      window.handleAuth = async () => {
-        const email = document.getElementById('auth-email').value;
-        const pass = document.getElementById('auth-pass').value;
-        try {
-          if (window.isLoginMode) {
-            const res = await signInWithEmailAndPassword(auth, email, pass);
-            if (!res.user.emailVerified) { alert("Verify Email!"); await signOut(auth); }
-          } else {
-            const uid_short = "AV" + Math.floor(1000 + Math.random() * 9999);
-            const res = await createUserWithEmailAndPassword(auth, email, pass);
-            await sendEmailVerification(res.user);
-            await setDoc(doc(db, "users", res.user.uid), { balance: 0, email, gameId: uid_short, name: "Player", avatar: "1" });
-            alert("Verify Link Sent! ID: " + uid_short);
-            window.isLoginMode = true;
-          }
-        } catch (err) { alert(err.message); }
-      };
-
+      // --- SYNC & AUTH ---
       function startSync(uid) {
         onSnapshot(doc(db, "users", uid), (d) => {
           if(d.exists()) {
             window.wallet = d.data().balance;
             document.getElementById('bal-text').innerText = window.wallet.toFixed(2);
-            document.getElementById('profile-name').innerText = d.data().name;
-            document.getElementById('profile-id').innerText = "ID: " + d.data().gameId;
-            document.getElementById('user-avatar').src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${d.data().avatar}`;
           }
         });
         if(!isFlying) startGameLoop();
       }
 
-      // --- GAME LOGIC ---
       function startGameLoop() {
         isFlying = true;
         multiplier = 1.00;
-        let crashPoint = (Math.random() * 3 + 1.1).toFixed(2); 
-
-        gameInterval = setInterval(() => {
+        let crashPoint = (Math.random() * 4 + 1.1).toFixed(2);
+        let gameInt = setInterval(() => {
           multiplier += 0.01;
           document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
-          document.getElementById('multiplier-text').style.color = "white";
-
           if(multiplier >= crashPoint) {
-            clearInterval(gameInterval);
+            clearInterval(gameInt);
             document.getElementById('multiplier-text').innerText = "FLEW AWAY!";
-            document.getElementById('multiplier-text').style.color = "#d11348";
+            resultsHistory.unshift(multiplier.toFixed(2));
+            if(resultsHistory.length > 30) resultsHistory.pop();
+            updateHistoryUI();
             isFlying = false;
-            currentBet.active = false;
-            setTimeout(startGameLoop, 4000); 
+            setTimeout(startGameLoop, 4000);
           }
-        }, 80);
+        }, 70);
       }
 
-      window.placeBet = async (p) => {
-        const amt = parseFloat(document.getElementById('amt-' + p).value);
-        if(amt > window.wallet || amt <= 0) return alert("Low Balance!");
-        
-        if(!isFlying || multiplier > 1.10) return alert("Wait for next round!");
+      function updateHistoryUI() {
+          const list = document.getElementById('hist-dropdown');
+          list.innerHTML = resultsHistory.map(r => `<span>${r}x</span>`).join('');
+      }
 
-        const newBal = window.wallet - amt;
-        await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: newBal });
-        currentBet = { active: true, amount: amt };
-        alert("Bet Placed!");
-      };
-
-      window.cashOut = async () => {
-        if(!currentBet.active || !isFlying) return;
-        const winAmt = currentBet.amount * multiplier;
-        const newBal = window.wallet + winAmt;
-        await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: newBal });
-        currentBet.active = false;
-        alert("Win: ₹" + winAmt.toFixed(2));
+      window.handleAuth = async () => {
+        const email = document.getElementById('auth-email').value;
+        const pass = document.getElementById('auth-pass').value;
+        try {
+          if (window.isLoginMode) {
+             const res = await signInWithEmailAndPassword(auth, email, pass);
+             if (!res.user.emailVerified) { alert("Verify Email!"); await signOut(auth); }
+          } else {
+             const res = await createUserWithEmailAndPassword(auth, email, pass);
+             await sendEmailVerification(res.user);
+             await setDoc(doc(db, "users", res.user.uid), { balance: 0, email, gameId: "AV"+Math.floor(1000+Math.random()*9000), name: "Player", avatar: "1" });
+             alert("Verify link sent!");
+          }
+        } catch (e) { alert(e.message); }
       };
 
       onAuthStateChanged(auth, (u) => { if(u && u.emailVerified) { document.getElementById('auth-screen').style.display='none'; startSync(u.uid); }});
@@ -109,32 +84,52 @@
 
     <style>
         :root { --bg-dark: #0a0e17; --panel-bg: #161d2b; --win-green: #28a745; }
-        body { background: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; overflow: hidden; }
-        .top-nav { background: #0f1521; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
-        #side-menu { position: fixed; top: 0; left: -280px; width: 260px; height: 100%; background: #161d2b; z-index: 9999; transition: 0.3s; padding: 20px; border-right: 2px solid #ff0055; }
-        .display-area { height: 220px; background: radial-gradient(circle at bottom left, #1a2a44, #05080f); margin: 10px; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 12px; width: 48%; border: 1px solid #252f44; }
-        .main-btn { width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--win-green); color: white; font-weight: bold; cursor: pointer; }
+        body { background: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+        
+        /* Layout Fix: Removed Left Red Line */
+        .top-nav { background: #0f1521; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
+        .nav-right { display: flex; align-items: center; gap: 10px; }
+        
+        .balance-container { background: #000; border: 1px solid var(--win-green); padding: 4px 12px; border-radius: 20px; color: var(--win-green); font-weight: bold; display: flex; align-items: center; gap: 5px; }
+        
+        /* Dropdown Results */
+        .history-bar { background: #111827; padding: 5px 15px; font-size: 12px; display: flex; justify-content: space-between; cursor: pointer; border-bottom: 1px solid #222; }
+        #hist-dropdown { display: none; background: #0f1521; padding: 10px; grid-template-columns: repeat(5, 1fr); gap: 5px; text-align: center; }
+        #hist-dropdown span { background: #161d2b; padding: 2px; border-radius: 10px; color: #9d50ff; border: 1px solid #252f44; font-size: 10px; }
+
+        /* Game Area */
+        .display-area { height: 210px; background: radial-gradient(circle at bottom, #1a2a44, #05080f); margin: 10px; border-radius: 15px; display: flex; align-items: center; justify-content: center; position: relative; }
+        #multiplier-text { font-size: 3.5rem; font-weight: 900; }
+
+        /* Fake User Table */
+        .live-bets { margin: 10px; background: var(--panel-bg); border-radius: 10px; font-size: 11px; padding: 10px; }
+        .bet-table { width: 100%; border-collapse: collapse; }
+        .bet-table th { color: #9ea0a3; text-align: left; padding-bottom: 8px; font-weight: normal; }
+        .bet-row { border-bottom: 1px solid #1a2233; color: #fff; }
+        .bet-row td { padding: 6px 0; }
+
+        /* Bet Cards */
+        .bet-container { display: flex; gap: 8px; padding: 10px; }
+        .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 12px; width: 50%; border: 1px solid #252f44; }
+        .main-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--win-green); color: white; font-weight: bold; cursor: pointer; }
+        .q-btn { background: #000; border: 1px solid #333; color: #fff; font-size: 10px; padding: 5px; border-radius: 5px; margin: 2px; cursor: pointer; }
+        
         #auth-screen { position: fixed; inset: 0; background: var(--bg-dark); z-index: 10000; display: flex; justify-content: center; align-items: center; }
-        .q-btn { background: #000; border: 1px solid #333; color: #fff; font-size: 10px; padding: 5px; border-radius: 5px; margin: 2px; }
+        #side-menu { position: fixed; top: 0; right: -280px; width: 250px; height: 100%; background: #161d2b; z-index: 9999; transition: 0.3s; padding: 20px; border-left: 2px solid #ff0055; }
     </style>
 </head>
 <body>
 
 <div id="side-menu">
-    <div style="text-align: center; margin-bottom: 20px;">
-        <img id="user-avatar" src="" style="width:60px; border-radius:50%; border:2px solid var(--win-green);">
-        <div id="profile-name" style="font-weight: bold; margin-top: 5px;">Player</div>
-        <div id="profile-id" style="font-size: 10px; color: #9ea0a3;">ID: 0000</div>
-    </div>
-    <div onclick="document.getElementById('dep-modal').style.display='flex'">💰 Deposit</div>
-    <div style="margin-top:20px;">🏦 Withdrawal</div>
-    <div style="margin-top:20px; color:red;" onclick="location.reload()">Logout</div>
+    <h3 style="color: #ff0055;">HOME MENU</h3>
+    <div style="margin-top:20px; cursor:pointer;" onclick="location.reload()">🚪 Logout</div>
+    <div style="margin-top:20px;">📜 Bet History</div>
+    <div style="margin-top:20px;">🔗 Referral Link</div>
 </div>
 
 <div id="auth-screen">
     <div style="background: #161d2b; padding: 30px; border-radius: 15px; text-align: center; width: 80%;">
-        <h2 id="auth-title" style="color:#ff0055">LOGIN</h2>
+        <h2 id="auth-title">LOGIN</h2>
         <input type="email" id="auth-email" style="width:90%; padding:10px; margin-bottom:10px;" placeholder="Email">
         <input type="password" id="auth-pass" style="width:90%; padding:10px; margin-bottom:10px;" placeholder="Password">
         <button class="main-btn" onclick="handleAuth()">PROCEED</button>
@@ -143,46 +138,73 @@
 </div>
 
 <div class="top-nav">
-    <div onclick="const m=document.getElementById('side-menu'); m.style.left=m.style.left==='0px'?'-280px':'0px'" style="font-size: 24px;">☰</div>
-    <div style="color:#ff0055; font-weight:900; font-size:20px;">AVIATOR</div>
-    <div style="background:#000; border:1px solid var(--win-green); padding:5px 10px; border-radius:20px;">₹<span id="bal-text">0.00</span></div>
+    <div style="color:#ff0055; font-weight:900; font-size:18px;">AVIATOR</div>
+    <div class="nav-right">
+        <div class="balance-container">
+            ₹<span id="bal-text">0.00</span>
+            <div style="background:var(--win-green); color:#fff; border-radius:50%; width:18px; height:18px; text-align:center; line-height:18px; cursor:pointer;">+</div>
+        </div>
+        <div onclick="const m=document.getElementById('side-menu'); m.style.right=m.style.right==='0px'?'-280px':'0px'" style="font-size: 22px; cursor: pointer;">☰</div>
+    </div>
 </div>
+
+<div class="history-bar" onclick="const d=document.getElementById('hist-dropdown'); d.style.display=d.style.display==='grid'?'none':'grid'">
+    <span>Recent Results</span>
+    <span>▼</span>
+</div>
+<div id="hist-dropdown"></div>
 
 <div class="display-area">
-    <h1 id="multiplier-text" style="font-size: 3.5rem; margin:0;">1.00x</h1>
-    <button onclick="cashOut()" style="background:#d97706; border:none; color:white; padding:5px 20px; border-radius:5px; margin-top:10px; font-weight:bold;">CASH OUT</button>
+    <h1 id="multiplier-text">1.00x</h1>
 </div>
 
-<div style="display: flex; gap: 10px; padding: 10px; justify-content: center;">
+<div class="bet-container">
     <div class="bet-card">
-        <input type="number" id="amt-1" value="100" style="width: 80%; background: #000; color: white; border: none; padding: 5px;">
+        <div style="font-size:9px; color:gray; margin-bottom:4px;">Auto Play <input type="checkbox"> Auto Cash <input type="checkbox"></div>
+        <input type="number" id="amt-1" value="100" style="width: 80%; background:#000; color:#fff; border:none; padding:4px;">
         <div>
             <button class="q-btn" onclick="document.getElementById('amt-1').value=10">10</button>
             <button class="q-btn" onclick="document.getElementById('amt-1').value=100">100</button>
             <button class="q-btn" onclick="document.getElementById('amt-1').value=500">500</button>
+            <button class="q-btn" onclick="document.getElementById('amt-1').value=1000">1000</button>
         </div>
-        <button class="main-btn" onclick="placeBet(1)" style="margin-top: 8px;">BET</button>
+        <button class="main-btn" style="margin-top:5px;">BET</button>
     </div>
     <div class="bet-card">
-        <input type="number" id="amt-2" value="100" style="width: 80%; background: #000; color: white; border: none; padding: 5px;">
+        <div style="font-size:9px; color:gray; margin-bottom:4px;">Auto Play <input type="checkbox"> Auto Cash <input type="checkbox"></div>
+        <input type="number" id="amt-2" value="100" style="width: 80%; background:#000; color:#fff; border:none; padding:4px;">
         <div>
             <button class="q-btn" onclick="document.getElementById('amt-2').value=10">10</button>
             <button class="q-btn" onclick="document.getElementById('amt-2').value=100">100</button>
             <button class="q-btn" onclick="document.getElementById('amt-2').value=500">500</button>
+            <button class="q-btn" onclick="document.getElementById('amt-2').value=1000">1000</button>
         </div>
-        <button class="main-btn" onclick="placeBet(2)" style="margin-top: 8px; background: #1267ff;">BET</button>
+        <button class="main-btn" style="margin-top:5px; background:#1267ff;">BET</button>
     </div>
 </div>
 
-<div id="dep-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10001; justify-content:center; align-items:center;">
-    <div style="background: #161d2b; padding: 25px; border-radius: 15px; width: 80%; text-align: center;">
-        <h3>Deposit Request</h3>
-        <input type="number" id="d-amt" style="width: 90%; padding: 10px; margin: 10px 0;" placeholder="Amount">
-        <input type="text" id="d-utr" style="width: 90%; padding: 10px; margin: 10px 0;" placeholder="12 Digit UTR">
-        <button class="main-btn" onclick="alert('Request Sent!')">Submit</button>
-        <button onclick="document.getElementById('dep-modal').style.display='none'" style="margin-top:10px; background:none; border:none; color:gray;">Close</button>
-    </div>
+<div class="live-bets">
+    <table class="bet-table">
+        <thead>
+            <tr><th>User</th><th>Bet</th><th>Cash Out</th></tr>
+        </thead>
+        <tbody id="fake-bet-list"></tbody>
+    </table>
 </div>
+
+<script>
+    const fNames = ["Rahul", "Sonia", "Vijay", "Ankit", "Priya", "Arjun", "Karan"];
+    function addFakeBet() {
+        const list = document.getElementById('fake-bet-list');
+        const name = fNames[Math.floor(Math.random() * fNames.length)] + "****";
+        const amt = (Math.random() * 500 + 10).toFixed(0);
+        const cashout = (Math.random() * 2 + 1.1).toFixed(2);
+        const row = `<tr class="bet-row"><td>${name}</td><td>₹${amt}</td><td style="color:#28a745">${cashout}x</td></tr>`;
+        list.insertAdjacentHTML('afterbegin', row);
+        if(list.children.length > 8) list.lastElementChild.remove();
+    }
+    setInterval(addFakeBet, 2500);
+</script>
 
 </body>
 </html>
