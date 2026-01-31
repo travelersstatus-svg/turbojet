@@ -1,14 +1,14 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviator Pro Max</title>
+    <title>Aviator Pro Max - Final Fix</title>
     
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-      import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-      import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+      import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+      import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc",
@@ -23,167 +23,181 @@
       const auth = getAuth();
       const db = getFirestore();
 
+      window.userData = {};
       let multiplier = 1.00;
       let isFlying = false;
       let resultsHistory = [];
+
+      // --- LOGOUT FUNCTION (FIXED) ---
+      window.handleLogout = async () => {
+        try {
+          await signOut(auth);
+          sessionStorage.clear(); // Clear session
+          localStorage.clear();   // Clear saved data
+          location.reload();      // Force refresh to login screen
+        } catch (err) { alert("Logout Failed: " + err.message); }
+      };
 
       // --- GAME ENGINE ---
       function runGame() {
         if(isFlying) return;
         isFlying = true;
         multiplier = 1.00;
-        let crashAt = (Math.random() * 5 + 1.1).toFixed(2);
+        let crashAt = (Math.random() * 4 + 1.2).toFixed(2);
         
         let timer = setInterval(() => {
           multiplier += 0.01;
           const display = document.getElementById('multiplier-text');
           display.innerText = multiplier.toFixed(2) + "x";
-          display.style.color = "white";
-
           if(multiplier >= crashAt) {
             clearInterval(timer);
             display.innerText = "FLEW AWAY!";
-            display.style.color = "#ff0055";
             resultsHistory.unshift(multiplier.toFixed(2));
             if(resultsHistory.length > 30) resultsHistory.pop();
-            updateHistory();
+            updateHistoryUI();
             isFlying = false;
-            setTimeout(runGame, 3000);
+            setTimeout(runGame, 4000);
           }
         }, 80);
       }
 
-      function updateHistory() {
-        const h = document.getElementById('hist-list');
-        h.innerHTML = resultsHistory.map(r => `<span>${r}x</span>`).join('');
+      function updateHistoryUI() {
+        document.getElementById('hist-list').innerHTML = resultsHistory.map(r => `<span>${r}x</span>`).join('');
       }
+
+      // --- REFERRAL LINK ---
+      window.copyRefLink = () => {
+        const link = window.location.origin + "?ref=" + window.userData.gameId;
+        navigator.clipboard.writeText(link);
+        alert("Referral Link Copied: " + link);
+      };
 
       onAuthStateChanged(auth, (user) => {
         if(user) {
           document.getElementById('auth-screen').style.display = 'none';
           onSnapshot(doc(db, "users", user.uid), (d) => {
-            if(d.exists()) document.getElementById('bal-text').innerText = d.data().balance.toFixed(2);
+            if(d.exists()) {
+                window.userData = d.data();
+                document.getElementById('bal-text').innerText = d.data().balance.toFixed(2);
+                document.getElementById('u-id-display').innerText = "ID: " + d.data().gameId;
+            }
           });
-          runGame();
+          if(!isFlying) runGame();
+        } else {
+          document.getElementById('auth-screen').style.display = 'flex';
         }
       });
     </script>
 
     <style>
-        * { box-sizing: border-box; }
-        body { background: #0a0e17; color: white; font-family: sans-serif; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #0a0e17; color: white; font-family: sans-serif; overflow-x: hidden; }
         
-        /* Nav & Menu Fix */
         .header { background: #0f1521; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
-        .nav-right { display: flex; align-items: center; gap: 12px; }
-        .wallet { background: #000; border: 1px solid #28a745; padding: 4px 10px; border-radius: 20px; color: #28a745; font-weight: bold; }
+        .wallet-box { background: #000; border: 1px solid #28a745; padding: 4px 12px; border-radius: 20px; color: #28a745; font-weight: bold; display: flex; align-items: center; gap: 8px; }
         
-        /* Side Menu (Right Side) */
-        #side-menu { position: fixed; top: 0; right: -280px; width: 250px; height: 100%; background: #161d2b; z-index: 1000; transition: 0.3s; padding: 20px; border-left: 2px solid #ff0055; }
+        /* SIDE MENU (RIGHT SIDE) */
+        #side-menu { position: fixed; top: 0; right: -280px; width: 260px; height: 100%; background: #161d2b; z-index: 2000; transition: 0.4s; padding: 25px; border-left: 2px solid #ff0055; box-shadow: -5px 0 15px rgba(0,0,0,0.5); }
+        .menu-opt { padding: 15px 0; border-bottom: 1px solid #252f44; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+        .menu-opt:hover { color: #ff0055; }
+
+        .game-area { height: 210px; background: radial-gradient(circle at bottom, #1a2a44, #05080f); margin: 15px; border-radius: 15px; display: flex; align-items: center; justify-content: center; position: relative; }
+        #multiplier-text { font-size: 3.5rem; font-weight: 900; }
+
+        .history-btn { background: #111827; padding: 8px 15px; font-size: 12px; cursor: pointer; display: flex; justify-content: space-between; }
+        #hist-list { display: none; background: #0f1521; padding: 10px; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+        #hist-list span { background: #1a2233; padding: 3px; border-radius: 8px; font-size: 10px; text-align: center; color: #9d50ff; border: 1px solid #252f44; }
+
+        .bet-card { background: #161d2b; padding: 12px; border-radius: 15px; border: 1px solid #252f44; flex: 1; }
+        .main-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; background: #28a745; color: white; font-weight: bold; margin-top: 8px; }
         
-        /* History Dropdown */
-        .history-section { background: #111827; padding: 8px 15px; cursor: pointer; border-bottom: 1px solid #222; font-size: 13px; }
-        #hist-list { display: none; background: #0f1521; padding: 10px; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-        #hist-list span { background: #1a2233; padding: 3px; border-radius: 8px; font-size: 11px; text-align: center; color: #9d50ff; }
-
-        /* Multiplier Area */
-        .game-screen { height: 230px; background: radial-gradient(circle at bottom, #1a2a44, #05080f); margin: 10px; border-radius: 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        #multiplier-text { font-size: 3.8rem; font-weight: 900; }
-
-        /* Fake Table */
-        .bets-table { margin: 10px; background: #161d2b; border-radius: 10px; padding: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { color: #555; text-align: left; padding-bottom: 10px; }
-        td { padding: 8px 0; border-bottom: 1px solid #1f2937; }
-
-        /* Bet Cards */
-        .controls { display: flex; gap: 10px; padding: 10px; }
-        .card { background: #161d2b; flex: 1; padding: 12px; border-radius: 15px; border: 1px solid #252f44; }
-        .bet-btn { width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: bold; color: white; cursor: pointer; margin-top: 10px; }
-        .q-btn { background: #000; border: 1px solid #333; color: #fff; padding: 5px; font-size: 10px; border-radius: 5px; margin: 2px; }
+        #auth-screen { position: fixed; inset: 0; background: #0a0e17; z-index: 3000; display: none; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
 <div id="side-menu">
-    <h3 style="color:#ff0055">MENU</h3>
-    <p>ID: <span id="u-id">AV7721</span></p>
-    <hr>
-    <p>Transaction History</p>
-    <p>Referral Code</p>
-    <p style="color:red" onclick="location.reload()">Logout</p>
+    <div style="text-align:center; margin-bottom:20px;">
+        <div style="width:60px; height:60px; background:#252f44; border-radius:50%; margin:auto; display:flex; align-items:center; justify-content:center; font-size:30px;">👤</div>
+        <div id="u-id-display" style="font-size:12px; color:gray; margin-top:5px;">ID: Loading...</div>
+    </div>
+    <div class="menu-opt" onclick="document.getElementById('dep-modal').style.display='flex'">💰 Deposit</div>
+    <div class="menu-opt" onclick="alert('Withdrawal request sent to Admin')">🏦 Withdraw</div>
+    <div class="menu-opt">📜 Transaction History</div>
+    <div class="menu-opt">🎮 Bet History</div>
+    <div class="menu-opt" onclick="copyRefLink()">🔗 Referral Link</div>
+    <div class="menu-opt" style="color:#ff4444; margin-top:30px;" onclick="handleLogout()">🚪 Logout</div>
+    <button style="margin-top:20px; background:none; border:1px solid #333; color:gray; width:100%; padding:5px;" onclick="const m=document.getElementById('side-menu'); m.style.right='-280px'">Close</button>
 </div>
 
 <div class="header">
     <div style="color:#ff0055; font-weight:900; font-size:20px;">AVIATOR</div>
-    <div class="nav-right">
-        <div class="wallet">₹<span id="bal-text">0.00</span> <span style="cursor:pointer">+</span></div>
-        <div onclick="const m=document.getElementById('side-menu'); m.style.right=m.style.right==='0px'?'-280px':'0px'" style="font-size:25px; cursor:pointer">☰</div>
+    <div style="display:flex; align-items:center; gap:12px;">
+        <div class="wallet-box">
+            ₹<span id="bal-text">0.00</span>
+            <span style="cursor:pointer; background:#28a745; color:#fff; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:14px;" onclick="document.getElementById('dep-modal').style.display='flex'">+</span>
+        </div>
+        <div onclick="const m=document.getElementById('side-menu'); m.style.right='0px'" style="font-size:26px; cursor:pointer;">☰</div>
     </div>
 </div>
 
-<div class="history-section" onclick="const l=document.getElementById('hist-list'); l.style.display=l.style.display==='grid'?'none':'grid'">
-    Past Results ▼
+<div class="history-btn" onclick="const h=document.getElementById('hist-list'); h.style.display=h.style.display==='grid'?'none':'grid'">
+    Recent Results (Last 30) <span>▼</span>
 </div>
 <div id="hist-list"></div>
 
-<div class="game-screen">
+<div class="game-area">
     <div id="multiplier-text">1.00x</div>
 </div>
 
-<div class="controls">
-    <div class="card">
+<div style="display:flex; gap:10px; padding:10px;">
+    <div class="bet-card">
         <div style="font-size:10px; color:gray">Auto Play <input type="checkbox"> Auto Cash <input type="checkbox"></div>
         <input type="number" id="amt-1" value="100" style="width:100%; background:#000; color:#fff; border:none; margin:5px 0; padding:5px;">
-        <div style="display:flex; flex-wrap:wrap">
-            <button class="q-btn" onclick="document.getElementById('amt-1').value=10">10</button>
-            <button class="q-btn" onclick="document.getElementById('amt-1').value=100">100</button>
-            <button class="q-btn" onclick="document.getElementById('amt-1').value=500">500</button>
-            <button class="q-btn" onclick="document.getElementById('amt-1').value=1000">1000</button>
-        </div>
-        <button class="bet-btn" style="background:#28a745">BET</button>
+        <button class="main-btn">BET</button>
     </div>
-    <div class="card">
+    <div class="bet-card">
         <div style="font-size:10px; color:gray">Auto Play <input type="checkbox"> Auto Cash <input type="checkbox"></div>
         <input type="number" id="amt-2" value="100" style="width:100%; background:#000; color:#fff; border:none; margin:5px 0; padding:5px;">
-        <div style="display:flex; flex-wrap:wrap">
-            <button class="q-btn" onclick="document.getElementById('amt-2').value=10">10</button>
-            <button class="q-btn" onclick="document.getElementById('amt-2').value=100">100</button>
-            <button class="q-btn" onclick="document.getElementById('amt-2').value=500">500</button>
-            <button class="q-btn" onclick="document.getElementById('amt-2').value=1000">1000</button>
-        </div>
-        <button class="bet-btn" style="background:#1267ff">BET</button>
+        <button class="main-btn" style="background:#1267ff">BET</button>
     </div>
 </div>
 
-<div class="bets-table">
-    <table>
-        <thead><tr><th>User</th><th>Bet</th><th>Cash Out</th></tr></thead>
-        <tbody id="fake-list"></tbody>
+<div style="margin:10px; background:#161d2b; padding:10px; border-radius:10px; font-size:12px;">
+    <table style="width:100%; text-align:left; border-collapse:collapse;">
+        <thead style="color:gray;"><tr><th>User</th><th>Bet</th><th>Cash Out</th></tr></thead>
+        <tbody id="fake-bets"></tbody>
     </table>
 </div>
 
-<div id="auth-screen" style="position:fixed; inset:0; background:#0a0e17; z-index:10001; display:flex; align-items:center; justify-content:center;">
-    <div style="background:#161d2b; padding:40px; border-radius:20px; text-align:center; width:85%">
-        <h2 style="color:#ff0055">LOGIN</h2>
-        <input id="auth-email" placeholder="Email" style="width:100%; padding:12px; margin:10px 0;">
-        <input id="auth-pass" type="password" placeholder="Password" style="width:100%; padding:12px; margin:10px 0;">
-        <button onclick="handleAuth()" style="width:100%; padding:12px; background:#28a745; border:none; color:white; font-weight:bold; border-radius:10px;">PROCEED</button>
+<div id="dep-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:4000; align-items:center; justify-content:center;">
+    <div style="background:#161d2b; padding:25px; border-radius:15px; width:85%; text-align:center;">
+        <h3 style="color:#ff0055">Deposit</h3>
+        <input type="number" placeholder="Enter Amount" style="width:100%; padding:10px; margin:15px 0;">
+        <input type="text" placeholder="Enter UTR Number" style="width:100%; padding:10px; margin-bottom:15px;">
+        <button class="main-btn" onclick="alert('Sent!')">Submit</button>
+        <button onclick="document.getElementById('dep-modal').style.display='none'" style="margin-top:15px; background:none; border:none; color:gray;">Cancel</button>
+    </div>
+</div>
+
+<div id="auth-screen">
+    <div style="background:#161d2b; padding:30px; border-radius:20px; width:85%; text-align:center;">
+        <h2 style="color:#ff0055; margin-bottom:20px;">LOGIN</h2>
+        <input id="auth-email" placeholder="Email" style="width:100%; padding:12px; margin-bottom:10px;">
+        <input id="auth-pass" type="password" placeholder="Password" style="width:100%; padding:12px; margin-bottom:15px;">
+        <button onclick="window.location.reload()" style="width:100%; padding:12px; background:#28a745; border:none; color:white; font-weight:bold; border-radius:8px;">PROCEED</button>
     </div>
 </div>
 
 <script>
-    const names = ["Rahul", "Amit", "Priya", "Vikram", "Soni", "Arjun"];
-    function addFake() {
-        const list = document.getElementById('fake-list');
-        const name = names[Math.floor(Math.random()*names.length)] + "****";
-        const amt = (Math.random()*500 + 10).toFixed(0);
-        const mult = (Math.random()*2 + 1.1).toFixed(2);
-        const row = `<tr><td>${name}</td><td>₹${amt}</td><td style="color:#28a745">${mult}x</td></tr>`;
+    // Fake Live Bets logic
+    const names = ["Rahul", "Vijay", "Ankit", "Sonia", "Priya", "Arjun"];
+    setInterval(() => {
+        const list = document.getElementById('fake-bets');
+        const row = `<tr style="border-bottom:1px solid #222;"><td style="padding:8px;">${names[Math.floor(Math.random()*6)]}***</td><td>₹${(Math.random()*500+10).toFixed(0)}</td><td style="color:#28a745">${(Math.random()*2+1.1).toFixed(2)}x</td></tr>`;
         list.insertAdjacentHTML('afterbegin', row);
-        if(list.children.length > 7) list.lastElementChild.remove();
-    }
-    setInterval(addFake, 2000);
+        if(list.children.length > 6) list.lastElementChild.remove();
+    }, 2000);
 </script>
 
 </body>
