@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviator Pro Max - Final Fixed</title>
+    <title>Aviator Pro Max</title>
     
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -24,24 +24,30 @@
       const db = getFirestore();
 
       window.isLoginMode = true;
-      window.wallet = 0;
+      window.userData = {};
 
-      // --- AUTH ---
+      // --- AUTH & USER REGISTRATION ---
       window.handleAuth = async () => {
         const email = document.getElementById('auth-email').value;
         const pass = document.getElementById('auth-pass').value;
         try {
           if (window.isLoginMode) {
             const res = await signInWithEmailAndPassword(auth, email, pass);
-            if (res.user.emailVerified) { 
-                document.getElementById('auth-screen').style.display = 'none';
-                startSync(res.user.uid);
-            } else { alert("Verify Email!"); await signOut(auth); }
+            if (!res.user.emailVerified) { alert("Verify Email!"); await signOut(auth); }
           } else {
+            const uid_short = "AV" + Math.floor(1000 + Math.random() * 9000); // Unique ID
             const res = await createUserWithEmailAndPassword(auth, email, pass);
             await sendEmailVerification(res.user);
-            await setDoc(doc(db, "users", res.user.uid), { balance: 0, email: email });
-            alert("Verify link sent!"); window.toggleAuthMode();
+            await setDoc(doc(db, "users", res.user.uid), { 
+                balance: 0, 
+                email: email, 
+                gameId: uid_short, 
+                name: "Player", 
+                avatar: "1",
+                referralCount: 0 
+            });
+            alert("Verify link sent! Your ID is: " + uid_short);
+            window.toggleAuthMode();
           }
         } catch (err) { alert(err.message); }
       };
@@ -49,103 +55,159 @@
       function startSync(uid) {
         onSnapshot(doc(db, "users", uid), (d) => {
           if(d.exists()) { 
-            window.wallet = d.data().balance; 
-            window.updateUI(); 
+            window.userData = d.data();
+            window.wallet = d.data().balance;
+            document.getElementById('bal-text').innerText = window.wallet.toFixed(2);
+            document.getElementById('profile-name').innerText = window.userData.name;
+            document.getElementById('profile-id').innerText = "ID: " + window.userData.gameId;
+            document.getElementById('user-avatar').src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${window.userData.avatar}`;
           }
         });
       }
 
-      window.handleBet = async (p) => {
-        const amt = parseFloat(document.getElementById('amt-' + p).value);
-        if(amt > window.wallet || amt <= 0) return alert("Low Balance");
-        const newBal = window.wallet - amt;
-        await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: newBal });
+      onAuthStateChanged(auth, (u) => { 
+          if(u && u.emailVerified) { 
+              document.getElementById('auth-screen').style.display='none'; 
+              startSync(u.uid); 
+          }
+      });
+
+      // --- MENU LOGIC ---
+      window.toggleMenu = () => {
+          const m = document.getElementById('side-menu');
+          m.style.left = m.style.left === '0px' ? '-280px' : '0px';
       };
 
-      window.submitDeposit = async () => {
-          const amt = document.getElementById('d-amt').value;
-          const utr = document.getElementById('d-utr').value;
-          await addDoc(collection(db, "deposits"), { uid: auth.currentUser.uid, email: auth.currentUser.email, amt: parseFloat(amt), utr: utr, status: "pending", time: new Date() });
-          alert("Sent!"); document.getElementById('dep-modal').style.display='none';
+      window.updateProfile = async () => {
+          const newName = prompt("Enter Name:", window.userData.name);
+          const newAv = Math.floor(Math.random() * 100); // Randomize Avatar
+          if(newName) {
+              await updateDoc(doc(db, "users", auth.currentUser.uid), { name: newName, avatar: newAv.toString() });
+          }
       };
-
-      onAuthStateChanged(auth, (u) => { if(u && u.emailVerified) { document.getElementById('auth-screen').style.display='none'; startSync(u.uid); }});
+      
+      window.copyReferral = () => {
+          const refLink = `https://yourdomain.com?ref=${window.userData.gameId}`;
+          navigator.clipboard.writeText(refLink);
+          alert("Referral Link Copied! (500 pts per join)");
+      };
     </script>
 
     <style>
-        :root { --bg-dark: #0a0e17; --panel-bg: #161d2b; --win-green: #28a745; --accent-red: #d11348; }
-        body { background: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; overflow-x: hidden; }
+        :root { --bg-dark: #0a0e17; --panel-bg: #161d2b; --win-green: #28a745; --accent-red: #d11348; --btn-blue: #1267ff; }
+        body { background: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; overflow: hidden; }
+        
+        /* AUTH RESTORED */
         #auth-screen { position: fixed; inset: 0; background: var(--bg-dark); z-index: 10000; display: flex; justify-content: center; align-items: center; }
-        .auth-card { background: var(--panel-bg); padding: 25px; border-radius: 15px; width: 85%; max-width: 350px; text-align: center; }
-        .top-nav { background: #0f1521; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .balance-box { background: #000; border: 2px solid var(--win-green); padding: 5px 15px; border-radius: 20px; color: var(--win-green); cursor: pointer; }
-        .display-area { height: 200px; background: radial-gradient(circle at bottom left, #1a2a44, #05080f); margin: 10px; border-radius: 15px; display: flex; align-items: center; justify-content: center; position: relative; }
-        #multiplier-text { font-size: 3rem; font-weight: 900; }
-        .bet-container { display: flex; gap: 10px; padding: 10px; }
+        
+        /* TOP NAV WITH MENU */
+        .top-nav { background: #0f1521; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
+        .menu-btn { font-size: 24px; cursor: pointer; color: #9ea0a3; }
+        
+        /* SIDE MENU */
+        #side-menu { position: fixed; top: 0; left: -280px; width: 260px; height: 100%; background: #161d2b; z-index: 9999; transition: 0.3s; padding: 20px; border-right: 2px solid #ff0055; }
+        .menu-item { padding: 15px 0; border-bottom: 1px solid #252f44; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        
+        /* PROFILE BOX */
+        .profile-section { text-align: center; margin-bottom: 20px; }
+        .avatar-img { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--win-green); cursor: pointer; }
+
+        /* BET BUTTONS RESTORED */
         .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 12px; width: 50%; border: 1px solid #252f44; }
-        .main-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--win-green); color: white; font-weight: bold; }
-        .modal-input { width: 90%; padding: 8px; margin: 8px 0; background: #000; border: 1px solid #333; color: #fff; }
-        /* Fake Players List Style */
-        .fake-list { height: 150px; overflow-y: hidden; margin: 10px; background: #0f1521; border-radius: 10px; font-size: 11px; padding: 5px; }
-        .fake-row { display: flex; justify-content: space-between; padding: 4px; border-bottom: 1px solid #1a2233; color: #9ea0a3; }
+        .quick-bet-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 8px; }
+        .q-btn { background: #000; border: 1px solid #333; color: #fff; font-size: 10px; padding: 4px; border-radius: 5px; }
+        
+        /* AUTO OPTIONS */
+        .auto-row { display: flex; justify-content: space-between; margin-top: 10px; font-size: 11px; color: #9ea0a3; }
+
+        .main-btn { width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--win-green); color: white; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
+<div id="side-menu">
+    <div class="profile-section">
+        <img id="user-avatar" src="" class="avatar-img" onclick="updateProfile()">
+        <div id="profile-name" style="font-weight: bold; margin-top: 5px;">Player</div>
+        <div id="profile-id" style="font-size: 10px; color: #9ea0a3;">ID: 0000</div>
+    </div>
+    <div class="menu-item" onclick="document.getElementById('dep-modal').style.display='flex'; toggleMenu()">💰 Deposit</div>
+    <div class="menu-item" onclick="alert('Withdraw logic here'); toggleMenu()">🏦 Withdrawal</div>
+    <div class="menu-item" onclick="toggleMenu()">📜 History</div>
+    <div class="menu-item" onclick="copyReferral()">🔗 Referral (Earn 500)</div>
+    <div class="menu-item" style="color: red;" onclick="location.reload()">🚪 Logout</div>
+</div>
+
 <div id="auth-screen">
-    <div class="auth-card">
+    <div class="auth-card" style="background: #161d2b; padding: 30px; border-radius: 15px; text-align: center;">
         <h2 id="auth-title" style="color:#ff0055">LOGIN</h2>
-        <input type="email" id="auth-email" class="modal-input" placeholder="Email">
-        <input type="password" id="auth-pass" class="modal-input" placeholder="Password">
+        <input type="email" id="auth-email" style="width:90%; padding:10px; margin:5px;" placeholder="Email">
+        <input type="password" id="auth-pass" style="width:90%; padding:10px; margin:5px;" placeholder="Password">
         <button class="main-btn" onclick="handleAuth()">PROCEED</button>
-        <p onclick="window.isLoginMode=!window.isLoginMode; document.getElementById('auth-title').innerText=window.isLoginMode?'LOGIN':'REGISTER'" style="cursor:pointer; font-size:12px; margin-top:10px;">Switch Login/Register</p>
+        <p onclick="window.toggleAuthMode()" style="cursor:pointer; font-size:12px; margin-top:10px;">Switch Register/Login</p>
     </div>
 </div>
 
 <div class="top-nav">
-    <div style="color:#ff0055; font-weight:900; font-size:18px;">AVIATOR</div>
-    <div class="balance-box" onclick="document.getElementById('dep-modal').style.display='flex'">₹<span id="bal-text">0.00</span></div>
+    <div class="menu-btn" onclick="toggleMenu()">☰</div>
+    <div style="color:#ff0055; font-weight:900; font-size:20px;">AVIATOR</div>
+    <div style="display: flex; align-items: center; gap: 5px;">
+        <span style="color: #28a745; font-weight: bold;">₹<span id="bal-text">0.00</span></span>
+        <button style="background: #28a745; border:none; color:white; border-radius:50%; width:20px; height:20px;" onclick="document.getElementById('dep-modal').style.display='flex'">+</button>
+    </div>
 </div>
 
-<div class="display-area">
-    <div id="multiplier-text">1.00x</div>
+<div style="height: 220px; background: radial-gradient(circle at bottom, #1a2a44, #05080f); margin: 10px; border-radius: 15px; display: flex; align-items: center; justify-content: center;">
+    <h1 id="multiplier-text" style="font-size: 3.5rem;">1.00x</h1>
 </div>
 
-<div class="bet-container">
-    <div class="bet-card"><input type="number" id="amt-1" value="100" class="modal-input"><button class="main-btn" onclick="handleBet(1)">BET</button></div>
-    <div class="bet-card"><input type="number" id="amt-2" value="100" class="modal-input"><button class="main-btn" onclick="handleBet(2)">BET</button></div>
+<div style="display: flex; gap: 10px; padding: 10px;">
+    <div class="bet-card">
+        <div class="auto-row">
+            <span>Auto Play <input type="checkbox"></span>
+            <span>Auto Cashout <input type="checkbox"></span>
+        </div>
+        <input type="number" id="amt-1" value="100" style="width: 80%; background: #000; color: white; border: none; padding: 5px; margin: 5px 0;">
+        <div class="quick-bet-row">
+            <button class="q-btn" onclick="document.getElementById('amt-1').value=10">10</button>
+            <button class="q-btn" onclick="document.getElementById('amt-1').value=100">100</button>
+            <button class="q-btn" onclick="document.getElementById('amt-1').value=500">500</button>
+            <button class="q-btn" onclick="document.getElementById('amt-1').value=1000">1000</button>
+        </div>
+        <button class="main-btn" style="margin-top: 10px;">BET</button>
+    </div>
+
+    <div class="bet-card">
+        <div class="auto-row">
+            <span>Auto Play <input type="checkbox"></span>
+            <span>Auto Cashout <input type="checkbox"></span>
+        </div>
+        <input type="number" id="amt-2" value="100" style="width: 80%; background: #000; color: white; border: none; padding: 5px; margin: 5px 0;">
+        <div class="quick-bet-row">
+            <button class="q-btn" onclick="document.getElementById('amt-2').value=10">10</button>
+            <button class="q-btn" onclick="document.getElementById('amt-2').value=100">100</button>
+            <button class="q-btn" onclick="document.getElementById('amt-2').value=500">500</button>
+            <button class="q-btn" onclick="document.getElementById('amt-2').value=1000">1000</button>
+        </div>
+        <button class="main-btn" style="margin-top: 10px; background: #1267ff;">BET</button>
+    </div>
 </div>
 
-<div style="padding: 0 10px; font-size: 12px; color: #555;">LIVE BETS</div>
-<div id="fake-players" class="fake-list"></div>
-
-<div id="dep-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9000; justify-content:center; align-items:center;">
-    <div class="auth-card">
-        <h3>Deposit</h3>
-        <input type="number" id="d-amt" class="modal-input" placeholder="Amount">
-        <input type="text" id="d-utr" class="modal-input" placeholder="UTR">
-        <button class="main-btn" onclick="submitDeposit()">Submit</button>
-        <button onclick="document.getElementById('dep-modal').style.display='none'">Close</button>
+<div id="dep-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10001; justify-content:center; align-items:center;">
+    <div class="auth-card" style="background: #161d2b; padding: 25px; border-radius: 15px; width: 80%;">
+        <h3>Deposit Money</h3>
+        <input type="number" id="d-amt" style="width: 90%; padding: 10px; margin: 10px 0;" placeholder="Amount">
+        <input type="text" id="d-utr" style="width: 90%; padding: 10px; margin: 10px 0;" placeholder="12 Digit UTR">
+        <button class="main-btn" onclick="submitDeposit()">Submit Request</button>
+        <button onclick="document.getElementById('dep-modal').style.display='none'" style="margin-top: 10px; background: none; color: gray; border: none;">Close</button>
     </div>
 </div>
 
 <script>
-    // --- UI Update ---
-    window.updateUI = () => {
-        document.getElementById('bal-text').innerText = window.wallet.toFixed(2);
+    window.toggleAuthMode = () => {
+        window.isLoginMode = !window.isLoginMode;
+        document.getElementById('auth-title').innerText = window.isLoginMode ? "LOGIN" : "REGISTER";
     };
-
-    // --- Fake Players Logic (Bina Game Badle) ---
-    const names = ["Rahul", "Amit", "Sonia", "Vijay", "Priya", "Arjun", "Karan", "Deepak"];
-    function addFakeBet() {
-        const list = document.getElementById('fake-players');
-        const name = names[Math.floor(Math.random() * names.length)] + "****";
-        const amt = (Math.random() * 500 + 100).toFixed(0);
-        const row = `<div class="fake-row"><span>${name}</span><span>₹${amt}</span><span style="color:#28a745">Placed</span></div>`;
-        list.insertAdjacentHTML('afterbegin', row);
-        if(list.children.length > 10) list.lastElementChild.remove();
-    }
-    setInterval(addFakeBet, 3000); // Har 3 second mein naya fake player
 </script>
 
 </body>
