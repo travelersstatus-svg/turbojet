@@ -1,28 +1,93 @@
-// ✅ Fixed Login/Logout Logic
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // Check agar sahi admin email hai
-                if (user.email === "travelersstatus@gmail.com") {
-                    document.getElementById('auth-status').innerText = "Admin Verified: " + user.email;
-                    loadData(); // Data load karein
-                } else {
-                    // Agar koi galat user login hai toh use turant logout kar do
-                    alert("Access Denied! You are not the Admin.");
-                    await signOut(auth); 
-                    window.location.href = "index.html";
-                }
-            } else {
-                // Agar koi bhi login nahi hai
-                document.getElementById('auth-status').innerText = "Please Login as Admin first.";
-                setTimeout(() => {
-                    window.location.href = "index.html"; 
-                }, 2000);
-            }
-        });
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aviator Admin - Control Panel</title>
+    <style>
+        body { background: #0a0e17; color: white; font-family: sans-serif; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        .card { background: #161d2b; padding: 20px; border-radius: 12px; border: 1px solid #252f44; margin-bottom: 15px; }
+        .btn-approve { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-reject { background: #d11348; margin-left: 10px; }
+        .status-pending { color: #ffc107; font-weight: bold; }
+        input { padding: 8px; border-radius: 5px; border: 1px solid #333; background: #000; color: white; }
+    </style>
+</head>
+<body>
 
-        // Logout function jo aap button mein laga sakte hain
-        window.adminLogout = async () => {
-            await signOut(auth);
-            alert("Logged out successfully");
-            window.location.href = "index.html";
-        };
+<div class="container">
+    <h1 style="color: #ff0055;">Admin Dashboard</h1>
+    <hr style="border: 0.5px solid #252f44;">
+
+    <h3>Pending Deposits</h3>
+    <div id="deposit-requests">Loading requests...</div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc, getDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // --- SAME CONFIG ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc",
+      authDomain: "myaviatoregame.firebaseapp.com",
+      projectId: "myaviatoregame",
+      storageBucket: "myaviatoregame.firebasestorage.app",
+      messagingSenderId: "286687400349",
+      appId: "1:286687400349:web:e01e2cff439a3267de1f74"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore();
+
+    // Listen for Pending Deposits
+    const q = query(collection(db, "deposits"), where("status", "==", "pending"));
+    onSnapshot(q, (snapshot) => {
+        const container = document.getElementById('deposit-requests');
+        container.innerHTML = '';
+        
+        if (snapshot.empty) {
+            container.innerHTML = '<p>No pending requests.</p>';
+            return;
+        }
+
+        snapshot.forEach((depositDoc) => {
+            const data = depositDoc.data();
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+                <p><strong>User:</strong> ${data.email}</p>
+                <p><strong>Amount:</strong> ₹${data.amt}</p>
+                <p><strong>UTR:</strong> ${data.utr}</p>
+                <button class="btn-approve" onclick="approveDeposit('${depositDoc.id}', '${data.uid}', ${data.amt})">Approve & Add Balance</button>
+                <button class="btn-approve btn-reject" onclick="rejectDeposit('${depositDoc.id}')">Reject</button>
+            `;
+            container.appendChild(div);
+        });
+    });
+
+    // Approve Logic
+    window.approveDeposit = async (docId, uid, amt) => {
+        try {
+            const userRef = doc(db, "users", uid);
+            const userSnap = await getDoc(userRef);
+            
+            if (userSnap.exists()) {
+                const currentBal = userSnap.data().balance || 0;
+                await updateDoc(userRef, { balance: currentBal + amt });
+                await deleteDoc(doc(db, "deposits", docId));
+                alert("Success: Balance Updated!");
+            }
+        } catch (e) { alert("Error: " + e.message); }
+    };
+
+    // Reject Logic
+    window.rejectDeposit = async (docId) => {
+        if(confirm("Reject this deposit?")) {
+            await deleteDoc(doc(db, "deposits", docId));
+        }
+    };
+</script>
+
+</body>
+</html>
