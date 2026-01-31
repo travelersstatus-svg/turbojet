@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviator Pro Max - Final Fix</title>
+    <title>Aviator Pro Max - Official</title>
     
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-      import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-      import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+      import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+      import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc",
@@ -23,181 +23,191 @@
       const auth = getAuth();
       const db = getFirestore();
 
-      window.userData = {};
+      // Ensure user stays logged in
+      setPersistence(auth, browserLocalPersistence);
+
+      window.isLoginMode = true;
       let multiplier = 1.00;
       let isFlying = false;
       let resultsHistory = [];
 
-      // --- LOGOUT FUNCTION (FIXED) ---
-      window.handleLogout = async () => {
-        try {
-          await signOut(auth);
-          sessionStorage.clear(); // Clear session
-          localStorage.clear();   // Clear saved data
-          location.reload();      // Force refresh to login screen
-        } catch (err) { alert("Logout Failed: " + err.message); }
+      // --- AUTH FUNCTIONS ---
+      window.toggleAuth = () => {
+          window.isLoginMode = !window.isLoginMode;
+          document.getElementById('auth-title').innerText = window.isLoginMode ? "LOGIN" : "REGISTER";
+          document.getElementById('resend-box').style.display = window.isLoginMode ? "none" : "block";
       };
 
+      window.handleAuth = async () => {
+          const email = document.getElementById('auth-email').value;
+          const pass = document.getElementById('auth-pass').value;
+          try {
+              if (window.isLoginMode) {
+                  const res = await signInWithEmailAndPassword(auth, email, pass);
+                  if (!res.user.emailVerified) {
+                      alert("Please verify your email first!");
+                      await signOut(auth);
+                  }
+              } else {
+                  const res = await createUserWithEmailAndPassword(auth, email, pass);
+                  await sendEmailVerification(res.user);
+                  await setDoc(doc(db, "users", res.user.uid), { 
+                      balance: 0, 
+                      email, 
+                      gameId: "AV" + Math.floor(1000 + Math.random() * 9000),
+                      referralPoints: 0
+                  });
+                  alert("Registration Successful! Verification link sent to your email.");
+                  window.toggleAuth();
+              }
+          } catch (e) { alert(e.message); }
+      };
+
+      window.resendLink = async () => {
+          if (auth.currentUser) {
+              await sendEmailVerification(auth.currentUser);
+              alert("Verification link resent!");
+          } else { alert("Please enter details and try registering again."); }
+      };
+
+      window.logout = () => { signOut(auth).then(() => location.reload()); };
+
       // --- GAME ENGINE ---
-      function runGame() {
-        if(isFlying) return;
-        isFlying = true;
-        multiplier = 1.00;
-        let crashAt = (Math.random() * 4 + 1.2).toFixed(2);
-        
-        let timer = setInterval(() => {
-          multiplier += 0.01;
-          const display = document.getElementById('multiplier-text');
-          display.innerText = multiplier.toFixed(2) + "x";
-          if(multiplier >= crashAt) {
-            clearInterval(timer);
-            display.innerText = "FLEW AWAY!";
-            resultsHistory.unshift(multiplier.toFixed(2));
-            if(resultsHistory.length > 30) resultsHistory.pop();
-            updateHistoryUI();
-            isFlying = false;
-            setTimeout(runGame, 4000);
-          }
-        }, 80);
+      function startEngine() {
+          if(isFlying) return;
+          isFlying = true;
+          multiplier = 1.00;
+          let crashAt = (Math.random() * 5 + 1.1).toFixed(2);
+          let timer = setInterval(() => {
+              multiplier += 0.01;
+              document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
+              if (multiplier >= crashAt) {
+                  clearInterval(timer);
+                  document.getElementById('multiplier-text').innerText = "FLEW AWAY!";
+                  resultsHistory.unshift(multiplier.toFixed(2));
+                  if(resultsHistory.length > 30) resultsHistory.pop();
+                  updateHistoryUI();
+                  isFlying = false;
+                  setTimeout(startEngine, 4000);
+              }
+          }, 80);
       }
 
       function updateHistoryUI() {
-        document.getElementById('hist-list').innerHTML = resultsHistory.map(r => `<span>${r}x</span>`).join('');
+          document.getElementById('hist-list').innerHTML = resultsHistory.map(r => `<span>${r}x</span>`).join('');
       }
 
-      // --- REFERRAL LINK ---
-      window.copyRefLink = () => {
-        const link = window.location.origin + "?ref=" + window.userData.gameId;
-        navigator.clipboard.writeText(link);
-        alert("Referral Link Copied: " + link);
-      };
-
       onAuthStateChanged(auth, (user) => {
-        if(user) {
-          document.getElementById('auth-screen').style.display = 'none';
-          onSnapshot(doc(db, "users", user.uid), (d) => {
-            if(d.exists()) {
-                window.userData = d.data();
-                document.getElementById('bal-text').innerText = d.data().balance.toFixed(2);
-                document.getElementById('u-id-display').innerText = "ID: " + d.data().gameId;
-            }
-          });
-          if(!isFlying) runGame();
-        } else {
-          document.getElementById('auth-screen').style.display = 'flex';
-        }
+          if (user && user.emailVerified) {
+              document.getElementById('auth-page').style.display = 'none';
+              onSnapshot(doc(db, "users", user.uid), (d) => {
+                  if(d.exists()) document.getElementById('bal-text').innerText = d.data().balance.toFixed(2);
+              });
+              startEngine();
+          } else {
+              document.getElementById('auth-page').style.display = 'flex';
+          }
       });
     </script>
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #0a0e17; color: white; font-family: sans-serif; overflow-x: hidden; }
+        body { background: #0a0e17; color: white; font-family: sans-serif; }
         
-        .header { background: #0f1521; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
-        .wallet-box { background: #000; border: 1px solid #28a745; padding: 4px 12px; border-radius: 20px; color: #28a745; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        /* Auth Page Styling */
+        #auth-page { position: fixed; inset: 0; background: #0a0e17; z-index: 5000; display: flex; align-items: center; justify-content: center; }
+        .auth-card { background: #161d2b; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; border: 1px solid #252f44; }
+        .auth-input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; }
         
-        /* SIDE MENU (RIGHT SIDE) */
-        #side-menu { position: fixed; top: 0; right: -280px; width: 260px; height: 100%; background: #161d2b; z-index: 2000; transition: 0.4s; padding: 25px; border-left: 2px solid #ff0055; box-shadow: -5px 0 15px rgba(0,0,0,0.5); }
-        .menu-opt { padding: 15px 0; border-bottom: 1px solid #252f44; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 10px; }
-        .menu-opt:hover { color: #ff0055; }
+        /* Header */
+        .header { background: #0f1521; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
+        .wallet-box { background: #000; border: 1px solid #28a745; padding: 5px 12px; border-radius: 20px; color: #28a745; font-weight: bold; }
+        
+        /* Sidebar (Right Side) */
+        #sidebar { position: fixed; top: 0; right: -280px; width: 260px; height: 100%; background: #161d2b; z-index: 1000; transition: 0.3s; padding: 25px; border-left: 2px solid #ff0055; }
+        .menu-link { padding: 15px 0; border-bottom: 1px solid #252f44; cursor: pointer; display: block; text-decoration: none; color: white; }
 
-        .game-area { height: 210px; background: radial-gradient(circle at bottom, #1a2a44, #05080f); margin: 15px; border-radius: 15px; display: flex; align-items: center; justify-content: center; position: relative; }
+        /* Game UI */
+        .display { height: 220px; background: radial-gradient(circle at bottom, #1a2a44, #05080f); margin: 15px; border-radius: 15px; display: flex; align-items: center; justify-content: center; }
         #multiplier-text { font-size: 3.5rem; font-weight: 900; }
 
-        .history-btn { background: #111827; padding: 8px 15px; font-size: 12px; cursor: pointer; display: flex; justify-content: space-between; }
+        /* History Dropdown */
+        .hist-header { background: #111827; padding: 10px 15px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid #222; }
         #hist-list { display: none; background: #0f1521; padding: 10px; grid-template-columns: repeat(5, 1fr); gap: 5px; }
-        #hist-list span { background: #1a2233; padding: 3px; border-radius: 8px; font-size: 10px; text-align: center; color: #9d50ff; border: 1px solid #252f44; }
+        #hist-list span { background: #1a2233; padding: 3px; border-radius: 8px; font-size: 10px; text-align: center; color: #9d50ff; }
 
-        .bet-card { background: #161d2b; padding: 12px; border-radius: 15px; border: 1px solid #252f44; flex: 1; }
-        .main-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; background: #28a745; color: white; font-weight: bold; margin-top: 8px; }
-        
-        #auth-screen { position: fixed; inset: 0; background: #0a0e17; z-index: 3000; display: none; align-items: center; justify-content: center; }
+        .bet-card { background: #161d2b; padding: 15px; border-radius: 15px; flex: 1; border: 1px solid #252f44; }
+        .btn-green { background: #28a745; width: 100%; padding: 10px; border: none; border-radius: 8px; color: white; font-weight: bold; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div id="side-menu">
-    <div style="text-align:center; margin-bottom:20px;">
-        <div style="width:60px; height:60px; background:#252f44; border-radius:50%; margin:auto; display:flex; align-items:center; justify-content:center; font-size:30px;">👤</div>
-        <div id="u-id-display" style="font-size:12px; color:gray; margin-top:5px;">ID: Loading...</div>
+<div id="auth-page">
+    <div class="auth-card">
+        <h2 id="auth-title" style="color:#ff0055; margin-bottom:15px;">LOGIN</h2>
+        <input type="email" id="auth-email" class="auth-input" placeholder="Email Address">
+        <input type="password" id="auth-pass" class="auth-input" placeholder="Password">
+        <button class="btn-green" onclick="handleAuth()">PROCEED</button>
+        <p id="resend-box" style="display:none; font-size:12px; margin-top:10px; color:#aaa;" onclick="resendLink()">Didn't get link? <u>Resend Verification</u></p>
+        <p style="margin-top:15px; font-size:13px; cursor:pointer;" onclick="toggleAuth()">Don't have an account? <u>Register</u></p>
     </div>
-    <div class="menu-opt" onclick="document.getElementById('dep-modal').style.display='flex'">💰 Deposit</div>
-    <div class="menu-opt" onclick="alert('Withdrawal request sent to Admin')">🏦 Withdraw</div>
-    <div class="menu-opt">📜 Transaction History</div>
-    <div class="menu-opt">🎮 Bet History</div>
-    <div class="menu-opt" onclick="copyRefLink()">🔗 Referral Link</div>
-    <div class="menu-opt" style="color:#ff4444; margin-top:30px;" onclick="handleLogout()">🚪 Logout</div>
-    <button style="margin-top:20px; background:none; border:1px solid #333; color:gray; width:100%; padding:5px;" onclick="const m=document.getElementById('side-menu'); m.style.right='-280px'">Close</button>
+</div>
+
+<div id="sidebar">
+    <h3 style="color:#ff0055">MENU</h3>
+    <div class="menu-link" onclick="alert('Deposit Panel')">💰 Deposit</div>
+    <div class="menu-link" onclick="alert('Withdraw Panel')">🏦 Withdraw</div>
+    <div class="menu-link">📜 Transaction History</div>
+    <div class="menu-link">🔗 Referral Link</div>
+    <div class="menu-link" style="color:#ff4444; margin-top:30px;" onclick="logout()">🚪 Logout</div>
+    <button style="margin-top:20px; background:none; border:none; color:gray;" onclick="document.getElementById('sidebar').style.right='-280px'">Close</button>
 </div>
 
 <div class="header">
-    <div style="color:#ff0055; font-weight:900; font-size:20px;">AVIATOR</div>
+    <div style="color:#ff0055; font-weight:900; font-size:22px;">AVIATOR</div>
     <div style="display:flex; align-items:center; gap:12px;">
-        <div class="wallet-box">
-            ₹<span id="bal-text">0.00</span>
-            <span style="cursor:pointer; background:#28a745; color:#fff; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:14px;" onclick="document.getElementById('dep-modal').style.display='flex'">+</span>
-        </div>
-        <div onclick="const m=document.getElementById('side-menu'); m.style.right='0px'" style="font-size:26px; cursor:pointer;">☰</div>
+        <div class="wallet-box">₹<span id="bal-text">0.00</span></div>
+        <div onclick="document.getElementById('sidebar').style.right='0px'" style="font-size:26px; cursor:pointer;">☰</div>
     </div>
 </div>
 
-<div class="history-btn" onclick="const h=document.getElementById('hist-list'); h.style.display=h.style.display==='grid'?'none':'grid'">
-    Recent Results (Last 30) <span>▼</span>
+<div class="hist-header" onclick="const l=document.getElementById('hist-list'); l.style.display=l.style.display==='grid'?'none':'grid'">
+    Past Results (Last 30) <span>▼</span>
 </div>
 <div id="hist-list"></div>
 
-<div class="game-area">
-    <div id="multiplier-text">1.00x</div>
+<div class="display">
+    <h1 id="multiplier-text">1.00x</h1>
 </div>
 
-<div style="display:flex; gap:10px; padding:10px;">
+<div style="display:flex; gap:10px; padding:15px;">
     <div class="bet-card">
         <div style="font-size:10px; color:gray">Auto Play <input type="checkbox"> Auto Cash <input type="checkbox"></div>
-        <input type="number" id="amt-1" value="100" style="width:100%; background:#000; color:#fff; border:none; margin:5px 0; padding:5px;">
-        <button class="main-btn">BET</button>
+        <input type="number" id="amt-1" value="100" style="width:100%; background:#000; border:none; color:#fff; padding:5px; margin-top:5px;">
+        <button class="btn-green">BET</button>
     </div>
     <div class="bet-card">
         <div style="font-size:10px; color:gray">Auto Play <input type="checkbox"> Auto Cash <input type="checkbox"></div>
-        <input type="number" id="amt-2" value="100" style="width:100%; background:#000; color:#fff; border:none; margin:5px 0; padding:5px;">
-        <button class="main-btn" style="background:#1267ff">BET</button>
+        <input type="number" id="amt-2" value="100" style="width:100%; background:#000; border:none; color:#fff; padding:5px; margin-top:5px;">
+        <button class="btn-green" style="background:#1267ff">BET</button>
     </div>
 </div>
 
-<div style="margin:10px; background:#161d2b; padding:10px; border-radius:10px; font-size:12px;">
-    <table style="width:100%; text-align:left; border-collapse:collapse;">
+<div style="margin:15px; background:#161d2b; padding:10px; border-radius:10px;">
+    <table style="width:100%; font-size:12px; text-align:left;">
         <thead style="color:gray;"><tr><th>User</th><th>Bet</th><th>Cash Out</th></tr></thead>
-        <tbody id="fake-bets"></tbody>
+        <tbody id="fake-table-body"></tbody>
     </table>
 </div>
 
-<div id="dep-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:4000; align-items:center; justify-content:center;">
-    <div style="background:#161d2b; padding:25px; border-radius:15px; width:85%; text-align:center;">
-        <h3 style="color:#ff0055">Deposit</h3>
-        <input type="number" placeholder="Enter Amount" style="width:100%; padding:10px; margin:15px 0;">
-        <input type="text" placeholder="Enter UTR Number" style="width:100%; padding:10px; margin-bottom:15px;">
-        <button class="main-btn" onclick="alert('Sent!')">Submit</button>
-        <button onclick="document.getElementById('dep-modal').style.display='none'" style="margin-top:15px; background:none; border:none; color:gray;">Cancel</button>
-    </div>
-</div>
-
-<div id="auth-screen">
-    <div style="background:#161d2b; padding:30px; border-radius:20px; width:85%; text-align:center;">
-        <h2 style="color:#ff0055; margin-bottom:20px;">LOGIN</h2>
-        <input id="auth-email" placeholder="Email" style="width:100%; padding:12px; margin-bottom:10px;">
-        <input id="auth-pass" type="password" placeholder="Password" style="width:100%; padding:12px; margin-bottom:15px;">
-        <button onclick="window.location.reload()" style="width:100%; padding:12px; background:#28a745; border:none; color:white; font-weight:bold; border-radius:8px;">PROCEED</button>
-    </div>
-</div>
-
 <script>
-    // Fake Live Bets logic
-    const names = ["Rahul", "Vijay", "Ankit", "Sonia", "Priya", "Arjun"];
+    const users = ["Amit", "Sumit", "Pooja", "Rahul", "Vikash", "Soni"];
     setInterval(() => {
-        const list = document.getElementById('fake-bets');
-        const row = `<tr style="border-bottom:1px solid #222;"><td style="padding:8px;">${names[Math.floor(Math.random()*6)]}***</td><td>₹${(Math.random()*500+10).toFixed(0)}</td><td style="color:#28a745">${(Math.random()*2+1.1).toFixed(2)}x</td></tr>`;
-        list.insertAdjacentHTML('afterbegin', row);
-        if(list.children.length > 6) list.lastElementChild.remove();
-    }, 2000);
+        const body = document.getElementById('fake-table-body');
+        const row = `<tr style="border-bottom:1px solid #222;"><td style="padding:8px;">${users[Math.floor(Math.random()*6)]}***</td><td>₹${(Math.random()*500+10).toFixed(0)}</td><td style="color:#28a745">${(Math.random()*2+1.1).toFixed(2)}x</td></tr>`;
+        body.insertAdjacentHTML('afterbegin', row);
+        if(body.children.length > 6) body.lastElementChild.remove();
+    }, 2500);
 </script>
 
 </body>
