@@ -30,7 +30,7 @@
         .history-container { background: #080c14; padding: 8px; position: relative; }
         .history-strip { display: flex; gap: 8px; overflow: hidden; width: 85%; height: 30px; align-items: center; }
         #hist-toggle { position: absolute; right: 10px; top: 10px; background: #252f44; border-radius: 5px; padding: 2px 8px; cursor: pointer; z-index: 2100; font-size: 10px; }
-        #full-history { display: none; position: absolute; top: 40px; left: 0; width: 100%; background: #161d2b; z-index: 2000; max-height: 250px; overflow-y: auto; padding: 15px; border-bottom: 3px solid var(--win-green); border-radius: 0 0 15px 15px; }
+        #full-history { display: none; position: absolute; top: 40px; left: 0; width: 100%; background: #161d2b; z-index: 2000; max-height: 250px; overflow-y: auto; padding: 15px; border-bottom: 3px solid var(--win-green); }
         .hist-chip { font-size: 11px; padding: 4px 12px; border-radius: 12px; background: #1c2538; color: #9d50ff; font-weight: bold; flex-shrink: 0; border: 1px solid #252f44; }
         .chip-green { color: var(--win-green) !important; border-color: var(--win-green); }
 
@@ -46,12 +46,14 @@
         .auto-row { display: flex; justify-content: space-between; align-items: center; font-size: 9px; margin-bottom: 5px; }
         .input-box { background: #000; border: 1px solid #444; border-radius: 20px; display: flex; justify-content: space-between; padding: 4px 10px; align-items: center; margin-bottom: 8px; }
         .input-box input { background: none; border: none; color: #fff; width: 45px; text-align: center; font-size: 13px; outline: none; }
-        .main-btn { width: 100%; height: 40px; border: none; border-radius: 10px; font-weight: bold; color: white; background: var(--win-green); font-size: 13px; cursor: pointer; transition: 0.2s; }
+        .main-btn { width: 100%; height: 40px; border: none; border-radius: 10px; font-weight: bold; color: white; background: var(--win-green); font-size: 13px; cursor: pointer; }
         .btn-cashout { background: var(--btn-orange) !important; }
 
         .live-section { margin: 10px; background: var(--panel-bg); border-radius: 15px; font-size: 10px; border: 1px solid #252f44; min-height: 200px; }
         .live-header { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; padding: 8px 10px; background: #0f1521; font-weight: bold; }
         .live-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; padding: 6px 10px; border-bottom: 1px solid #1a2233; }
+        .user-col { color: #9ea0a3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .win-col { color: var(--win-green); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -113,19 +115,13 @@
 <div class="bet-container">
     <div class="bet-card">
         <div class="auto-row"><label><input type="checkbox" id="auto-play-1"> Auto</label><label><input type="checkbox" id="auto-cash-tick-1"> Cash <input type="number" id="auto-cash-val-1" value="2.00" style="width:30px;"></label></div>
-        <div class="amt-row">
-            <button class="amt-btn" onclick="setAmt(1,10)">10</button><button class="amt-btn" onclick="setAmt(1,50)">50</button><button class="amt-btn" onclick="setAmt(1,100)">100</button>
-            <button class="amt-btn" onclick="setAmt(1,200)">200</button><button class="amt-btn" onclick="setAmt(1,500)">500</button><button class="amt-btn" onclick="setAmt(1,1000)">1000</button>
-        </div>
+        <div class="amt-row"><button class="amt-btn" onclick="setAmt(1,10)">10</button><button class="amt-btn" onclick="setAmt(1,50)">50</button><button class="amt-btn" onclick="setAmt(1,100)">100</button><button class="amt-btn" onclick="setAmt(1,200)">200</button><button class="amt-btn" onclick="setAmt(1,500)">500</button><button class="amt-btn" onclick="setAmt(1,1000)">1000</button></div>
         <div class="input-box"><button onclick="adj(1,-10)">-</button><input type="number" id="amt-1" value="100"><button onclick="adj(1,10)">+</button></div>
         <button id="btn-1" class="main-btn" onclick="handleBet(1)">BET</button>
     </div>
     <div class="bet-card">
         <div class="auto-row"><label><input type="checkbox" id="auto-play-2"> Auto</label><label><input type="checkbox" id="auto-cash-tick-2"> Cash <input type="number" id="auto-cash-val-2" value="2.00" style="width:30px;"></label></div>
-        <div class="amt-row">
-            <button class="amt-btn" onclick="setAmt(2,10)">10</button><button class="amt-btn" onclick="setAmt(2,50)">50</button><button class="amt-btn" onclick="setAmt(2,100)">100</button>
-            <button class="amt-btn" onclick="setAmt(2,200)">200</button><button class="amt-btn" onclick="setAmt(2,500)">500</button><button class="amt-btn" onclick="setAmt(2,1000)">1000</button>
-        </div>
+        <div class="amt-row"><button class="amt-btn" onclick="setAmt(2,10)">10</button><button class="amt-btn" onclick="setAmt(2,50)">50</button><button class="amt-btn" onclick="setAmt(2,100)">100</button><button class="amt-btn" onclick="setAmt(2,200)">200</button><button class="amt-btn" onclick="setAmt(2,500)">500</button><button class="amt-btn" onclick="setAmt(2,1000)">1000</button></div>
         <div class="input-box"><button onclick="adj(2,-10)">-</button><input type="number" id="amt-2" value="100"><button onclick="adj(2,10)">+</button></div>
         <button id="btn-2" class="main-btn" onclick="handleBet(2)">BET</button>
     </div>
@@ -142,7 +138,7 @@
     const auth = firebase.auth(), db = firebase.database();
 
     let wallet = 0, multiplier = 1.0, isFlying = false, currentUser = null;
-    let results = [1.55, 2.10, 1.05, 3.44, 1.12, 1.90, 4.55, 1.01, 2.30, 1.66, 2.88, 1.25];
+    let results = [1.50, 2.33, 1.08, 4.20, 1.15, 5.00, 1.01, 2.10];
     let activeBets = { 1: null, 2: null }, queuedBets = { 1: null, 2: null };
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -161,9 +157,17 @@
     function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value) + v); }
 
     function toggleFullHist() { 
-        const f = document.getElementById('full-history'); 
-        f.style.display = (f.style.display === 'block') ? 'none' : 'block';
+        const f = document.getElementById('full-history'); f.style.display = (f.style.display === 'block') ? 'none' : 'block';
         f.innerHTML = results.slice(0,30).map(r => `<span class="hist-chip ${r >= 2 ? 'chip-green' : ''}" style="margin:4px; display:inline-block;">${r}x</span>`).join('');
+    }
+
+    function generateFakeUsers() {
+        const list = document.getElementById('live-list'); list.innerHTML = "";
+        for(let i=0; i<12; i++) {
+            let u = "User" + Math.floor(Math.random()*9000 + 1000);
+            let b = Math.floor(Math.random()*2000 + 10);
+            list.innerHTML += `<div class="live-row"><span class="user-col">${u}</span><span>₹${b}</span><span id="fake-m-${i}">-</span><span id="fake-w-${i}">-</span></div>`;
+        }
     }
 
     function updateUI() {
@@ -171,17 +175,10 @@
         document.getElementById('hist-row').innerHTML = results.slice(0,10).map(r => `<div class="hist-chip ${r >= 2 ? 'chip-green' : ''}">${r}x</div>`).join('');
         [1,2].forEach(p => {
             let btn = document.getElementById('btn-'+p);
-            if (!isFlying) {
-                btn.innerText = activeBets[p] ? "CANCEL" : "BET";
-                btn.className = "main-btn";
-            } else {
-                if (activeBets[p] && !activeBets[p].cashed) {
-                    btn.innerText = "CASH OUT " + (activeBets[p].amt * multiplier).toFixed(1);
-                    btn.className = "main-btn btn-cashout";
-                } else {
-                    btn.innerText = queuedBets[p] ? "CANCEL" : "BET NEXT";
-                    btn.className = "main-btn";
-                }
+            if (!isFlying) { btn.innerText = activeBets[p] ? "CANCEL" : "BET"; btn.className = "main-btn"; }
+            else {
+                if (activeBets[p] && !activeBets[p].cashed) { btn.innerText = "CASH OUT " + (activeBets[p].amt * multiplier).toFixed(1); btn.className = "main-btn btn-cashout"; }
+                else { btn.innerText = queuedBets[p] ? "CANCEL" : "BET NEXT"; btn.className = "main-btn"; }
             }
         });
     }
@@ -192,9 +189,8 @@
             if (activeBets[p]) { wallet += activeBets[p].amt; activeBets[p] = null; }
             else if (amt <= wallet) { wallet -= amt; activeBets[p] = { amt, cashed: false }; }
         } else {
-            if (activeBets[p] && !activeBets[p].cashed) {
-                wallet += (activeBets[p].amt * multiplier); activeBets[p].cashed = true;
-            } else if (queuedBets[p]) { wallet += queuedBets[p].amt; queuedBets[p] = null; }
+            if (activeBets[p] && !activeBets[p].cashed) { wallet += (activeBets[p].amt * multiplier); activeBets[p].cashed = true; }
+            else if (queuedBets[p]) { wallet += queuedBets[p].amt; queuedBets[p] = null; }
             else if (amt <= wallet) { wallet -= amt; queuedBets[p] = { amt }; }
         }
         db.ref('users/' + currentUser.uid).update({ balance: wallet });
@@ -202,14 +198,11 @@
     }
 
     function requestWithdraw() {
-        const name = document.getElementById('w-name').value;
-        const acc = document.getElementById('w-acc').value;
-        const ifsc = document.getElementById('w-ifsc').value;
-        const amt = parseFloat(document.getElementById('w-amt').value);
-        if(!name || !acc || !ifsc || !amt) return alert("Sari details bharein!");
-        if(amt > wallet) return alert("Balance kam hai!");
-        db.ref('requests/withdrawals').push({ uid: currentUser.uid, name, acc, ifsc, amount: amt, status: "pending", time: new Date().toLocaleString() });
-        alert("Withdrawal Requested!");
+        const n = document.getElementById('w-name').value, a = document.getElementById('w-acc').value, i = document.getElementById('w-ifsc').value, am = parseFloat(document.getElementById('w-amt').value);
+        if(!n || !a || !i || !am) return alert("All fields required!");
+        if(am > wallet) return alert("Insufficient balance!");
+        db.ref('requests/withdrawals').push({ uid: currentUser.uid, name: n, acc: a, ifsc: i, amount: am, status: "pending", time: new Date().toLocaleString() });
+        alert("Request Sent!");
     }
 
     function startLoop() {
@@ -217,7 +210,7 @@
         document.getElementById('flew-away').style.display = 'none';
         document.getElementById('multiplier-text').style.display = 'none';
         document.getElementById('countdown').style.display = 'block';
-        
+        generateFakeUsers();
         [1,2].forEach(p => {
             if(queuedBets[p]) { activeBets[p] = { amt: queuedBets[p].amt, cashed: false }; queuedBets[p] = null; }
             if(document.getElementById('auto-play-'+p).checked && !activeBets[p]) {
@@ -225,7 +218,6 @@
                 if(amt <= wallet) { wallet -= amt; activeBets[p] = { amt, cashed: false }; }
             }
         });
-
         let t = 5;
         let timer = setInterval(() => {
             document.getElementById('countdown').innerText = "NEXT ROUND IN " + t + "s";
@@ -239,23 +231,30 @@
         isFlying = true;
         document.getElementById('countdown').style.display = 'none';
         document.getElementById('multiplier-text').style.display = 'block';
-        let crashPoint = (1 + Math.pow(Math.random(), 2.8) * 10).toFixed(2);
+        let crashPoint = (1 + Math.pow(Math.random(), 3) * 12).toFixed(2);
         
         let anim = () => {
             if(!isFlying) return;
             if(multiplier >= crashPoint) {
-                isFlying = false; 
-                document.getElementById('flew-away').style.display = 'block';
+                isFlying = false; document.getElementById('flew-away').style.display = 'block';
                 results.unshift(parseFloat(multiplier.toFixed(2)));
-                if(results.length > 30) results.pop();
-                activeBets[1] = activeBets[2] = null; // Important: Clear bets on crash
+                if(results.length > 40) results.pop();
+                activeBets[1] = activeBets[2] = null;
                 db.ref('users/' + currentUser.uid).update({ balance: wallet });
-                updateUI(); // Immediate UI update to change cashout to bet
-                setTimeout(startLoop, 3000); return;
+                updateUI(); setTimeout(startLoop, 3000); return;
             }
             multiplier += (multiplier < 2) ? 0.003 : 0.006;
             document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
             
+            // Randomly cash out fake users
+            for(let i=0; i<12; i++) {
+                if(Math.random() < 0.01 && document.getElementById('fake-m-'+i).innerText === "-") {
+                    document.getElementById('fake-m-'+i).innerText = multiplier.toFixed(2) + "x";
+                    document.getElementById('fake-w-'+i).innerText = "₹" + (Math.random()*1000).toFixed(0);
+                    document.getElementById('fake-w-'+i).classList.add('win-col');
+                }
+            }
+
             [1,2].forEach(p => {
                 if(document.getElementById('auto-cash-tick-'+p).checked && activeBets[p] && !activeBets[p].cashed) {
                     if(multiplier >= parseFloat(document.getElementById('auto-cash-val-'+p).value)) {
@@ -277,7 +276,6 @@
         ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
         ctx.drawImage(planeImg, x-30, y-30, 60, 60);
     }
-
     planeImg.onload = startLoop;
 </script>
 </body>
