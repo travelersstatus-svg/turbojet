@@ -3,162 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviator Game</title>
+    <title>Aviator Pro - Live</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
-        :root { --bg-dark: #0a0e17; --panel-bg: #161d2b; --win-green: #28a745; --accent-red: #d11348; --gold: #ffc107; }
-        body { background: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; overflow-x: hidden; }
-        .top-nav { background: #0f1521; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
-        .balance-box { background: #000; border: 2px solid var(--win-green); padding: 6px 15px; border-radius: 20px; color: var(--win-green); font-weight: bold; }
-        .display-area { position: relative; height: 220px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 70%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; overflow: hidden; }
-        #multiplier-text { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 4rem; font-weight: 900; z-index: 10; }
-        #flew-away { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); color: #ff0055; font-size: 1.5rem; font-weight: bold; display: none; }
-        .bet-container { display: flex; gap: 8px; padding: 10px; }
-        .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 15px; border: 1px solid #252f44; width: 50%; text-align: center; }
-        .main-btn { width: 100%; height: 40px; border: none; border-radius: 8px; font-weight: bold; color: white; background: var(--win-green); cursor: pointer; }
-        .live-section { margin: 10px; background: var(--panel-bg); border-radius: 15px; font-size: 10px; border: 1px solid #252f44; min-height: 200px; }
-        .live-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; padding: 6px 10px; border-bottom: 1px solid #1a2233; }
+        :root { --bg: #0a0e17; --card: #161d2b; --win: #28a745; --danger: #d11348; --accent: #ff0055; }
+        body { background: var(--bg); color: white; font-family: 'Arial', sans-serif; margin: 0; overflow: hidden; }
         
-        /* Sidebar/Deposit */
-        #side-menu { position: fixed; top: 0; right: -100%; width: 85%; height: 100%; background: #0f1521; z-index: 5000; transition: 0.4s; padding: 20px; border-left: 1px solid #252f44; }
-        .menu-item { padding: 15px; background: #161d2b; border-radius: 10px; margin-bottom: 10px; cursor: pointer; display: flex; justify-content: space-between; }
-        .form-container { display: none; background: #05080f; padding: 15px; border-radius: 10px; border: 1px solid #252f44; }
-        .f-input { width: 100%; padding: 10px; margin-top: 8px; border-radius: 5px; background: #000; color: white; border: 1px solid #444; }
+        /* Header */
+        .header { background: #0f1521; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
+        .bal-box { background: #000; border: 2px solid var(--win); padding: 5px 15px; border-radius: 20px; color: var(--win); font-weight: bold; }
+
+        /* Game Area */
+        .game-screen { position: relative; height: 260px; background: radial-gradient(circle at bottom left, #1c2c4c 0%, #05080f 80%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; }
+        #multiplier { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3.5rem; font-weight: 900; color: white; z-index: 5; text-shadow: 0 0 15px rgba(255,255,255,0.3); }
+        #status-msg { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); font-weight: bold; font-size: 1.2rem; display: none; z-index: 6; }
+        canvas { width: 100%; height: 100%; border-radius: 15px; }
+
+        /* Betting Controls */
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
+        .bet-card { background: var(--card); padding: 12px; border-radius: 15px; border: 1px solid #252f44; text-align: center; }
+        .input-group { display: flex; align-items: center; background: #000; border-radius: 8px; margin-bottom: 8px; padding: 2px; }
+        input { width: 100%; background: transparent; border: none; color: white; text-align: center; font-size: 16px; outline: none; }
+        .main-btn { width: 100%; height: 45px; border: none; border-radius: 10px; font-weight: bold; color: white; font-size: 16px; cursor: pointer; transition: 0.2s; }
+        .btn-bet { background: var(--win); }
+        .btn-cash { background: #d97706; }
+        .btn-wait { background: #333; cursor: not-allowed; }
+
+        /* Sidebar/Menu */
+        #menu { position: fixed; top: 0; right: -100%; width: 80%; height: 100%; background: #0f1521; z-index: 100; transition: 0.3s; padding: 20px; border-left: 1px solid #252f44; }
+        .menu-open { right: 0 !important; }
+        .dep-form { background: #05080f; padding: 15px; border-radius: 10px; margin-top: 10px; border: 1px solid #252f44; }
     </style>
 </head>
 <body>
 
-<div id="side-menu">
-    <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>MENU</b> <span onclick="toggleMenu()">✕</span></div>
-    <div class="menu-item" onclick="toggleSub('dep-box')">💰 Deposit <span>▼</span></div>
-    <div id="dep-box" class="form-container">
-        <div style="text-align:center; background:#fff; padding:10px; border-radius:10px;">
-            <img id="qr-display" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=YOUR_ID@okicici&am=0" style="width:120px;">
-        </div>
-        <a id="upi-link" href="upi://pay?pa=YOUR_ID@okicici&am=0" style="display:block; background:#007bff; color:white; padding:10px; border-radius:5px; text-align:center; margin-top:10px; text-decoration:none; font-weight:bold;">PAY VIA UPI APP</a>
-        <input type="number" id="dep-amt" class="f-input" placeholder="Amount" oninput="updateQR()">
-        <input type="text" id="dep-utr" class="f-input" placeholder="UTR/Reference Number">
-        <button class="main-btn" style="margin-top:10px;" onclick="requestDeposit()">SUBMIT TO ADMIN</button>
+<div id="menu">
+    <div style="display:flex; justify-content:space-between;"><h3>MENU</h3> <button onclick="toggleMenu()" style="background:none; border:none; color:white; font-size:24px;">✕</button></div>
+    <hr style="border:0.5px solid #252f44;">
+    <p><b>DEPOSIT FUNDS</b></p>
+    <div class="dep-form">
+        <center><img id="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=YOUR_ID@okicici" style="width:120px; border-radius:8px;"></center>
+        <input type="number" id="d-amt" placeholder="Amount" style="margin-top:10px; padding:8px; width:90%; background:#000; color:white; border:1px solid #444;">
+        <input type="text" id="d-utr" placeholder="UTR / Ref Number" style="margin-top:5px; padding:8px; width:90%; background:#000; color:white; border:1px solid #444;">
+        <button onclick="sendDep()" style="margin-top:10px; width:100%; background:var(--win); color:white; border:none; padding:10px; border-radius:5px; font-weight:bold;">SUBMIT DEPOSIT</button>
     </div>
 </div>
 
-<div class="top-nav">
-    <div style="color:#ff0055; font-weight:900; font-size:20px;">AVIATOR</div>
+<div class="header">
+    <div style="color:var(--accent); font-weight:900; font-size:1.5rem;">AVIATOR</div>
     <div style="display:flex; align-items:center; gap:10px;">
-        <div class="balance-box">₹<span id="bal-text">0.00</span></div>
-        <div onclick="toggleMenu()" style="cursor:pointer; font-size:24px;">☰</div>
+        <div class="bal-box">₹<span id="balance">0.00</span></div>
+        <button onclick="toggleMenu()" style="background:none; border:none; color:white; font-size:25px;">☰</button>
     </div>
 </div>
 
-<div class="display-area">
+<div class="game-screen">
+    <div id="multiplier">1.00x</div>
+    <div id="status-msg">FLEW AWAY!</div>
     <canvas id="gameCanvas"></canvas>
-    <div id="multiplier-text">1.00x</div>
-    <div id="flew-away">FLEW AWAY!</div>
 </div>
 
-<div class="bet-container">
+<div class="controls">
     <div class="bet-card">
-        <input type="number" id="amt-1" value="100" style="width:100%; background:#000; color:#fff; border:1px solid #444; margin-bottom:5px; text-align:center;">
-        <button id="btn-1" class="main-btn" onclick="handleBet(1)">BET</button>
+        <div class="input-group"><input type="number" id="amt1" value="100"></div>
+        <button id="btn1" class="main-btn btn-bet" onclick="handleAction(1)">BET</button>
     </div>
     <div class="bet-card">
-        <input type="number" id="amt-2" value="100" style="width:100%; background:#000; color:#fff; border:1px solid #444; margin-bottom:5px; text-align:center;">
-        <button id="btn-2" class="main-btn" onclick="handleBet(2)">BET</button>
+        <div class="input-group"><input type="number" id="amt2" value="100"></div>
+        <button id="btn2" class="main-btn btn-bet" onclick="handleAction(2)">BET</button>
     </div>
-</div>
-
-<div class="live-section">
-    <div id="live-list"></div>
 </div>
 
 <script>
+    // Firebase Config (Must match your app)
     const firebaseConfig = { apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc", authDomain: "myaviatoregame.firebaseapp.com", projectId: "myaviatoregame", storageBucket: "myaviatoregame.firebasestorage.app", messagingSenderId: "286687400349", appId: "1:286687400349:web:e01e2cff439a3267de1f74" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
 
-    let wallet = 0, multiplier = 1.0, isFlying = false, activeBets = { 1: null, 2: null };
+    let userBal = 0, currentMult = 1.0, isFlying = false, gameState = "waiting";
+    let myBets = { 1: null, 2: null };
+
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const planeImg = new Image(); planeImg.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNMzIgMjU2TDE2MCAxOTJMMjI0IDMyLDI4OCAxOTJMNTAwIDI1NkwyODggMzI0TDIyNCA0ODBMMTYwIDMyNEwzMiAyNTZ6IiBmaWxsPSIjZmYwMDQ0Ii8+PC9zdmc+";
+    const planeImg = new Image();
+    planeImg.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNMzIgMjU2TDE2MCAxOTJMMjI0IDMyLDI4OCAxOTJMNTAwIDI1NkwyODggMzI0TDIyNCA0ODBMMTYwIDMyNEwzMiAyNTZ6IiBmaWxsPSIjZmYwMDQ0Ii8+PC9zdmc+";
 
-    function toggleMenu() { let m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
-    function toggleSub(id) { let e = document.getElementById(id); e.style.display = e.style.display === 'block' ? 'none' : 'block'; }
-    function updateQR() {
-        let v = document.getElementById('dep-amt').value || 0;
-        let upi = "upi://pay?pa=YOUR_ID@okicici&pn=Admin&am=" + v;
-        document.getElementById('qr-display').src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(upi);
-        document.getElementById('upi-link').href = upi;
+    function toggleMenu() { document.getElementById('menu').classList.toggle('menu-open'); }
+
+    function sendDep() {
+        let a = document.getElementById('d-amt').value, u = document.getElementById('d-utr').value;
+        if(!a || !u) return alert("All fields required");
+        db.ref('requests/deposits').push({ uid: auth.currentUser.uid, email: auth.currentUser.email, amount: parseFloat(a), utr: u, status: 'pending' });
+        alert("Request Sent!");
     }
 
-    function requestDeposit() {
-        let amt = document.getElementById('dep-amt').value;
-        let utr = document.getElementById('dep-utr').value;
-        if(!amt || !utr) return alert("Fill all fields!");
-        db.ref('requests/deposits').push({ uid: auth.currentUser.uid, email: auth.currentUser.email, amount: parseFloat(amt), utr: utr, status: 'pending' });
-        alert("Request Sent to Admin!");
-    }
-
-    function handleBet(p) {
-        let amt = parseInt(document.getElementById('amt-'+p).value);
-        if(!isFlying) {
-            if(activeBets[p]) { wallet += activeBets[p].amt; activeBets[p] = null; }
-            else if(amt <= wallet) { wallet -= amt; activeBets[p] = { amt, cashed: false }; }
-        } else if(activeBets[p] && !activeBets[p].cashed) {
-            wallet += (activeBets[p].amt * multiplier); activeBets[p].cashed = true;
+    function handleAction(p) {
+        let amt = parseFloat(document.getElementById('amt'+p).value);
+        if (gameState === "waiting") {
+            if (myBets[p]) { userBal += myBets[p].amt; myBets[p] = null; }
+            else if (amt <= userBal) { userBal -= amt; myBets[p] = { amt: amt, cashed: false }; }
+        } else if (gameState === "flying" && myBets[p] && !myBets[p].cashed) {
+            userBal += (myBets[p].amt * currentMult);
+            myBets[p].cashed = true;
         }
-        db.ref('users/' + auth.currentUser.uid).update({ balance: wallet });
+        db.ref('users/' + auth.currentUser.uid).update({ balance: userBal });
         updateUI();
     }
 
     function updateUI() {
-        document.getElementById('bal-text').innerText = wallet.toFixed(2);
-        [1,2].forEach(p => {
-            let b = document.getElementById('btn-'+p);
-            if(!isFlying) b.innerText = activeBets[p] ? "CANCEL" : "BET";
-            else if(activeBets[p] && !activeBets[p].cashed) b.innerText = "CASH OUT ₹"+(activeBets[p].amt * multiplier).toFixed(1);
-            else b.innerText = "BET NEXT";
+        document.getElementById('balance').innerText = userBal.toFixed(2);
+        [1, 2].forEach(p => {
+            let btn = document.getElementById('btn'+p);
+            if (gameState === "waiting") {
+                btn.className = "main-btn " + (myBets[p] ? "btn-wait" : "btn-bet");
+                btn.innerText = myBets[p] ? "CANCEL" : "BET";
+            } else {
+                if (myBets[p] && !myBets[p].cashed) {
+                    btn.className = "main-btn btn-cash";
+                    btn.innerText = "CASH OUT ₹" + (myBets[p].amt * currentMult).toFixed(1);
+                } else {
+                    btn.className = "main-btn btn-wait";
+                    btn.innerText = "BETTING CLOSED";
+                }
+            }
         });
     }
 
-    function startLoop() {
-        isFlying = false; multiplier = 1.0;
-        document.getElementById('flew-away').style.display = 'none';
-        let t = 5; let timer = setInterval(() => { if(t <= 0){ clearInterval(timer); runFlight(); } t--; }, 1000);
+    function gameLoop() {
+        gameState = "waiting"; currentMult = 1.0;
+        document.getElementById('multiplier').style.color = "white";
+        document.getElementById('status-msg').style.display = "none";
+        
+        let countdown = 5;
+        let t = setInterval(() => {
+            document.getElementById('multiplier').innerText = countdown + "s";
+            countdown--;
+            if (countdown < 0) { clearInterval(t); startFlight(); }
+        }, 1000);
         updateUI();
     }
 
-    function runFlight() {
-        isFlying = true; let crash = (1.0 + Math.pow(Math.random(), 3) * 5).toFixed(2);
-        let anim = () => {
-            if(!isFlying) return;
-            if(multiplier >= crash) {
-                isFlying = false; document.getElementById('flew-away').style.display = 'block';
-                activeBets[1] = activeBets[2] = null; setTimeout(startLoop, 3000); return;
+    function startFlight() {
+        gameState = "flying";
+        let crashPoint = (1.0 + Math.pow(Math.random(), 3) * 10).toFixed(2);
+        
+        let flight = setInterval(() => {
+            if (currentMult >= crashPoint) {
+                clearInterval(flight);
+                endFlight();
+                return;
             }
-            multiplier += 0.002; document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
-            updateUI(); draw(); requestAnimationFrame(anim);
-        }; anim();
+            currentMult += 0.01;
+            document.getElementById('multiplier').innerText = currentMult.toFixed(2) + "x";
+            draw();
+            updateUI();
+        }, 50);
+    }
+
+    function endFlight() {
+        gameState = "crashed";
+        document.getElementById('multiplier').style.color = "#ff0055";
+        document.getElementById('status-msg').style.display = "block";
+        myBets = { 1: null, 2: null };
+        setTimeout(gameLoop, 4000);
     }
 
     function draw() {
         canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-        let p = Math.min((multiplier - 1) / 2, 0.9);
-        let x = p * canvas.width * 0.9 + 20, y = (canvas.height - 40) - (Math.pow(p,0.6) * canvas.height * 0.7);
+        let progress = Math.min((currentMult - 1) / 4, 0.9);
+        let x = progress * canvas.width * 0.8 + 30;
+        let y = (canvas.height - 30) - (Math.pow(progress, 0.7) * canvas.height * 0.7);
+        
         ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 4; ctx.beginPath();
+        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 5; ctx.beginPath();
         ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
         ctx.drawImage(planeImg, x-25, y-25, 50, 50);
     }
 
     auth.onAuthStateChanged(user => {
         if(!user) window.location.href = "index.html";
-        else db.ref('users/'+user.uid+'/balance').on('value', s => { wallet = s.val() || 0; updateUI(); });
+        else db.ref('users/'+user.uid+'/balance').on('value', s => { userBal = s.val() || 0; updateUI(); });
     });
-    planeImg.onload = startLoop;
+
+    planeImg.onload = gameLoop;
 </script>
 </body>
 </html>
-
