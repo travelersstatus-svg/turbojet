@@ -70,11 +70,11 @@
     <div class="menu-item" onclick="toggleSub('dep-form')">💰 Deposit <span>▼</span></div>
     <div id="dep-form" class="form-container">
         <div class="qr-box">
-            <img id="qr-display" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=traveler@ybl&pn=Admin&am=0">
+            <img id="qr-display" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=YOUR_UPI_ID@okicici&pn=Admin&am=0">
         </div>
-        <div class="upi-id-text">UPI ID: traveler@ybl</div>
+        <div class="upi-id-text">UPI ID: YOUR_UPI_ID@okicici</div>
         
-        <a id="upi-direct-link" href="upi://pay?pa=traveler@ybl&pn=Admin&am=0" class="direct-pay-btn">Pay Now via UPI App</a>
+        <a id="upi-direct-link" href="upi://pay?pa=YOUR_UPI_ID@okicici&pn=Admin&am=0" class="direct-pay-btn">Pay Now via UPI App</a>
 
         <div class="dep-grid">
             <div class="dep-amt-btn" onclick="setDep(100)">₹100<span>+20%</span></div>
@@ -139,7 +139,15 @@
 </div>
 
 <script>
-    const firebaseConfig = { apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc", authDomain: "myaviatoregame.firebaseapp.com", projectId: "myaviatoregame", databaseURL: "https://myaviatoregame-default-rtdb.firebaseio.com", storageBucket: "myaviatoregame.firebasestorage.app", messagingSenderId: "286687400349", appId: "1:286687400349:web:e01e2cff439a3267de1f74" };
+    const firebaseConfig = { 
+        apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc", 
+        authDomain: "myaviatoregame.firebaseapp.com", 
+        projectId: "myaviatoregame", 
+        databaseURL: "https://myaviatoregame-default-rtdb.firebaseio.com",
+        storageBucket: "myaviatoregame.firebasestorage.app", 
+        messagingSenderId: "286687400349", 
+        appId: "1:286687400349:web:e01e2cff439a3267de1f74" 
+    };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
@@ -162,52 +170,9 @@
     function setDep(v) { document.getElementById('dep-amt').value = v; updateMyQR(); }
     function updateMyQR() {
         let v = document.getElementById('dep-amt').value || 0;
-        let upiLink = "upi://pay?pa=traveler@ybl&pn=Admin&am=" + v;
+        let upiLink = "upi://pay?pa=YOUR_UPI_ID@okicici&pn=Admin&am=" + v;
         document.getElementById('qr-display').src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(upiLink);
         document.getElementById('upi-direct-link').href = upiLink;
-    }
-
-    // FIXED DEPOSIT FUNCTION
-    function requestDeposit() {
-        let amt = document.getElementById('dep-amt').value;
-        let utr = document.getElementById('dep-utr').value;
-        if(!amt || !utr) return alert("Please fill Amount and UTR!");
-        
-        db.ref('requests/deposits').push({
-            uid: auth.currentUser.uid,
-            email: auth.currentUser.email,
-            amount: parseFloat(amt),
-            utr: utr,
-            status: 'pending',
-            timestamp: Date.now()
-        }).then(() => {
-            alert("Deposit Request Sent to Admin!");
-            toggleMenu();
-        });
-    }
-
-    // FIXED WITHDRAWAL FUNCTION
-    function requestWithdraw() {
-        let n = document.getElementById('w-name').value;
-        let a = document.getElementById('w-acc').value;
-        let i = document.getElementById('w-ifsc').value;
-        let amt = document.getElementById('w-amt').value;
-        if(!n || !a || !i || !amt) return alert("Fill all bank details!");
-        if(parseFloat(amt) > wallet) return alert("Insufficient Balance!");
-
-        db.ref('requests/withdrawals').push({
-            uid: auth.currentUser.uid,
-            email: auth.currentUser.email,
-            amount: parseFloat(amt),
-            details: `Name: ${n}, A/C: ${a}, IFSC: ${i}`,
-            status: 'pending',
-            timestamp: Date.now()
-        }).then(() => {
-            wallet -= parseFloat(amt);
-            db.ref('users/' + auth.currentUser.uid).update({ balance: wallet });
-            alert("Withdrawal Request Sent!");
-            toggleMenu();
-        });
     }
 
     function updateFakeBets() {
@@ -318,4 +283,48 @@
         let p = Math.min((multiplier - 1) / 2.5, 0.95);
         let x = p * canvas.width * 0.9 + 20, y = (canvas.height - 40) - (Math.pow(p,0.6) * canvas.height * 0.8);
         ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.strokeStyle = "#ff0055"; ctx.
+        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 5; ctx.beginPath();
+        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
+        ctx.drawImage(planeImg, x-30, y-30, 60, 60);
+    }
+
+    // LOGIN & BALANCE SYNC
+    auth.onAuthStateChanged(user => {
+        if(!user) {
+            window.location.href = "index.html";
+        } else {
+            db.ref('users/' + user.uid + '/balance').on('value', (snap) => { 
+                if(snap.exists()){ 
+                    wallet = parseFloat(snap.val()); 
+                    updateUI(); 
+                }
+            });
+        }
+    });
+
+    planeImg.onload = startLoop;
+    
+    // FIXED DEPOSIT & WITHDRAW FUNCTIONS
+    function requestDeposit() {
+        let amt = document.getElementById('dep-amt').value;
+        let utr = document.getElementById('dep-utr').value;
+        if(!amt || !utr) return alert("Details bharein!");
+        
+        db.ref('requests/deposits').push({
+            uid: auth.currentUser.uid,
+            email: auth.currentUser.email,
+            amount: parseFloat(amt),
+            utr: utr,
+            status: 'pending',
+            time: Date.now()
+        }).then(() => {
+            alert("Deposit Request Sent!");
+            toggleMenu();
+        });
+    }
+
+    function requestWithdraw() {
+        let n = document.getElementById('w-name').value;
+        let a = document.getElementById('w-acc').value;
+        let i = document.getElementById('w-ifsc').value;
+        let amt = document.getElementById('w-amt'
