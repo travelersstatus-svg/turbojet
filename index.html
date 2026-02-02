@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviator - Login & Register</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <style>
+        body { background: #0a0e17; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .auth-card { background: #161d2b; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; border: 1px solid #252f44; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { color: #ff0055; text-align: center; margin-bottom: 25px; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #252f44; background: #05080f; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #28a745; color: white; font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
+        .switch-btn { background: transparent; color: #9ea0a3; font-size: 14px; text-decoration: underline; }
+        .error { color: #ff0055; font-size: 12px; margin-bottom: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="auth-card" id="auth-container">
+    <h2 id="auth-title">LOGIN</h2>
+    <div id="error-msg" class="error"></div>
+    
+    <input type="email" id="email" placeholder="Email Address">
+    <input type="password" id="password" placeholder="Password">
+    
+    <button id="main-btn" onclick="handleAuth()">Login Now</button>
+    <button class="switch-btn" id="toggle-btn" onclick="toggleAuth()">Don't have an account? Register</button>
+</div>
+
+<script>
+    // Firebase Config (Same as your game)
+    const firebaseConfig = { 
+        apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc", 
+        authDomain: "myaviatoregame.firebaseapp.com", 
+        projectId: "myaviatoregame", 
+        storageBucket: "myaviatoregame.firebasestorage.app", 
+        messagingSenderId: "286687400349", 
+        appId: "1:286687400349:web:e01e2cff439a3267de1f74" 
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.database();
+    let isLogin = true;
+
+    function toggleAuth() {
+        isLogin = !isLogin;
+        document.getElementById('auth-title').innerText = isLogin ? "LOGIN" : "REGISTER";
+        document.getElementById('main-btn').innerText = isLogin ? "Login Now" : "Create Account";
+        document.getElementById('toggle-btn').innerText = isLogin ? "Don't have an account? Register" : "Already have an account? Login";
+    }
+
+    function handleAuth() {
+        const email = document.getElementById('email').value;
+        const pass = document.getElementById('password').value;
+        const errorDiv = document.getElementById('error-msg');
+        errorDiv.innerText = "";
+
+        if(isLogin) {
+            // LOGIN LOGIC
+            auth.signInWithEmailAndPassword(email, pass)
+            .then((userCredential) => {
+                const user = userCredential.user;
+                if(user.emailVerified) {
+                    window.location.href = "game.html"; // Redirect to game
+                } else {
+                    errorDiv.innerText = "Please verify your email first! Check your inbox.";
+                    auth.signOut();
+                }
+            })
+            .catch((error) => { errorDiv.innerText = error.message; });
+        } else {
+            // REGISTER LOGIC
+            auth.createUserWithEmailAndPassword(email, pass)
+            .then((userCredential) => {
+                const user = userCredential.user;
+                
+                // Set initial balance in database
+                db.ref('users/' + user.uid).set({
+                    email: email,
+                    balance: 0
+                });
+
+                // Send Verification Email
+                user.sendEmailVerification().then(() => {
+                    alert("Verification email sent! Please check your inbox and verify before logging in.");
+                    toggleAuth();
+                });
+            })
+            .catch((error) => { errorDiv.innerText = error.message; });
+        }
+    }
+
+    // Check if already logged in
+    auth.onAuthStateChanged((user) => {
+        if (user && user.emailVerified) {
+            window.location.href = "game.html";
+        }
+    });
+</script>
+</body>
+</html>
+
