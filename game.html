@@ -18,6 +18,12 @@
         .f-input { width: 100%; padding: 10px; margin-top: 8px; border-radius: 5px; border: 1px solid #444; background: #000; color: white; }
         .f-btn { background: var(--win-green); color: white; border: none; padding: 10px; margin-top: 10px; border-radius: 5px; width: 100%; font-weight: bold; cursor: pointer; }
 
+        .dep-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
+        .dep-amt-btn { background: #1c2538; border: 1px solid #252f44; color: white; padding: 6px 0; border-radius: 5px; font-size: 10px; cursor: pointer; text-align: center; }
+        .qr-box { text-align: center; background: #fff; padding: 10px; border-radius: 10px; margin-top: 10px; }
+        .qr-box img { width: 140px; height: 140px; }
+        .upi-id-text { background: #1c2538; padding: 8px; border-radius: 5px; margin-top: 5px; font-size: 12px; color: var(--gold); text-align: center; border: 1px dashed var(--gold); }
+
         .top-nav { background: #0f1521; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
         .balance-box { background: #000; border: 2px solid var(--win-green); padding: 6px 18px; border-radius: 20px; color: var(--win-green); font-weight: bold; font-size: 16px; }
 
@@ -46,16 +52,37 @@
         .live-section { margin: 10px; background: var(--panel-bg); border-radius: 15px; font-size: 10px; border: 1px solid #252f44; min-height: 200px; }
         .live-header { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; padding: 8px 10px; background: #0f1521; font-weight: bold; }
         .live-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; padding: 6px 10px; border-bottom: 1px solid #1a2233; }
+        .user-col { color: #9ea0a3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .win-col { color: var(--win-green); font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="side-menu">
     <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>MENU</b> <span onclick="toggleMenu()" style="cursor:pointer">✕</span></div>
+    
     <div class="menu-item" onclick="toggleSub('dep-form')">💰 Deposit <span>▼</span></div>
     <div id="dep-form" class="form-container">
+        <div class="qr-box"><img id="qr-display" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=demo@upi"></div>
+        <div class="upi-id-text">UPI: demo@upi</div>
+        <div class="dep-grid">
+            <div class="dep-amt-btn" onclick="setDep(100)">100</div>
+            <div class="dep-amt-btn" onclick="setDep(200)">200</div>
+            <div class="dep-amt-btn" onclick="setDep(500)">500</div>
+            <div class="dep-amt-btn" onclick="setDep(1000)">1000</div>
+        </div>
         <input type="number" id="dep-amt" class="f-input" placeholder="Amount">
-        <button class="f-btn" onclick="alert('Sent')">Submit</button>
+        <input type="text" id="dep-utr" class="f-input" placeholder="UTR Number">
+        <button class="f-btn" onclick="requestDeposit()">Submit</button>
+    </div>
+
+    <div class="menu-item" onclick="toggleSub('with-form')">🏦 Withdrawal <span>▼</span></div>
+    <div id="with-form" class="form-container">
+        <input type="text" id="w-name" class="f-input" placeholder="Account Holder Name">
+        <input type="text" id="w-acc" class="f-input" placeholder="Bank Account Number">
+        <input type="text" id="w-ifsc" class="f-input" placeholder="IFSC Code">
+        <input type="number" id="w-amt" class="f-input" placeholder="Amount">
+        <button class="f-btn" onclick="requestWithdraw()">Submit Withdrawal</button>
     </div>
     <button class="f-btn" style="background:#d11348; margin-top:20px;" onclick="firebase.auth().signOut()">LOGOUT</button>
 </div>
@@ -114,8 +141,8 @@
     const planeImg = new Image();
     planeImg.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNMzIgMjU2TDE2MCAxOTJMMjI0IDMyLDI4OCAxOTJMNTAwIDI1NkwyODggMzI0TDIyNCA0ODBMMTYwIDMyNEwzMiAyNTZ6IiBmaWxsPSIjZmYwMDQ0Ii8+PC9zdmc+";
 
-    // --- CRITICAL FIX: REAL-TIME SYNC ---
-    function syncEngine() {
+    // --- GAME ENGINE SYNC ---
+    function startSync() {
         db.ref('gameState').on('value', snap => {
             const state = snap.val();
             if(!state) return;
@@ -129,14 +156,14 @@
                 document.getElementById('countdown').innerText = "NEXT ROUND IN " + (state.timer || 0) + "s";
                 if(state.status === 'crashed') {
                     document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
-                    activeBets[1] = activeBets[2] = null;
+                    activeBets[1] = activeBets[2] = null; // Reset bets
                 }
             } else {
                 document.getElementById('flew-away').style.display = 'none';
                 document.getElementById('countdown').style.display = 'none';
                 document.getElementById('multiplier-text').style.display = 'block';
                 document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
-                draw(); // Keep plane moving
+                draw(); // Draw plane movement
                 checkAutoCashout();
             }
             updateUI();
@@ -150,7 +177,9 @@
     function checkAutoCashout() {
         [1,2].forEach(p => {
             if(document.getElementById('auto-cash-tick-'+p).checked && activeBets[p] && !activeBets[p].cashed) {
-                if(multiplier >= parseFloat(document.getElementById('auto-cash-val-'+p).value)) cashout(p);
+                if(multiplier >= parseFloat(document.getElementById('auto-cash-val-'+p).value)) {
+                    cashout(p);
+                }
             }
         });
     }
@@ -165,14 +194,20 @@
     }
 
     function handleBet(p) {
-        if(isFlying) { cashout(p); return; }
+        if(isFlying) {
+            cashout(p);
+            return;
+        }
         let amt = parseInt(document.getElementById('amt-'+p).value);
         if (amt <= wallet && !activeBets[p]) {
-            wallet -= amt; activeBets[p] = { amt, cashed: false };
+            wallet -= amt;
+            activeBets[p] = { amt, cashed: false };
+            db.ref('users/' + currentUser.uid).update({ balance: wallet });
         } else if (activeBets[p]) {
-            wallet += activeBets[p].amt; activeBets[p] = null;
+            wallet += activeBets[p].amt;
+            activeBets[p] = null;
+            db.ref('users/' + currentUser.uid).update({ balance: wallet });
         }
-        db.ref('users/' + currentUser.uid).update({ balance: wallet });
         updateUI();
     }
 
@@ -180,19 +215,9 @@
         if (user) { 
             currentUser = user; 
             db.ref('users/' + user.uid + '/balance').on('value', snap => { wallet = parseFloat(snap.val()) || 0; updateUI(); });
-            syncEngine(); 
+            startSync(); // Start synchronization
         } else { window.location.href = "login.html"; }
     });
-
-    function draw() {
-        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-        let p = Math.min((multiplier - 1) / 5, 0.95);
-        let x = p * canvas.width * 0.9 + 20, y = (canvas.height - 40) - (Math.pow(p,0.6) * canvas.height * 0.8);
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 5; ctx.beginPath();
-        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
-        ctx.drawImage(planeImg, x-30, y-30, 60, 60);
-    }
 
     function updateUI() {
         document.getElementById('bal-text').innerText = wallet.toFixed(2);
@@ -207,6 +232,16 @@
                 btn.className = "main-btn";
             }
         });
+    }
+
+    function draw() {
+        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+        let p = Math.min((multiplier - 1) / 5, 0.95);
+        let x = p * canvas.width * 0.9 + 20, y = (canvas.height - 40) - (Math.pow(p,0.6) * canvas.height * 0.8);
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 5; ctx.beginPath();
+        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
+        ctx.drawImage(planeImg, x-30, y-30, 60, 60);
     }
 
     function toggleMenu() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
