@@ -45,9 +45,15 @@
 
         .bet-container { display: flex; flex-direction: row; gap: 8px; padding: 10px; width: 100%; }
         .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 15px; border: 1px solid #252f44; width: 50%; }
-        .auto-row { display: flex; justify-content: space-between; align-items: center; font-size: 8px; margin-bottom: 5px; }
+        .auto-row { display: flex; justify-content: space-between; align-items: center; font-size: 9px; margin-bottom: 8px; background: #000; padding: 5px; border-radius: 5px; }
         .input-box { background: #000; border: 1px solid #444; border-radius: 20px; display: flex; justify-content: space-between; padding: 4px 10px; align-items: center; margin-bottom: 8px; }
-        .input-box input { background: none; border: none; color: #fff; width: 45px; text-align: center; font-size: 14px; outline: none; }
+        .input-box input { background: none; border: none; color: #fff; width: 55px; text-align: center; font-size: 14px; outline: none; }
+        .input-box button { background: #252f44; border: none; color: white; width: 25px; height: 25px; border-radius: 50%; cursor: pointer; }
+        
+        .chip-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 8px; }
+        .chip-btn { background: #1c2538; border: 1px solid #333; color: white; padding: 4px 0; border-radius: 5px; font-size: 10px; cursor: pointer; }
+        .chip-btn:active { background: #333; }
+
         .main-btn { width: 100%; height: 45px; border: none; border-radius: 10px; font-weight: bold; color: white; background: var(--win-green); font-size: 14px; cursor: pointer; }
         .btn-cashout { background: var(--btn-orange) !important; }
         .btn-waiting { background: #333 !important; color: #f1c40f; }
@@ -111,13 +117,46 @@
 
 <div class="bet-container">
     <div class="bet-card">
-        <div class="auto-row"><label><input type="checkbox" id="auto-play-1"> Auto</label><label><input type="checkbox" id="auto-cash-tick-1"> Cashout</label><input type="number" id="auto-cash-val-1" value="2.00" step="0.1" style="width:30px; background:#000; color:white; border:none; font-size:10px;"></div>
-        <div class="input-box"><button onclick="adj(1,-10)">-</button><input type="number" id="amt-1" value="100"><button onclick="adj(1,10)">+</button></div>
+        <div class="auto-row">
+            <label><input type="checkbox" id="auto-play-1"> Auto</label>
+            <label><input type="checkbox" id="auto-cash-tick-1"> Cashout</label>
+            <input type="number" id="auto-cash-val-1" value="2.00" step="0.1" style="width:35px; background:#111; color:var(--win-green); border:none; font-size:10px;">
+        </div>
+        <div class="input-box">
+            <button onclick="adj(1,-10)">-</button>
+            <input type="number" id="amt-1" value="10">
+            <button onclick="adj(1,10)">+</button>
+        </div>
+        <div class="chip-grid">
+            <button class="chip-btn" onclick="setAmt(1, 10)">10</button>
+            <button class="chip-btn" onclick="setAmt(1, 100)">100</button>
+            <button class="chip-btn" onclick="setAmt(1, 200)">200</button>
+            <button class="chip-btn" onclick="setAmt(1, 300)">300</button>
+            <button class="chip-btn" onclick="setAmt(1, 500)">500</button>
+            <button class="chip-btn" onclick="setAmt(1, 1000)">1000</button>
+        </div>
         <button id="btn-1" class="main-btn" onclick="handleBet(1)">BET</button>
     </div>
+
     <div class="bet-card">
-        <div class="auto-row"><label><input type="checkbox" id="auto-play-2"> Auto</label><label><input type="checkbox" id="auto-cash-tick-2"> Cashout</label><input type="number" id="auto-cash-val-2" value="2.00" step="0.1" style="width:30px; background:#000; color:white; border:none; font-size:10px;"></div>
-        <div class="input-box"><button onclick="adj(2,-10)">-</button><input type="number" id="amt-2" value="100"><button onclick="adj(2,10)">+</button></div>
+        <div class="auto-row">
+            <label><input type="checkbox" id="auto-play-2"> Auto</label>
+            <label><input type="checkbox" id="auto-cash-tick-2"> Cashout</label>
+            <input type="number" id="auto-cash-val-2" value="2.00" step="0.1" style="width:35px; background:#111; color:var(--win-green); border:none; font-size:10px;">
+        </div>
+        <div class="input-box">
+            <button onclick="adj(2,-10)">-</button>
+            <input type="number" id="amt-2" value="10">
+            <button onclick="adj(2,10)">+</button>
+        </div>
+        <div class="chip-grid">
+            <button class="chip-btn" onclick="setAmt(2, 10)">10</button>
+            <button class="chip-btn" onclick="setAmt(2, 100)">100</button>
+            <button class="chip-btn" onclick="setAmt(2, 200)">200</button>
+            <button class="chip-btn" onclick="setAmt(2, 300)">300</button>
+            <button class="chip-btn" onclick="setAmt(2, 500)">500</button>
+            <button class="chip-btn" onclick="setAmt(2, 1000)">1000</button>
+        </div>
         <button id="btn-2" class="main-btn" onclick="handleBet(2)">BET</button>
     </div>
 </div>
@@ -150,7 +189,6 @@
     const planeImg = new Image();
     planeImg.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNMzIgMjU2TDE2MCAxOTJMMjI0IDMyLDI4OCAxOTJMNTAwIDI1NkwyODggMzI0TDIyNCA0ODBMMTYwIDMyNEwzMiAyNTZ6IiBmaWxsPSIjZmYwMDQ0Ii8+PC9zdmc+";
 
-    // AUTH CHECK
     auth.onAuthStateChanged(user => {
         if (user) {
             currentUser = user;
@@ -165,7 +203,10 @@
     function toggleSub(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
     function getChipClass(val) { if(val >= 10) return 'chip-gold'; if(val >= 2) return 'chip-green'; return ''; }
     function toggleFullHist() { const f = document.getElementById('full-history'); f.style.display = f.style.display === 'block' ? 'none' : 'block'; f.innerHTML = results.map(r => `<span class="hist-chip ${getChipClass(r)}" style="margin:2px">${r}x</span>`).join(''); }
+    
+    // Updated functions for bet amounts
     function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value) + v); }
+    function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
 
     function setDep(v) { document.getElementById('dep-amt').value = v; updateMyQR(); }
     function updateMyQR() {
@@ -280,25 +321,4 @@
             document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
             [1,2].forEach(p => {
                 if(document.getElementById('auto-cash-tick-'+p).checked && activeBets[p] && !activeBets[p].cashed) {
-                    if(multiplier >= parseFloat(document.getElementById('auto-cash-val-'+p).value)) cashOut(p);
-                }
-            });
-            draw(); updateUI(); requestAnimationFrame(anim);
-        };
-        requestAnimationFrame(anim);
-    }
-
-    function draw() {
-        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-        let p = Math.min((multiplier - 1) / 2.5, 0.95);
-        let x = p * canvas.width * 0.9 + 20, y = (canvas.height - 40) - (Math.pow(p,0.6) * canvas.height * 0.8);
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 5; ctx.beginPath();
-        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
-        ctx.drawImage(planeImg, x-30, y-30, 60, 60);
-    }
-
-    planeImg.onload = startLoop;
-</script>
-</body>
-</html>
+       
