@@ -137,7 +137,9 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth(), db = firebase.database();
 
+    // Variables
     let wallet = 0, multiplier = 1.0, isFlying = false, currentUser = null;
+    let serverTimeOffset = 0; 
     let results = [1.50, 2.33, 1.08, 4.20, 1.15, 5.00, 1.01, 2.10];
     let activeBets = { 1: null, 2: null }, queuedBets = { 1: null, 2: null };
     const canvas = document.getElementById('gameCanvas');
@@ -145,11 +147,37 @@
     const planeImg = new Image();
     planeImg.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNMzIgMjU2TDE2MCAxOTJMMjI0IDMyLDI4OCAxOTJMNTAwIDI1NkwyODggMzI0TDIyNCA0ODBMMTYwIDMyNEwzMiAyNTZ6IiBmaWxsPSIjZmYwMDQ0Ii8+PC9zdmc+";
 
+    // --- Firebase Sync Logic ---
     auth.onAuthStateChanged(user => {
-        if (user) { currentUser = user; db.ref('users/' + user.uid + '/balance').on('value', snap => { wallet = parseFloat(snap.val()) || 0; updateUI(); }); }
-        else { window.location.href = "index.html"; }
+        if (user) { 
+            currentUser = user; 
+            db.ref('users/' + user.uid + '/balance').on('value', snap => { wallet = parseFloat(snap.val()) || 0; updateUI(); }); 
+        } else { window.location.href = "index.html"; }
     });
 
+    db.ref(".info/serverTimeOffset").on("value", (snap) => { serverTimeOffset = snap.val(); });
+
+    db.ref('game_state').on('value', (snap) => {
+        const data = snap.val();
+        if (!data) { if (currentUser) startLoop(); return; }
+
+        const now = Date.now() + serverTimeOffset;
+        const startTime = data.startTime;
+        const waitTime = 5000; 
+
+        if (now < startTime + waitTime) {
+            isFlying = false;
+            let remaining = Math.ceil((startTime + waitTime - now) / 1000);
+            document.getElementById('countdown').innerText = "NEXT ROUND IN " + remaining + "s";
+            document.getElementById('countdown').style.display = 'block';
+            document.getElementById('multiplier-text').style.display = 'none';
+            document.getElementById('flew-away').style.display = 'none';
+        } else if (!isFlying) {
+            runFlight(data.crashPoint, startTime + waitTime);
+        }
+    });
+
+    // --- UI Helpers ---
     function toggleMenu() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
     function toggleSub(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
     function setDep(v) { document.getElementById('dep-amt').value = v; }
@@ -183,6 +211,64 @@
         });
     }
 
+    // --- Core Game Functions ---
+    function startLoop() {
+        if (isFlying) return;
+        let newStartTime = Date.now() + serverTimeOffset;
+        let newCrashPoint = (1 + Math.pow(Math.random(), 3) * 15).toFixed(2);
+        generateFakeUsers();
+        
+        db.ref('game_state').set({
+            startTime: newStartTime,
+            crashPoint: newCrashPoint
+        });
+    }
+
+    function runFlight(crashPoint, actualStartTime) {
+        isFlying = true;
+        document.getElementById('countdown').style.display = 'none';
+        document.getElementById('multiplier-text').style.display = 'block';
+        
+        let anim = () => {
+            if(!isFlying) return;
+            const now = Date.now() + serverTimeOffset;
+            const elapsed = (now - actualStartTime) / 1000; 
+            if (elapsed < 0) { requestAnimationFrame(anim); return; }
+
+            multiplier = Math.pow(1.15, elapsed); 
+
+            if(multiplier >= crashPoint) {
+                isFlying = false; 
+                document.getElementById('flew-away').style.display = 'block';
+                document.getElementById('multiplier-text').innerText = crashPoint + "x";
+                results.unshift(parseFloat(crashPoint));
+                if(results.length > 40) results.pop();
+                activeBets[1] = activeBets[2] = null;
+                if(currentUser) db.ref('users/' + currentUser.uid).update({ balance: wallet });
+                updateUI(); 
+                setTimeout(startLoop, 3000); 
+                return;
+            }
+            
+            document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
+            
+            // Auto Cashout check
+            [1,2].forEach(p => {
+                if(document.getElementById('auto-cash-tick-'+p).checked && activeBets[p] && !activeBets[p].cashed) {
+                    if(multiplier >= parseFloat(document.getElementById('auto-cash-val-'+p).value)) {
+                        wallet += (activeBets[p].amt * multiplier); activeBets[p].cashed = true;
+                        db.ref('users/' + currentUser.uid).update({ balance: wallet });
+                    }
+                }
+            });
+
+            draw(); 
+            updateUI();
+            requestAnimationFrame(anim);
+        };
+        requestAnimationFrame(anim);
+    }
+
     function handleBet(p) {
         let amt = parseInt(document.getElementById('amt-'+p).value);
         if (!isFlying) {
@@ -197,27 +283,13 @@
         updateUI();
     }
 
-    function requestWithdraw() {
-        const n = document.getElementById('w-name').value, a = document.getElementById('w-acc').value, i = document.getElementById('w-ifsc').value, am = parseFloat(document.getElementById('w-amt').value);
-        if(!n || !a || !i || !am) return alert("All fields required!");
-        if(am > wallet) return alert("Insufficient balance!");
-        db.ref('requests/withdrawals').push({ uid: currentUser.uid, name: n, acc: a, ifsc: i, amount: am, status: "pending", time: new Date().toLocaleString() });
-        alert("Request Sent!");
-    }
-       // --- Fixed Deposit Function ---
+    // --- Transactions ---
     function requestDeposit() {
         const amt = document.getElementById('dep-amt').value;
         const utr = document.getElementById('dep-utr').value;
+        if(!amt || !utr) return alert("Please enter Amount and UTR Number!");
+        if(amt < 100) return alert("Minimum deposit is 100");
 
-        if(!amt || !utr) {
-            return alert("Please enter Amount and UTR Number!");
-        }
-
-        if(amt < 100) {
-            return alert("Minimum deposit is 100");
-        }
-
-        // Firebase mein data bhej raha hai admin approval ke liye
         db.ref('requests/deposits').push({
             uid: currentUser.uid,
             email: currentUser.email,
@@ -226,91 +298,45 @@
             status: "pending",
             time: new Date().toLocaleString()
         }).then(() => {
-            alert("Deposit Request Submitted! Waiting for Admin Approval.");
-            // Form reset
+            alert("Deposit Request Submitted!");
             document.getElementById('dep-amt').value = '';
             document.getElementById('dep-utr').value = '';
-            toggleSub('dep-form'); // Form close
-        }).catch((error) => {
-            alert("Error: " + error.message);
+            toggleSub('dep-form');
         });
     }
-    
 
-    function startLoop() {
-        isFlying = false; multiplier = 1.0;
-        document.getElementById('flew-away').style.display = 'none';
-        document.getElementById('multiplier-text').style.display = 'none';
-        document.getElementById('countdown').style.display = 'block';
-        generateFakeUsers();
-        [1,2].forEach(p => {
-            if(queuedBets[p]) { activeBets[p] = { amt: queuedBets[p].amt, cashed: false }; queuedBets[p] = null; }
-            if(document.getElementById('auto-play-'+p).checked && !activeBets[p]) {
-                let amt = parseInt(document.getElementById('amt-'+p).value);
-                if(amt <= wallet) { wallet -= amt; activeBets[p] = { amt, cashed: false }; }
-            }
-        });
-        let t = 5;
-        let timer = setInterval(() => {
-            document.getElementById('countdown').innerText = "NEXT ROUND IN " + t + "s";
-            if(t <= 0) { clearInterval(timer); runFlight(); }
-            t--;
-        }, 1000);
-        updateUI();
-    }
-
-    function runFlight() {
-        isFlying = true;
-        document.getElementById('countdown').style.display = 'none';
-        document.getElementById('multiplier-text').style.display = 'block';
-        let crashPoint = (1 + Math.pow(Math.random(), 3) * 12).toFixed(2);
-        
-        let anim = () => {
-            if(!isFlying) return;
-            if(multiplier >= crashPoint) {
-                isFlying = false; document.getElementById('flew-away').style.display = 'block';
-                results.unshift(parseFloat(multiplier.toFixed(2)));
-                if(results.length > 40) results.pop();
-                activeBets[1] = activeBets[2] = null;
-                db.ref('users/' + currentUser.uid).update({ balance: wallet });
-                updateUI(); setTimeout(startLoop, 3000); return;
-            }
-            multiplier += (multiplier < 2) ? 0.003 : 0.006;
-            document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
-            
-            // Randomly cash out fake users
-            for(let i=0; i<12; i++) {
-                if(Math.random() < 0.01 && document.getElementById('fake-m-'+i).innerText === "-") {
-                    document.getElementById('fake-m-'+i).innerText = multiplier.toFixed(2) + "x";
-                    document.getElementById('fake-w-'+i).innerText = "₹" + (Math.random()*1000).toFixed(0);
-                    document.getElementById('fake-w-'+i).classList.add('win-col');
-                }
-            }
-
-            [1,2].forEach(p => {
-                if(document.getElementById('auto-cash-tick-'+p).checked && activeBets[p] && !activeBets[p].cashed) {
-                    if(multiplier >= parseFloat(document.getElementById('auto-cash-val-'+p).value)) {
-                        wallet += (activeBets[p].amt * multiplier); activeBets[p].cashed = true;
-                    }
-                }
-            });
-            draw(); updateUI(); requestAnimationFrame(anim);
-        };
-        requestAnimationFrame(anim);
+function requestWithdraw() {
+        const n = document.getElementById('w-name').value, a = document.getElementById('w-acc').value, i = document.getElementById('w-ifsc').value, am = parseFloat(document.getElementById('w-amt').value);
+        if(!n || !a || !i || !am) return alert("All fields required!");
+        if(am > wallet) return alert("Insufficient balance!");
+        db.ref('requests/withdrawals').push({ uid: currentUser.uid, name: n, acc: a, ifsc: i, amount: am, status: "pending", time: new Date().toLocaleString() });
+        alert("Request Sent!");
     }
 
     function draw() {
         canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-        let p = Math.min((multiplier - 1) / 5, 0.95);
+        let p = Math.min((multiplier - 1) / 10, 0.95);
         let x = p * canvas.width * 0.9 + 20, y = (canvas.height - 40) - (Math.pow(p,0.6) * canvas.height * 0.8);
         ctx.clearRect(0,0,canvas.width,canvas.height);
         ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 5; ctx.beginPath();
         ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
         ctx.drawImage(planeImg, x-30, y-30, 60, 60);
     }
-    planeImg.onload = startLoop;
+
+    planeImg.onload = () => { console.log("Aviator Ready"); };
 </script>
 </body>
-    </html>
-    
+</html>
 
+
+
+
+
+
+
+
+
+
+
+
+                                             
