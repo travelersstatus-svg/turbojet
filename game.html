@@ -46,7 +46,6 @@
         .live-section { margin: 10px; background: var(--panel-bg); border-radius: 15px; font-size: 10px; border: 1px solid #252f44; min-height: 200px; }
         .live-header { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; padding: 8px 10px; background: #0f1521; font-weight: bold; }
         .live-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; padding: 6px 10px; border-bottom: 1px solid #1a2233; }
-        .user-col { color: #9ea0a3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -84,13 +83,13 @@
 
 <div class="bet-container">
     <div class="bet-card">
-        <div class="auto-row"><label><input type="checkbox" id="auto-play-1"> Auto</label></div>
+        <div class="auto-row"><label><input type="checkbox" id="auto-play-1"> Auto</label><label><input type="checkbox" id="auto-cash-tick-1"> Cash <input type="number" id="auto-cash-val-1" value="2.00" style="width:30px;"></label></div>
         <div class="amt-row"><button class="amt-btn" onclick="setAmt(1,10)">10</button><button class="amt-btn" onclick="setAmt(1,50)">50</button><button class="amt-btn" onclick="setAmt(1,100)">100</button></div>
         <div class="input-box"><button onclick="adj(1,-10)">-</button><input type="number" id="amt-1" value="100"><button onclick="adj(1,10)">+</button></div>
         <button id="btn-1" class="main-btn" onclick="handleBet(1)">BET</button>
     </div>
     <div class="bet-card">
-        <div class="auto-row"><label><input type="checkbox" id="auto-play-2"> Auto</label></div>
+        <div class="auto-row"><label><input type="checkbox" id="auto-play-2"> Auto</label><label><input type="checkbox" id="auto-cash-tick-2"> Cash <input type="number" id="auto-cash-val-2" value="2.00" style="width:30px;"></label></div>
         <div class="amt-row"><button class="amt-btn" onclick="setAmt(2,10)">10</button><button class="amt-btn" onclick="setAmt(2,50)">50</button><button class="amt-btn" onclick="setAmt(2,100)">100</button></div>
         <div class="input-box"><button onclick="adj(2,-10)">-</button><input type="number" id="amt-2" value="100"><button onclick="adj(2,10)">+</button></div>
         <button id="btn-2" class="main-btn" onclick="handleBet(2)">BET</button>
@@ -103,15 +102,7 @@
 </div>
 
 <script>
-    const firebaseConfig = { 
-        apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc", 
-        authDomain: "myaviatoregame.firebaseapp.com", 
-        projectId: "myaviatoregame", 
-        databaseURL: "https://myaviatoregame-default-rtdb.firebaseio.com", 
-        storageBucket: "myaviatoregame.firebasestorage.app", 
-        messagingSenderId: "286687400349", 
-        appId: "1:286687400349:web:e01e2cff439a3267de1f74" 
-    };
+    const firebaseConfig = { apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc", authDomain: "myaviatoregame.firebaseapp.com", projectId: "myaviatoregame", databaseURL: "https://myaviatoregame-default-rtdb.firebaseio.com", storageBucket: "myaviatoregame.firebasestorage.app", messagingSenderId: "286687400349", appId: "1:286687400349:web:e01e2cff439a3267de1f74" };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth(), db = firebase.database();
 
@@ -123,8 +114,8 @@
     const planeImg = new Image();
     planeImg.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNMzIgMjU2TDE2MCAxOTJMMjI0IDMyLDI4OCAxOTJMNTAwIDI1NkwyODggMzI0TDIyNCA0ODBMMTYwIDMyNEwzMiAyNTZ6IiBmaWxsPSIjZmYwMDQ0Ii8+PC9zdmc+";
 
-    function syncGame() {
-        // Multiplier & Status Sync from Database
+    // --- CRITICAL FIX: REAL-TIME SYNC ---
+    function syncEngine() {
         db.ref('gameState').on('value', snap => {
             const state = snap.val();
             if(!state) return;
@@ -145,41 +136,43 @@
                 document.getElementById('countdown').style.display = 'none';
                 document.getElementById('multiplier-text').style.display = 'block';
                 document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
-                draw();
+                draw(); // Keep plane moving
+                checkAutoCashout();
             }
             updateUI();
         });
 
-        // History Sync (Real Results)
         db.ref('gameHistory').limitToLast(15).on('value', snap => {
-            const data = snap.val();
-            if(data) {
-                results = Object.values(data).reverse();
-                updateUI();
+            if(snap.val()) { results = Object.values(snap.val()).reverse(); updateUI(); }
+        });
+    }
+
+    function checkAutoCashout() {
+        [1,2].forEach(p => {
+            if(document.getElementById('auto-cash-tick-'+p).checked && activeBets[p] && !activeBets[p].cashed) {
+                if(multiplier >= parseFloat(document.getElementById('auto-cash-val-'+p).value)) cashout(p);
             }
         });
     }
 
-    function handleBet(p) {
-        if(isFlying) {
-            if(activeBets[p] && !activeBets[p].cashed) {
-                let win = activeBets[p].amt * multiplier;
-                wallet += win;
-                activeBets[p].cashed = true;
-                db.ref('users/' + currentUser.uid).update({ balance: wallet });
-            }
-            return;
+    function cashout(p) {
+        if(activeBets[p] && !activeBets[p].cashed && isFlying) {
+            wallet += (activeBets[p].amt * multiplier);
+            activeBets[p].cashed = true;
+            db.ref('users/' + currentUser.uid).update({ balance: wallet });
+            updateUI();
         }
+    }
+
+    function handleBet(p) {
+        if(isFlying) { cashout(p); return; }
         let amt = parseInt(document.getElementById('amt-'+p).value);
         if (amt <= wallet && !activeBets[p]) {
-            wallet -= amt;
-            activeBets[p] = { amt, cashed: false };
-            db.ref('users/' + currentUser.uid).update({ balance: wallet });
+            wallet -= amt; activeBets[p] = { amt, cashed: false };
         } else if (activeBets[p]) {
-            wallet += activeBets[p].amt;
-            activeBets[p] = null;
-            db.ref('users/' + currentUser.uid).update({ balance: wallet });
+            wallet += activeBets[p].amt; activeBets[p] = null;
         }
+        db.ref('users/' + currentUser.uid).update({ balance: wallet });
         updateUI();
     }
 
@@ -187,9 +180,19 @@
         if (user) { 
             currentUser = user; 
             db.ref('users/' + user.uid + '/balance').on('value', snap => { wallet = parseFloat(snap.val()) || 0; updateUI(); });
-            syncGame(); 
+            syncEngine(); 
         } else { window.location.href = "login.html"; }
     });
+
+    function draw() {
+        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+        let p = Math.min((multiplier - 1) / 5, 0.95);
+        let x = p * canvas.width * 0.9 + 20, y = (canvas.height - 40) - (Math.pow(p,0.6) * canvas.height * 0.8);
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 5; ctx.beginPath();
+        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
+        ctx.drawImage(planeImg, x-30, y-30, 60, 60);
+    }
 
     function updateUI() {
         document.getElementById('bal-text').innerText = wallet.toFixed(2);
@@ -204,16 +207,6 @@
                 btn.className = "main-btn";
             }
         });
-    }
-
-    function draw() {
-        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-        let p = Math.min((multiplier - 1) / 5, 0.95);
-        let x = p * canvas.width * 0.9 + 20, y = (canvas.height - 40) - (Math.pow(p,0.6) * canvas.height * 0.8);
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 5; ctx.beginPath();
-        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
-        ctx.drawImage(planeImg, x-30, y-30, 60, 60);
     }
 
     function toggleMenu() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
