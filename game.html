@@ -2,262 +2,170 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviator Pro Max</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Admin - Aviator Control</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
-        :root { --bg-dark: #0a0e17; --panel-bg: #161d2b; --win-green: #28a745; --accent-red: #d11348; --btn-orange: #d97706; --text-gray: #9ea0a3; --gold: #ffc107; }
-        * { box-sizing: border-box; }
-        body { background: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; padding: 0; overflow-x: hidden; -webkit-user-select: none; user-select: none; }
-        
-        /* Side Menu & Forms */
-        #side-menu { position: fixed; top: 0; right: -100%; width: 85%; height: 100%; background: #0f1521; z-index: 5000; transition: 0.4s; padding: 20px; border-left: 1px solid #252f44; overflow-y: auto; }
-        .menu-item { padding: 15px; background: #161d2b; border-radius: 10px; margin-bottom: 10px; font-size: 14px; display: flex; justify-content: space-between; border: 1px solid #252f44; cursor: pointer; }
-        .form-container { display: none; background: #05080f; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #252f44; }
-        .f-input { width: 100%; padding: 10px; margin-top: 8px; border-radius: 5px; border: 1px solid #444; background: #000; color: white; }
-        .f-btn { background: var(--win-green); color: white; border: none; padding: 10px; margin-top: 10px; border-radius: 5px; width: 100%; font-weight: bold; cursor: pointer; }
-
-        /* Grid Layouts */
-        .dep-grid, .bet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 8px; }
-        .amt-pill { background: #1c2538; border: 1px solid #333; color: white; padding: 5px; border-radius: 5px; font-size: 10px; text-align: center; cursor: pointer; }
-
-        /* Navigation */
-        .top-nav { background: #0f1521; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
-        .balance-box { background: #000; border: 2px solid var(--win-green); padding: 6px 18px; border-radius: 20px; color: var(--win-green); font-weight: bold; font-size: 16px; }
-
-        /* Game Display */
-        .display-area { position: relative; height: 220px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 70%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; overflow: hidden; }
-        #multiplier-text { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 4rem; font-weight: 900; z-index: 10; }
-        #flew-away { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); color: #ff0055; font-size: 1.8rem; font-weight: bold; display: none; z-index: 11; }
-        #countdown { position: absolute; bottom: 20px; width: 100%; text-align: center; color: var(--win-green); font-weight: bold; font-size: 15px; z-index: 12; }
-
-        /* Bet Section */
-        .bet-container { display: flex; flex-direction: row; gap: 8px; padding: 10px; width: 100%; }
-        .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 15px; border: 1px solid #252f44; width: 50%; }
-        .input-box { background: #000; border: 1px solid #444; border-radius: 20px; display: flex; justify-content: space-between; padding: 4px 10px; align-items: center; margin-bottom: 8px; }
-        .input-box input { background: none; border: none; color: #fff; width: 50px; text-align: center; font-size: 14px; outline: none; }
-        .main-btn { width: 100%; height: 45px; border: none; border-radius: 10px; font-weight: bold; color: white; background: var(--win-green); font-size: 14px; cursor: pointer; }
-        .btn-cashout { background: var(--btn-orange) !important; }
-
-        /* Live Section */
-        .live-section { margin: 10px; background: var(--panel-bg); border-radius: 15px; font-size: 10px; border: 1px solid #252f44; min-height: 200px; }
-        .live-header { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; padding: 8px 10px; background: #0f1521; font-weight: bold; }
-        .live-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; padding: 6px 10px; border-bottom: 1px solid #1a2233; color: #9ea0a3; }
-        .win-row { color: #fff; background: rgba(40, 167, 69, 0.1); }
+        body { background: #05080f; color: white; font-family: sans-serif; padding: 15px; margin: 0; }
+        .section-card { background: #161d2b; border: 1px solid #252f44; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
+        h2 { color: #ff0055; border-bottom: 1px solid #252f44; padding-bottom: 10px; margin-top: 0; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #252f44; font-size: 13px; }
+        th { color: #9ea0a3; text-transform: uppercase; }
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .btn-app { background: #28a745; color: white; }
+        .btn-rej { background: #d11348; color: white; }
+        .btn-edit { background: #5a32a8; color: white; }
+        code { background: #000; padding: 2px 5px; border-radius: 4px; color: #00d4ff; font-family: monospace; }
+        .status-msg { text-align: center; color: #9ea0a3; padding: 10px; font-style: italic; }
     </style>
 </head>
 <body>
 
-<div id="side-menu">
-    <b>HOME MENU</b> <hr>
-    <div class="menu-item" onclick="toggleSub('dep-form')">💰 Deposit <span>▼</span></div>
-    <div id="dep-form" class="form-container">
-        <div class="dep-grid">
-            <div class="amt-pill" onclick="setDep(100)">100+20%</div>
-            <div class="amt-pill" onclick="setDep(500)">500+20%</div>
-            <div class="amt-pill" onclick="setDep(1000)">1000+20%</div>
+    <h1 style="text-align:center; font-size: 22px; color: #fff;">ADMIN DASHBOARD</h1>
+
+    <div class="section-card">
+        <h2>👥 ALL USERS</h2>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr><th>Email</th><th>Balance</th><th>Action</th></tr></thead>
+                <tbody id="users-list"></tbody>
+            </table>
         </div>
-        <input type="number" id="dep-amt" class="f-input" placeholder="Amount">
-        <input type="text" id="dep-utr" class="f-input" placeholder="UTR/Ref No">
-        <button class="f-btn" onclick="requestDeposit()">Submit</button>
     </div>
-    <button class="f-btn" style="background:#d11348" onclick="firebase.auth().signOut()">LOGOUT</button>
-</div>
 
-<div class="top-nav">
-    <div style="color:#ff0055; font-weight:900; font-size:22px;">AVIATOR</div>
-    <div class="balance-box">₹<span id="bal-text">0.00</span></div>
-    <div onclick="toggleMenu()" style="cursor:pointer; font-size:24px;">☰</div>
-</div>
-
-<div class="display-area">
-    <canvas id="gameCanvas"></canvas>
-    <div id="multiplier-text">1.00x</div>
-    <div id="flew-away">FLEW AWAY!</div>
-    <div id="countdown">WAITING...</div>
-</div>
-
-<div class="bet-container">
-    <div class="bet-card">
-        <div class="bet-grid">
-            <div class="amt-pill" onclick="setBet(1,10)">10</div>
-            <div class="amt-pill" onclick="setBet(1,100)">100</div>
-            <div class="amt-pill" onclick="setBet(1,200)">200</div>
-            <div class="amt-pill" onclick="setBet(1,300)">300</div>
-            <div class="amt-pill" onclick="setBet(1,500)">500</div>
-            <div class="amt-pill" onclick="setBet(1,1000)">1000</div>
+    <div class="section-card">
+        <h2>💰 DEPOSIT REQUESTS</h2>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr><th>Email</th><th>Amount</th><th>UTR</th><th>Action</th></tr></thead>
+                <tbody id="dep-list"></tbody>
+            </table>
         </div>
-        <div class="input-box">
-            <button onclick="adj(1,-10)">-</button>
-            <input type="number" id="amt-1" value="100">
-            <button onclick="adj(1,10)">+</button>
-        </div>
-        <button id="btn-1" class="main-btn" onclick="handleBet(1)">BET</button>
     </div>
-    <div class="bet-card">
-        <div class="bet-grid">
-            <div class="amt-pill" onclick="setBet(2,10)">10</div>
-            <div class="amt-pill" onclick="setBet(2,100)">100</div>
-            <div class="amt-pill" onclick="setBet(2,200)">200</div>
-            <div class="amt-pill" onclick="setBet(2,300)">300</div>
-            <div class="amt-pill" onclick="setBet(2,500)">500</div>
-            <div class="amt-pill" onclick="setBet(2,1000)">1000</div>
-        </div>
-        <div class="input-box">
-            <button onclick="adj(2,-10)">-</button>
-            <input type="number" id="amt-2" value="100">
-            <button onclick="adj(2,10)">+</button>
-        </div>
-        <button id="btn-2" class="main-btn" onclick="handleBet(2)">BET</button>
-    </div>
-</div>
 
-<div class="live-section">
-    <div class="live-header"><span>User</span><span>Bet</span><span>X</span><span>Win</span></div>
-    <div id="live-list"></div>
-</div>
+    <div class="section-card">
+        <h2>🏦 WITHDRAWAL REQUESTS</h2>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr><th>Email</th><th>Amount</th><th>Details</th><th>Action</th></tr></thead>
+                <tbody id="with-list"></tbody>
+            </table>
+        </div>
+    </div>
 
 <script>
-    const firebaseConfig = { 
-        apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc", 
-        authDomain: "myaviatoregame.firebaseapp.com", 
-        projectId: "myaviatoregame", 
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc",
+        authDomain: "myaviatoregame.firebaseapp.com",
         databaseURL: "https://myaviatoregame-default-rtdb.firebaseio.com",
-        appId: "1:286687400349:web:e01e2cff439a3267de1f74" 
+        projectId: "myaviatoregame",
+        storageBucket: "myaviatoregame.firebasestorage.app",
+        messagingSenderId: "286687400349",
+        appId: "1:286687400349:web:e01e2cff439a3267de1f74"
     };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth(), db = firebase.database();
 
-    let wallet = 0, multiplier = 1.0, isFlying = false, currentUser = null;
-    let activeBets = { 1: null, 2: null }, queuedBets = { 1: null, 2: null };
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
 
-    // Canvas Setup
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const planeImg = new Image();
-    planeImg.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNMzIgMjU2TDE2MCAxOTJMMjI0IDMyLDI4OCAxOTJMNTAwIDI1NkwyODggMzI0TDIyNCA0ODBMMTYwIDMyNEwzMiAyNTZ6IiBmaWxsPSIjZmYwMDQ0Ii8+PC9zdmc+";
-
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            currentUser = user;
-            db.ref('users/' + user.uid + '/balance').on('value', snap => {
-                wallet = snap.val() || 0;
-                document.getElementById('bal-text').innerText = wallet.toFixed(2);
+    // 1. Fetch Users
+    db.ref('users').on('value', snap => {
+        let html = "";
+        if (!snap.exists()) {
+            html = "<tr><td colspan='3' class='status-msg'>No users found</td></tr>";
+        } else {
+            snap.forEach(child => {
+                let u = child.val();
+                html += `<tr>
+                    <td>${u.email}</td>
+                    <td style="color:#28a745; font-weight:bold;">₹${(u.balance || 0).toFixed(2)}</td>
+                    <td><button class="btn btn-edit" onclick="manualEdit('${child.key}')">Edit</button></td>
+                </tr>`;
             });
-        } else { window.location.href = "index.html"; }
+        }
+        document.getElementById('users-list').innerHTML = html;
     });
 
-    // Betting UI Functions
-    function setBet(p, v) { document.getElementById('amt-'+p).value = v; }
-    function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value) + v); }
-    function setDep(v) { document.getElementById('dep-amt').value = v; }
-    function toggleMenu() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
-    function toggleSub(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
-
-    function handleBet(p) {
-        let amt = parseInt(document.getElementById('amt-'+p).value);
-        if (!isFlying) {
-            if (activeBets[p]) { wallet += activeBets[p].amt; activeBets[p] = null; }
-            else if (amt <= wallet) { wallet -= amt; activeBets[p] = { amt, cashed: false }; }
-        } else {
-            if (activeBets[p] && !activeBets[p].cashed) {
-                wallet += (activeBets[p].amt * multiplier);
-                activeBets[p].cashed = true;
-            } else if (queuedBets[p]) { wallet += queuedBets[p].amt; queuedBets[p] = null; }
-            else if (amt <= wallet) { wallet -= amt; queuedBets[p] = { amt }; }
-        }
-        db.ref('users/' + currentUser.uid).update({ balance: wallet });
-        updateUI();
-    }
-
-    function updateUI() {
-        [1,2].forEach(p => {
-            let btn = document.getElementById('btn-'+p);
-            if(!isFlying) {
-                btn.innerText = activeBets[p] ? "CANCEL" : "BET";
-                btn.style.background = activeBets[p] ? "#333" : "#28a745";
-            } else {
-                if(activeBets[p] && !activeBets[p].cashed) {
-                    btn.innerText = "CASH OUT " + (activeBets[p].amt * multiplier).toFixed(1);
-                    btn.style.background = "#d97706";
-                } else {
-                    btn.innerText = queuedBets[p] ? "CANCEL NEXT" : "BET NEXT";
-                    btn.style.background = queuedBets[p] ? "#333" : "#28a745";
-                }
+    // 2. Fetch Deposits
+    db.ref('requests/deposits').on('value', snap => {
+        let html = "";
+        let count = 0;
+        snap.forEach(child => {
+            let d = child.val();
+            if(d.status === 'pending') {
+                count++;
+                html += `<tr>
+                    <td>${d.email}</td>
+                    <td><b>₹${d.amount}</b></td>
+                    <td><code>${d.utr}</code></td>
+                    <td>
+                        <button class="btn btn-app" onclick="approveDep('${child.key}','${d.uid}',${d.amount})">Approve</button>
+                        <button class="btn btn-rej" onclick="rejectReq('deposits','${child.key}')">Reject</button>
+                    </td>
+                </tr>`;
             }
         });
-    }
+        document.getElementById('dep-list').innerHTML = count > 0 ? html : "<tr><td colspan='4' class='status-msg'>No pending deposits</td></tr>";
+    });
 
-    // Fake Users Logic
-    const names = ["Rahul", "Aman", "Priya", "Vikram", "Soniya", "Deepak", "Kabir", "Riya"];
-    function updateFakeUsers() {
-        const list = document.getElementById('live-list');
+    // 3. Fetch Withdrawals
+    db.ref('requests/withdrawals').on('value', snap => {
         let html = "";
-        for(let i=0; i<10; i++){
-            let name = names[Math.floor(Math.random()*names.length)] + "***";
-            let bet = (Math.random()*500 + 10).toFixed(0);
-            let x = isFlying && Math.random() < 0.3 ? (Math.random()*multiplier).toFixed(2) : "-";
-            let win = x !== "-" ? "₹"+(bet*x).toFixed(0) : "-";
-            html += `<div class="live-row ${x !== '-' ? 'win-row' : ''}">
-                <span>${name}</span><span>₹${bet}</span><span>${x}x</span><span>${win}</span>
-            </div>`;
-        }
-        list.innerHTML = html;
-    }
-
-    function startLoop() {
-        isFlying = false; multiplier = 1.0;
-        document.getElementById('flew-away').style.display = 'none';
-        document.getElementById('multiplier-text').style.display = 'none';
-        let t = 5;
-        let timer = setInterval(() => {
-            document.getElementById('countdown').innerText = "NEXT ROUND IN " + t + "s";
-            if(t <= 0) { clearInterval(timer); runFlight(); }
-            t--;
-        }, 1000);
-        updateUI();
-    }
-
-    function runFlight() {
-        isFlying = true;
-        document.getElementById('countdown').style.display = 'none';
-        document.getElementById('multiplier-text').style.display = 'block';
-        let cp = (1.0 + Math.pow(Math.random(), 3) * 15).toFixed(2);
-        let anim = () => {
-            if(!isFlying) return;
-            if(multiplier >= cp) {
-                isFlying = false; document.getElementById('flew-away').style.display = 'block';
-                activeBets = { 1: queuedBets[1], 2: queuedBets[2] };
-                queuedBets = { 1: null, 2: null };
-                setTimeout(startLoop, 3000); return;
+        let count = 0;
+        snap.forEach(child => {
+            let w = child.val();
+            if(w.status === 'pending') {
+                count++;
+                html += `<tr>
+                    <td>${w.email}</td>
+                    <td><b>₹${w.amount}</b></td>
+                    <td><small>${w.details || 'N/A'}</small></td>
+                    <td>
+                        <button class="btn btn-app" onclick="approveWith('${child.key}')">Mark Paid</button>
+                        <button class="btn btn-rej" onclick="rejectReq('withdrawals','${child.key}')">Reject</button>
+                    </td>
+                </tr>`;
             }
-            multiplier += 0.0015;
-            document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
-            updateUI(); updateFakeUsers(); draw(); requestAnimationFrame(anim);
-        };
-        requestAnimationFrame(anim);
+        });
+        document.getElementById('with-list').innerHTML = count > 0 ? html : "<tr><td colspan='4' class='status-msg'>No pending withdrawals</td></tr>";
+    });
+
+    // --- Action Functions ---
+
+    function approveDep(key, uid, amt) {
+        if(confirm("Approve ₹" + amt + "?")) {
+            db.ref('users/' + uid + '/balance').transaction(current => (current || 0) + amt);
+            db.ref('requests/deposits/' + key).update({ status: 'approved' });
+            alert("Deposit Successful!");
+        }
     }
 
-    function draw() {
-        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-        let p = Math.min((multiplier - 1) / 3, 0.95);
-        let x = p * canvas.width * 0.9 + 20, y = (canvas.height - 40) - (Math.pow(p,0.6) * canvas.height * 0.8);
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 5; ctx.beginPath();
-        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
-        ctx.drawImage(planeImg, x-30, y-30, 60, 60);
+    function approveWith(key) {
+        if(confirm("Mark this withdrawal as Paid?")) {
+            db.ref('requests/withdrawals/' + key).update({ status: 'approved' });
+            alert("Withdrawal marked as Paid!");
+        }
     }
 
-    function requestDeposit() {
-        const amt = document.getElementById('dep-amt').value, utr = document.getElementById('dep-utr').value;
-        if(!amt || !utr) return alert("Fill all details");
-        db.ref('requests/deposits').push({ uid: currentUser.uid, email: currentUser.email, amount: parseFloat(amt), utr, status: "pending" });
-        alert("Request Sent!"); toggleMenu();
+    function rejectReq(path, key) {
+        if(confirm("Reject this request?")) {
+            db.ref('requests/' + path + '/' + key).update({ status: 'rejected' });
+            alert("Request Rejected!");
+        }
     }
 
-    planeImg.onload = startLoop;
+    function manualEdit(uid) {
+        let b = prompt("Enter new balance amount:");
+        if(b !== null && !isNaN(b)) {
+            db.ref('users/' + uid).update({ balance: parseFloat(b) });
+            alert("Balance updated!");
+        }
+    }
 </script>
 </body>
 </html>
