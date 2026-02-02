@@ -204,6 +204,38 @@
         db.ref('requests/withdrawals').push({ uid: currentUser.uid, name: n, acc: a, ifsc: i, amount: am, status: "pending", time: new Date().toLocaleString() });
         alert("Request Sent!");
     }
+       // --- Fixed Deposit Function ---
+    function requestDeposit() {
+        const amt = document.getElementById('dep-amt').value;
+        const utr = document.getElementById('dep-utr').value;
+
+        if(!amt || !utr) {
+            return alert("Please enter Amount and UTR Number!");
+        }
+
+        if(amt < 100) {
+            return alert("Minimum deposit is 100");
+        }
+
+        // Firebase mein data bhej raha hai admin approval ke liye
+        db.ref('requests/deposits').push({
+            uid: currentUser.uid,
+            email: currentUser.email,
+            amount: parseFloat(amt),
+            utr: utr,
+            status: "pending",
+            time: new Date().toLocaleString()
+        }).then(() => {
+            alert("Deposit Request Submitted! Waiting for Admin Approval.");
+            // Form reset
+            document.getElementById('dep-amt').value = '';
+            document.getElementById('dep-utr').value = '';
+            toggleSub('dep-form'); // Form close
+        }).catch((error) => {
+            alert("Error: " + error.message);
+        });
+    }
+    
 
     function startLoop() {
         isFlying = false; multiplier = 1.0;
@@ -281,3 +313,4 @@
 </body>
     </html>
     
+
