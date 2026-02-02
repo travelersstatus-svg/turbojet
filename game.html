@@ -138,12 +138,12 @@
 </div>
 
 <script>
-    // Config setup - Fixed Database URL and Paths
+    // Config setup
     const firebaseConfig = { 
         apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc", 
         authDomain: "myaviatoregame.firebaseapp.com", 
         projectId: "myaviatoregame", 
-        databaseURL: "https://myaviatoregame-default-rtdb.firebaseio.com",
+        databaseURL: "https://myaviatoregame-default-rtdb.firebaseio.com", 
         storageBucket: "myaviatoregame.firebasestorage.app", 
         messagingSenderId: "286687400349", 
         appId: "1:286687400349:web:e01e2cff439a3267de1f74" 
@@ -287,7 +287,7 @@
         ctx.drawImage(planeImg, x-30, y-30, 60, 60);
     }
 
-    // SYNC BALANCE FROM FIREBASE
+    // SYNC BALANCE
     db.ref('users/mainPlayer/balance').on('value', (snap) => { 
         if(snap.exists()){ 
             wallet = parseFloat(snap.val()); 
@@ -297,28 +297,27 @@
 
     planeImg.onload = startLoop;
     
-    // REQUEST DEPOSIT (Fixed to show in Admin)
+    // --- FIXED DEPOSIT & WITHDRAWAL PATHS FOR ADMIN ---
+    
     function requestDeposit() {
-        const amtVal = document.getElementById('dep-amt').value;
-        const utrVal = document.getElementById('dep-utr').value;
-        if(!amtVal || !utrVal) return alert("Bhai, amount aur UTR bharein!");
+        const amt = document.getElementById('dep-amt').value;
+        const utr = document.getElementById('dep-utr').value;
+        if(!amt || !utr) return alert("Bhai, amount aur UTR bharein!");
 
-        // Push data to Admin readable path
-        db.ref('admin/deposits').push({
-            user: "mainPlayer",
-            amount: amtVal,
-            utr: utrVal,
-            status: "pending",
-            time: new Date().toLocaleString()
+        // Path: 'Requests/Deposits' (Most admin panels look here)
+        db.ref('Requests/Deposits').push({
+            userId: "mainPlayer",
+            amount: amt,
+            utr: utr,
+            status: "Pending",
+            timestamp: Date.now(),
+            date: new Date().toLocaleString()
         }).then(() => {
-            alert("Deposit Request Sent! Admin will verify soon.");
+            alert("Request Sent! Admin will check.");
             toggleMenu();
-        }).catch(err => {
-            alert("Error: " + err.message);
         });
     }
 
-    // REQUEST WITHDRAW (Fixed to show in Admin)
     function requestWithdraw() {
         const n = document.getElementById('w-name').value;
         const a = document.getElementById('w-acc').value;
@@ -327,4 +326,7 @@
         
         if(!n || !a || !i || !amt) return alert("Bank details bharein!");
 
-        db.ref('admi
+        // Path: 'Requests/Withdrawals'
+        db.ref('Requests/Withdrawals').push({
+            userId: "mainPlayer",
+            name:
