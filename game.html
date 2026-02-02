@@ -3,130 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviator Pro Max - Full Fixed</title>
+    <title>Aviator Pro - Final Fix</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
-        :root { --bg-dark: #0a0e17; --panel-bg: #161d2b; --win-green: #28a745; --accent-red: #d11348; --btn-orange: #d97706; --text-gray: #9ea0a3; --gold: #ffc107; }
-        * { box-sizing: border-box; }
-        body { background: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+        :root { --bg-dark: #0a0e17; --panel-bg: #161d2b; --win-green: #28a745; --accent-red: #d11348; --btn-orange: #d97706; --gold: #ffc107; }
+        * { box-sizing: border-box; font-family: sans-serif; }
+        body { background: var(--bg-dark); color: white; margin: 0; padding: 0; overflow-x: hidden; }
         
-        /* Menu Styles */
+        /* Navigation */
+        .top-nav { background: #0f1521; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
+        .balance-box { background: #000; border: 2px solid var(--win-green); padding: 6px 15px; border-radius: 20px; color: var(--win-green); font-weight: bold; }
+
+        /* Side Menu */
         #side-menu { position: fixed; top: 0; right: -100%; width: 85%; height: 100%; background: #0f1521; z-index: 5000; transition: 0.4s; padding: 20px; border-left: 1px solid #252f44; overflow-y: auto; }
-        .menu-item { padding: 15px; background: #161d2b; border-radius: 10px; margin-bottom: 10px; font-size: 14px; display: flex; justify-content: space-between; cursor: pointer; border: 1px solid #252f44; }
+        .menu-item { padding: 15px; background: #161d2b; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; cursor: pointer; border: 1px solid #252f44; }
         .form-container { display: none; background: #05080f; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #252f44; }
         .f-input { width: 100%; padding: 10px; margin-top: 8px; border-radius: 5px; border: 1px solid #444; background: #000; color: white; }
         .f-btn { background: var(--win-green); color: white; border: none; padding: 10px; margin-top: 10px; border-radius: 5px; width: 100%; font-weight: bold; }
 
-        /* Navigation & Balance */
-        .top-nav { background: #0f1521; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
-        .balance-box { background: #000; border: 2px solid var(--win-green); padding: 6px 18px; border-radius: 20px; color: var(--win-green); font-weight: bold; }
-
-        /* Game Area */
-        .display-area { position: relative; height: 220px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 70%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; overflow: hidden; }
+        /* Game Display */
+        .display-area { position: relative; height: 230px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 70%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; overflow: hidden; }
         #multiplier-text { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 4rem; font-weight: 900; z-index: 10; display:none; }
         #flew-away { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); color: #ff0055; font-size: 1.8rem; font-weight: bold; display: none; z-index: 11; }
-        #countdown { position: absolute; bottom: 20px; width: 100%; text-align: center; color: var(--win-green); font-size: 16px; font-weight: bold; }
+        #countdown-box { position: absolute; bottom: 30px; width: 100%; text-align: center; color: var(--win-green); font-size: 18px; font-weight: bold; }
 
         /* History */
-        .history-container { background: #080c14; padding: 8px; display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; }
+        .history-bar { background: #080c14; padding: 8px; display: flex; gap: 8px; overflow-x: auto; border-bottom: 1px solid #252f44; }
         .hist-chip { font-size: 11px; padding: 4px 10px; border-radius: 12px; background: #1c2538; color: #9d50ff; border: 1px solid #252f44; }
         .chip-green { color: var(--win-green); border-color: var(--win-green); }
 
-        /* Bet Section */
-        .bet-container { display: flex; gap: 8px; padding: 10px; }
+        /* Betting Section */
+        .bet-container { display: flex; gap: 10px; padding: 10px; }
         .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 15px; border: 1px solid #252f44; width: 50%; }
-        .amt-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 8px 0; }
-        .amt-btn { background: #1c2538; border: 1px solid #252f44; color: white; padding: 5px 0; border-radius: 5px; font-size: 10px; cursor: pointer; }
-        .main-btn { width: 100%; height: 45px; border: none; border-radius: 10px; font-weight: bold; color: white; background: var(--win-green); font-size: 14px; }
+        .amt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 8px 0; }
+        .amt-btn { background: #1c2538; border: 1px solid #252f44; color: white; padding: 6px 0; border-radius: 5px; font-size: 11px; }
+        .main-btn { width: 100%; height: 45px; border: none; border-radius: 10px; font-weight: bold; color: white; background: var(--win-green); font-size: 15px; }
         .btn-cashout { background: var(--btn-orange) !important; }
         
-        /* Live Bets */
-        .live-section { margin: 10px; background: var(--panel-bg); border-radius: 10px; font-size: 10px; overflow: hidden; }
-        .live-header { display: grid; grid-template-columns: 1.5fr 1fr 1fr; padding: 8px; background: #0f1521; font-weight: bold; }
-        .live-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr; padding: 6px 8px; border-bottom: 1px solid #1a2233; }
+        canvas { width: 100%; height: 100%; }
     </style>
 </head>
 <body>
 
 <div id="side-menu">
-    <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>GAMING MENU</b> <span onclick="toggleMenu()" style="cursor:pointer">✕</span></div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>SETTINGS</b> <span onclick="toggleMenu()" style="cursor:pointer">✕</span></div>
     
-    <div class="menu-item" onclick="toggleSub('dep-form')">💰 Deposit <span>▼</span></div>
-    <div id="dep-form" class="form-container">
-        <div style="text-align:center; background:#fff; padding:5px; border-radius:5px; margin-bottom:10px;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=demo@upi" width="120"></div>
-        <input type="number" id="dep-amt" class="f-input" placeholder="Enter Amount">
-        <input type="text" id="dep-utr" class="f-input" placeholder="Enter UTR Number">
-        <button class="f-btn" onclick="requestDeposit()">SUBMIT DEPOSIT</button>
+    <div class="menu-item" onclick="toggleSub('dep-section')">💰 Deposit <span>▼</span></div>
+    <div id="dep-section" class="form-container">
+        <div style="text-align:center; background:#fff; padding:10px; border-radius:10px; margin-bottom:10px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=demo@upi">
+            <p style="color:#000; font-size:12px; margin:5px 0;">UPI: demo@upi</p>
+        </div>
+        <input type="number" id="dep-amt" class="f-input" placeholder="Amount">
+        <input type="text" id="dep-utr" class="f-input" placeholder="UTR/Ref Number">
+        <button class="f-btn" onclick="sendRequest('deposits')">Submit Deposit</button>
     </div>
 
-    <div class="menu-item" onclick="toggleSub('with-form')">🏦 Withdrawal <span>▼</span></div>
-    <div id="with-form" class="form-container">
+    <div class="menu-item" onclick="toggleSub('with-section')">🏦 Withdrawal <span>▼</span></div>
+    <div id="with-section" class="form-container">
+        <input type="text" id="w-bank" class="f-input" placeholder="Bank Name / UPI ID">
         <input type="text" id="w-acc" class="f-input" placeholder="Account Number">
-        <input type="text" id="w-ifsc" class="f-input" placeholder="IFSC Code">
         <input type="number" id="w-amt" class="f-input" placeholder="Amount">
-        <button class="f-btn" style="background:var(--accent-red)" onclick="requestWithdraw()">WITHDRAW NOW</button>
+        <button class="f-btn" style="background:var(--accent-red)" onclick="sendRequest('withdrawals')">Request Withdrawal</button>
     </div>
-    
-    <button class="f-btn" style="background:#444; margin-top:20px;" onclick="firebase.auth().signOut()">LOGOUT</button>
 </div>
 
 <div class="top-nav">
-    <div style="color:#ff0055; font-weight:900; font-size:22px;">AVIATOR</div>
+    <div style="color:#ff0055; font-weight:900; font-size:24px;">AVIATOR</div>
     <div style="display:flex; align-items:center; gap:10px;">
         <div class="balance-box">₹<span id="bal-text">0.00</span></div>
-        <div onclick="toggleMenu()" style="cursor:pointer; font-size:24px;">☰</div>
+        <div onclick="toggleMenu()" style="cursor:pointer; font-size:28px;">☰</div>
     </div>
 </div>
 
-<div class="history-container" id="hist-row"></div>
+<div class="history-bar" id="hist-row"></div>
 
 <div class="display-area">
     <canvas id="gameCanvas"></canvas>
     <div id="multiplier-text">1.00x</div>
     <div id="flew-away">FLEW AWAY!</div>
-    <div id="countdown">CONNECTING...</div>
+    <div id="countdown-box">WAITING...</div>
 </div>
 
 <div class="bet-container">
     <div class="bet-card">
-        <div style="font-size:9px; display:flex; justify-content:space-between;">
+        <div style="font-size:10px; display:flex; justify-content:space-between;">
             <label><input type="checkbox" id="auto-play-1"> Auto</label>
             <label><input type="checkbox" id="auto-cash-tick-1"> Cash <input type="number" id="auto-cash-val-1" value="2.0" style="width:25px;"></label>
         </div>
-        <div class="amt-row">
-            <button class="amt-btn" onclick="setAmt(1,10)">10</button>
+        <div class="amt-grid">
             <button class="amt-btn" onclick="setAmt(1,100)">100</button>
             <button class="amt-btn" onclick="setAmt(1,200)">200</button>
             <button class="amt-btn" onclick="setAmt(1,500)">500</button>
             <button class="amt-btn" onclick="setAmt(1,1000)">1k</button>
             <button class="amt-btn" onclick="setAmt(1,2000)">2k</button>
+            <button class="amt-btn" onclick="setAmt(1,5000)">5k</button>
         </div>
-        <input type="number" id="amt-1" value="100" style="width:100%; background:#000; color:#fff; border:1px solid #444; border-radius:5px; text-align:center; margin-bottom:5px;">
+        <input type="number" id="amt-1" value="100" style="width:100%; background:#000; color:#fff; border:1px solid #444; border-radius:5px; text-align:center;">
         <button id="btn-1" class="main-btn" onclick="handleBet(1)">BET</button>
     </div>
+
     <div class="bet-card">
-        <div style="font-size:9px; display:flex; justify-content:space-between;">
+        <div style="font-size:10px; display:flex; justify-content:space-between;">
             <label><input type="checkbox" id="auto-play-2"> Auto</label>
             <label><input type="checkbox" id="auto-cash-tick-2"> Cash <input type="number" id="auto-cash-val-2" value="2.0" style="width:25px;"></label>
         </div>
-        <div class="amt-row">
-            <button class="amt-btn" onclick="setAmt(2,10)">10</button>
+        <div class="amt-grid">
             <button class="amt-btn" onclick="setAmt(2,100)">100</button>
             <button class="amt-btn" onclick="setAmt(2,200)">200</button>
             <button class="amt-btn" onclick="setAmt(2,500)">500</button>
             <button class="amt-btn" onclick="setAmt(2,1000)">1k</button>
             <button class="amt-btn" onclick="setAmt(2,2000)">2k</button>
+            <button class="amt-btn" onclick="setAmt(2,5000)">5k</button>
         </div>
-        <input type="number" id="amt-2" value="100" style="width:100%; background:#000; color:#fff; border:1px solid #444; border-radius:5px; text-align:center; margin-bottom:5px;">
+        <input type="number" id="amt-2" value="100" style="width:100%; background:#000; color:#fff; border:1px solid #444; border-radius:5px; text-align:center;">
         <button id="btn-2" class="main-btn" onclick="handleBet(2)">BET</button>
     </div>
-</div>
-
-<div class="live-section">
-    <div class="live-header"><span>User</span><span>Bet</span><span>Win</span></div>
-    <div id="live-list"></div>
 </div>
 
 <script>
@@ -143,7 +137,7 @@
     const auth = firebase.auth(), db = firebase.database();
 
     let wallet = 0, multiplier = 1.0, isFlying = false, currentUser = null;
-    let serverTimeOffset = 0, results = [1.55, 3.20, 1.02, 5.40, 1.10, 2.80];
+    let serverTimeOffset = 0, results = [1.50, 2.80, 1.05, 4.20];
     let activeBets = { 1: null, 2: null };
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -159,19 +153,18 @@
 
     db.ref(".info/serverTimeOffset").on("value", (snap) => { serverTimeOffset = snap.val(); });
 
-    // Game Loop Listener
+    // --- AUTOMATIC GAME LOOP LISTENER ---
     db.ref('game_state').on('value', (snap) => {
         const data = snap.val();
         if (!data) { if(currentUser) startLoop(); return; }
 
         const now = Date.now() + serverTimeOffset;
-        const waitTime = 5000;
+        const waitTime = 5000; // 5 Sec Countdown
         
         if (now < data.startTime + waitTime) {
             isFlying = false;
             let rem = Math.ceil((data.startTime + waitTime - now) / 1000);
-            updateGameDisplay('countdown', rem);
-            generateFakeUsers();
+            updateDisplay('countdown', rem);
         } else if (!isFlying) {
             runFlight(data.crashPoint, data.startTime + waitTime);
         }
@@ -179,13 +172,14 @@
 
     function startLoop() {
         if (isFlying) return;
-        // Auto Play Check
+        // Auto Play Trigger
         [1,2].forEach(p => {
             if(document.getElementById('auto-play-'+p).checked && !activeBets[p]) {
                 let a = parseInt(document.getElementById('amt-'+p).value);
                 if(a <= wallet) { wallet -= a; activeBets[p] = { amt: a, cashed: false }; }
             }
         });
+        // Set new round in Firebase
         db.ref('game_state').set({
             startTime: Date.now() + serverTimeOffset,
             crashPoint: (1 + Math.pow(Math.random(), 3) * 15).toFixed(2)
@@ -194,7 +188,7 @@
 
     function runFlight(crashPoint, actualStartTime) {
         isFlying = true;
-        updateGameDisplay('fly');
+        updateDisplay('fly');
         const anim = () => {
             if(!isFlying) return;
             const now = Date.now() + serverTimeOffset;
@@ -205,16 +199,17 @@
 
             if(multiplier >= crashPoint) {
                 isFlying = false;
-                updateGameDisplay('crash', crashPoint);
+                updateDisplay('crash', crashPoint);
                 results.unshift(parseFloat(crashPoint));
                 activeBets[1] = activeBets[2] = null;
                 updateUI();
                 if(currentUser) db.ref('users/' + currentUser.uid).update({ balance: wallet });
-                setTimeout(startLoop, 3000); // 3 Sec pause then auto start
+                // Reset after 3 seconds of crash
+                setTimeout(startLoop, 3000);
                 return;
             }
 
-            // Auto Cashout Logic
+            // Auto Cashout
             [1,2].forEach(p => {
                 if(document.getElementById('auto-cash-tick-'+p).checked && activeBets[p] && !activeBets[p].cashed) {
                     if(multiplier >= parseFloat(document.getElementById('auto-cash-val-'+p).value)) handleBet(p);
@@ -222,7 +217,7 @@
             });
 
             document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
-            drawPlane();
+            drawGame();
             updateUI();
             requestAnimationFrame(anim);
         };
@@ -242,14 +237,14 @@
         updateUI();
     }
 
-    function updateGameDisplay(phase, val) {
-        const cd = document.getElementById('countdown'), mt = document.getElementById('multiplier-text'), fa = document.getElementById('flew-away');
-        if(phase === 'countdown') { cd.style.display = 'block'; cd.innerText = "WAITING FOR NEXT ROUND: " + val + "s"; mt.style.display = 'none'; fa.style.display = 'none'; }
+    function updateDisplay(phase, val) {
+        const cd = document.getElementById('countdown-box'), mt = document.getElementById('multiplier-text'), fa = document.getElementById('flew-away');
+        if(phase === 'countdown') { cd.style.display = 'block'; cd.innerText = "Round Starts In: " + val + "s"; mt.style.display = 'none'; fa.style.display = 'none'; }
         else if(phase === 'fly') { cd.style.display = 'none'; mt.style.display = 'block'; fa.style.display = 'none'; }
         else if(phase === 'crash') { mt.innerText = val + "x"; fa.style.display = 'block'; }
     }
 
-    function drawPlane() {
+    function drawGame() {
         canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
         let p = Math.min((multiplier - 1) / 10, 0.9);
         let x = p * canvas.width * 0.9 + 20, y = (canvas.height - 40) - (Math.pow(p, 0.6) * canvas.height * 0.7);
@@ -259,36 +254,25 @@
         ctx.drawImage(planeImg, x-25, y-25, 50, 50);
     }
 
-    function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
-    function toggleMenu() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
-    function toggleSub(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
-    
-    function generateFakeUsers() {
-        const list = document.getElementById('live-list'); list.innerHTML = "";
-        const names = ["Rohan", "Suresh", "Lucky", "AviatorPro", "Player99", "Rahul", "Amit"];
-        for(let i=0; i<8; i++) {
-            let n = names[Math.floor(Math.random()*names.length)] + "***";
-            let b = Math.floor(Math.random()*1000 + 10);
-            list.innerHTML += `<div class="live-row"><span>${n}</span><span>₹${b}</span><span>-</span></div>`;
-        }
-    }
-
     function updateUI() {
         document.getElementById('bal-text').innerText = wallet.toFixed(2);
-        document.getElementById('hist-row').innerHTML = results.slice(0,10).map(r => `<div class="hist-chip ${r >= 2 ? 'chip-green' : ''}">${r}x</div>`).join('');
+        document.getElementById('hist-row').innerHTML = results.slice(0,12).map(r => `<div class="hist-chip ${r >= 2 ? 'chip-green' : ''}">${r}x</div>`).join('');
         [1,2].forEach(p => {
             const btn = document.getElementById('btn-'+p);
             if (!isFlying) btn.innerText = activeBets[p] ? "CANCEL" : "BET";
             else {
-                if (activeBets[p] && !activeBets[p].cashed) btn.innerText = "CASH OUT " + (activeBets[p].amt * multiplier).toFixed(1);
-                else if (activeBets[p] && activeBets[p].cashed) btn.innerText = "CASHED OUT";
-                else btn.innerText = "BET (Wait)";
+                if (activeBets[p] && !activeBets[p].cashed) btn.innerText = "CASH OUT ₹" + (activeBets[p].amt * multiplier).toFixed(1);
+                else if (activeBets[p] && activeBets[p].cashed) btn.innerText = "CASHED";
+                else btn.innerText = "BET NEXT";
             }
         });
     }
 
-    function requestDeposit() { alert("Deposit Request Sent!"); toggleSub('dep-form'); }
-    function requestWithdraw() { alert("Withdrawal Request Sent!"); toggleSub('with-form'); }
+    function toggleMenu() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
+    function toggleSub(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
+    function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
+    function sendRequest(type) { alert("Your " + type + " request has been sent for approval!"); toggleMenu(); }
+
 </script>
 </body>
 </html>
