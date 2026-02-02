@@ -67,11 +67,19 @@
         <div class="qr-box"><img id="qr-display" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=YOUR_UPI_ID@okicici"></div>
         <div class="upi-id-text">UPI ID: YOUR_UPI_ID@okicici</div>
         <a id="upi-direct-link" href="#" class="direct-pay-btn">Pay Now via UPI App</a>
+        
         <div class="dep-grid">
             <div class="dep-amt-btn" onclick="setDep(100)">₹100<span>+20%</span></div>
+            <div class="dep-amt-btn" onclick="setDep(200)">₹200<span>+20%</span></div>
+            <div class="dep-amt-btn" onclick="setDep(300)">₹300<span>+20%</span></div>
             <div class="dep-amt-btn" onclick="setDep(500)">₹500<span>+20%</span></div>
             <div class="dep-amt-btn" onclick="setDep(1000)">₹1000<span>+20%</span></div>
+            <div class="dep-amt-btn" onclick="setDep(2000)">₹2000<span>+20%</span></div>
+            <div class="dep-amt-btn" onclick="setDep(3000)">₹3000<span>+20%</span></div>
+            <div class="dep-amt-btn" onclick="setDep(5000)">₹5000<span>+20%</span></div>
+            <div class="dep-amt-btn" onclick="setDep(10000)">₹10000<span>+20%</span></div>
         </div>
+
         <input type="number" id="dep-amt" class="f-input" placeholder="Amount" oninput="updateMyQR()">
         <input type="text" id="dep-utr" class="f-input" placeholder="UTR Number">
         <button class="f-btn" onclick="requestDeposit()">Submit Transaction</button>
@@ -79,9 +87,9 @@
 
     <div class="menu-item" onclick="toggleSub('with-form')">🏦 Withdrawal <span>▼</span></div>
     <div id="with-form" class="form-container">
-        <input type="text" id="w-name" class="f-input" placeholder="Bank Name">
-        <input type="text" id="w-acc" class="f-input" placeholder="A/C No / UPI">
-        <input type="text" id="w-ifsc" class="f-input" placeholder="IFSC Code">
+        <input type="text" id="w-name" class="f-input" placeholder="Bank/UPI Name">
+        <input type="text" id="w-acc" class="f-input" placeholder="A/C No / UPI ID">
+        <input type="text" id="w-ifsc" class="f-input" placeholder="IFSC (Optional)">
         <input type="number" id="w-amt" class="f-input" placeholder="Amount">
         <button class="f-btn" onclick="requestWithdraw()">Withdraw</button>
     </div>
@@ -150,7 +158,6 @@
     const planeImg = new Image();
     planeImg.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNMzIgMjU2TDE2MCAxOTJMMjI0IDMyLDI4OCAxOTJMNTAwIDI1NkwyODggMzI0TDIyNCA0ODBMMTYwIDMyNEwzMiAyNTZ6IiBmaWxsPSIjZmYwMDQ0Ii8+PC9zdmc+";
 
-    // AUTH CHECK
     auth.onAuthStateChanged(user => {
         if (user) {
             currentUser = user;
@@ -196,7 +203,7 @@
             uid: currentUser.uid,
             email: currentUser.email,
             amount: amt,
-            details: document.getElementById('w-acc').value + " " + document.getElementById('w-ifsc').value,
+            details: document.getElementById('w-acc').value + " " + (document.getElementById('w-ifsc').value || ""),
             status: "pending",
             time: new Date().toLocaleString()
         }).then(() => { alert("Withdrawal Request Sent!"); toggleMenu(); });
@@ -223,6 +230,7 @@
     }
 
     function handleBet(p) {
+        if(!currentUser) return;
         let amt = parseInt(document.getElementById('amt-'+p).value);
         if (!isFlying) {
             if (activeBets[p]) { wallet += activeBets[p].amt; activeBets[p] = null; }
@@ -236,7 +244,7 @@
     }
 
     function cashOut(p) {
-        if (!activeBets[p] || activeBets[p].cashed || !isFlying) return;
+        if (!activeBets[p] || activeBets[p].cashed || !isFlying || !currentUser) return;
         wallet += (activeBets[p].amt * multiplier); activeBets[p].cashed = true;
         db.ref('users/' + currentUser.uid).update({ balance: wallet });
     }
@@ -273,7 +281,7 @@
                 isFlying = false; document.getElementById('flew-away').style.display = 'block';
                 results.unshift(parseFloat(multiplier.toFixed(2)));
                 activeBets[1] = activeBets[2] = null;
-                db.ref('users/' + currentUser.uid).update({ balance: wallet });
+                if(currentUser) db.ref('users/' + currentUser.uid).update({ balance: wallet });
                 setTimeout(startLoop, 3000); return;
             }
             multiplier += 0.0015;
@@ -302,3 +310,4 @@
 </script>
 </body>
 </html>
+
