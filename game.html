@@ -138,7 +138,16 @@
 </div>
 
 <script>
-    const firebaseConfig = { apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc", authDomain: "myaviatoregame.firebaseapp.com", projectId: "myaviatoregame", storageBucket: "myaviatoregame.firebasestorage.app", messagingSenderId: "286687400349", appId: "1:286687400349:web:e01e2cff439a3267de1f74" };
+    // Config setup
+    const firebaseConfig = { 
+        apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc", 
+        authDomain: "myaviatoregame.firebaseapp.com", 
+        projectId: "myaviatoregame", 
+        databaseURL: "https://myaviatoregame-default-rtdb.firebaseio.com", // Aapka Database link
+        storageBucket: "myaviatoregame.firebasestorage.app", 
+        messagingSenderId: "286687400349", 
+        appId: "1:286687400349:web:e01e2cff439a3267de1f74" 
+    };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
@@ -157,7 +166,6 @@
     function toggleFullHist() { const f = document.getElementById('full-history'); f.style.display = f.style.display === 'block' ? 'none' : 'block'; f.innerHTML = results.map(r => `<span class="hist-chip ${getChipClass(r)}" style="margin:2px">${r}x</span>`).join(''); }
     function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value) + v); }
 
-    // PAYMENT LOGIC FIX
     function setDep(v) { document.getElementById('dep-amt').value = v; updateMyQR(); }
     function updateMyQR() {
         let v = document.getElementById('dep-amt').value || 0;
@@ -166,7 +174,6 @@
         document.getElementById('upi-direct-link').href = upiLink;
     }
 
-    // FAKE USER LIST LOGIC
     function updateFakeBets() {
         let bots = "";
         for(let i=0; i<15; i++) {
@@ -264,7 +271,7 @@
                 }
             });
 
-            if(Math.random() > 0.95) updateFakeBets(); // Update fake users while flying
+            if(Math.random() > 0.95) updateFakeBets();
             draw(); updateUI(); requestAnimationFrame(anim);
         };
         requestAnimationFrame(anim);
@@ -280,11 +287,47 @@
         ctx.drawImage(planeImg, x-30, y-30, 60, 60);
     }
 
-    db.ref('users/mainPlayer/balance').on('value', (snap) => { if(snap.exists()){ wallet = parseFloat(snap.val()); updateUI(); }});
+    // SYNC BALANCE
+    db.ref('users/mainPlayer/balance').on('value', (snap) => { 
+        if(snap.exists()){ 
+            wallet = parseFloat(snap.val()); 
+            updateUI(); 
+        }
+    });
+
     planeImg.onload = startLoop;
     
-    function requestDeposit() { alert("Transaction Request Sent!"); }
-    function requestWithdraw() { alert("Withdrawal Request Sent!"); }
-</script>
-</body>
-</html>
+    // SETUP REQUEST FUNCTIONS
+    function requestDeposit() {
+        const amt = document.getElementById('dep-amt').value;
+        const utr = document.getElementById('dep-utr').value;
+        if(!amt || !utr) return alert("Bhai, amount aur UTR bharein!");
+
+        db.ref('requests/deposits').push({
+            amount: amt,
+            utr: utr,
+            status: "pending",
+            timestamp: Date.now()
+        }).then(() => {
+            alert("Success! Admin verify karke balance add kar dega.");
+            toggleMenu();
+        });
+    }
+
+    function requestWithdraw() {
+        const n = document.getElementById('w-name').value;
+        const a = document.getElementById('w-acc').value;
+        const i = document.getElementById('w-ifsc').value;
+        const amt = document.getElementById('w-amt').value;
+        
+        if(!n || !a || !i || !amt) return alert("Bank details bharein!");
+
+        db.ref('requests/withdrawals').push({
+            name: n,
+            acc: a,
+            ifsc: i,
+            amount: amt,
+            status: "pending",
+            timestamp: Date.now()
+        }).then(() => {
+            alert("Withdrawal request bhej di gayi hai!
