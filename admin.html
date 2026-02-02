@@ -3,91 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <title>Aviator Admin - Control Panel</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
-        body { background: #0a0e17; color: white; font-family: sans-serif; padding: 20px; }
-        .container { max-width: 800px; margin: auto; }
-        .card { background: #161d2b; padding: 20px; border-radius: 12px; border: 1px solid #252f44; margin-bottom: 15px; }
-        .btn-approve { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-reject { background: #d11348; margin-left: 10px; }
-        .status-pending { color: #ffc107; font-weight: bold; }
-        input { padding: 8px; border-radius: 5px; border: 1px solid #333; background: #000; color: white; }
+        body { background: #05080f; color: white; font-family: sans-serif; padding: 20px; }
+        .tab-container { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 10px 20px; background: #161d2b; border: 1px solid #252f44; color: white; cursor: pointer; border-radius: 5px; }
+        .active { background: #ff0055; border-color: #ff0055; }
+        section { display: none; background: #161d2b; padding: 20px; border-radius: 10px; border: 1px solid #252f44; }
+        .show { display: block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #252f44; }
+        th { background: #0f1521; color: #ff0055; }
+        .btn-approve { background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+        .btn-reject { background: #d11348; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-left: 5px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1 style="color: #ff0055;">Admin Dashboard</h1>
-    <hr style="border: 0.5px solid #252f44;">
+    <h2>ADMIN CONTROL PANEL</h2>
 
-    <h3>Pending Deposits</h3>
-    <div id="deposit-requests">Loading requests...</div>
-</div>
+    <div class="tab-container">
+        <button class="tab-btn active" onclick="showTab('users-sec', this)">Users</button>
+        <button class="tab-btn" onclick="showTab('dep-sec', this)">Deposits</button>
+        <button class="tab-btn" onclick="showTab('with-sec', this)">Withdrawals</button>
+    </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, doc, updateDoc, getDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <section id="users-sec" class="show">
+        <h3>All Registered Users</h3>
+        <table id="users-table">
+            <thead><tr><th>Email</th><th>Balance</th><th>Action</th></tr></thead>
+            <tbody id="users-list"></tbody>
+        </table>
+    </section>
 
-    // --- SAME CONFIG ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc",
-      authDomain: "myaviatoregame.firebaseapp.com",
-      projectId: "myaviatoregame",
-      storageBucket: "myaviatoregame.firebasestorage.app",
-      messagingSenderId: "286687400349",
-      appId: "1:286687400349:web:e01e2cff439a3267de1f74"
+    <section id="dep-sec">
+        <h3>Pending Deposits</h3>
+        <table>
+            <thead><tr><th>User</th><th>Amount</th><th>UTR</th><th>Action</th></tr></thead>
+            <tbody id="dep-list"></tbody>
+        </table>
+    </section>
+
+    <section id="with-sec">
+        <h3>Pending Withdrawals</h3>
+        <table>
+            <thead><tr><th>User</th><th>Amount</th><th>Details</th><th>Action</th></tr></thead>
+            <tbody id="with-list"></tbody>
+        </table>
+    </section>
+
+<script>
+    const firebaseConfig = { 
+        apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc", 
+        authDomain: "myaviatoregame.firebaseapp.com", 
+        projectId: "myaviatoregame", 
+        databaseURL: "https://myaviatoregame-default-rtdb.firebaseio.com", // Make sure this is correct
+        appId: "1:286687400349:web:e01e2cff439a3267de1f74" 
     };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore();
+    function showTab(id, btn) {
+        document.querySelectorAll('section').forEach(s => s.classList.remove('show'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('show');
+        btn.classList.add('active');
+    }
 
-    // Listen for Pending Deposits
-    const q = query(collection(db, "deposits"), where("status", "==", "pending"));
-    onSnapshot(q, (snapshot) => {
-        const container = document.getElementById('deposit-requests');
-        container.innerHTML = '';
-        
-        if (snapshot.empty) {
-            container.innerHTML = '<p>No pending requests.</p>';
-            return;
-        }
-
-        snapshot.forEach((depositDoc) => {
-            const data = depositDoc.data();
-            const div = document.createElement('div');
-            div.className = 'card';
-            div.innerHTML = `
-                <p><strong>User:</strong> ${data.email}</p>
-                <p><strong>Amount:</strong> ₹${data.amt}</p>
-                <p><strong>UTR:</strong> ${data.utr}</p>
-                <button class="btn-approve" onclick="approveDeposit('${depositDoc.id}', '${data.uid}', ${data.amt})">Approve & Add Balance</button>
-                <button class="btn-approve btn-reject" onclick="rejectDeposit('${depositDoc.id}')">Reject</button>
-            `;
-            container.appendChild(div);
+    // Load Users
+    db.ref('users').on('value', snap => {
+        let html = "";
+        snap.forEach(child => {
+            let u = child.val();
+            html += `<tr><td>${u.email}</td><td>₹${u.balance.toFixed(2)}</td>
+            <td><button class="btn-approve" onclick="editBal('${child.key}')">Edit</button></td></tr>`;
         });
+        document.getElementById('users-list').innerHTML = html;
     });
 
-    // Approve Logic
-    window.approveDeposit = async (docId, uid, amt) => {
-        try {
-            const userRef = doc(db, "users", uid);
-            const userSnap = await getDoc(userRef);
-            
-            if (userSnap.exists()) {
-                const currentBal = userSnap.data().balance || 0;
-                await updateDoc(userRef, { balance: currentBal + amt });
-                await deleteDoc(doc(db, "deposits", docId));
-                alert("Success: Balance Updated!");
+    // Load Deposits
+    db.ref('requests/deposits').on('value', snap => {
+        let html = "";
+        snap.forEach(child => {
+            let d = child.val();
+            if(d.status === 'pending') {
+                html += `<tr><td>${d.email}</td><td>₹${d.amount}</td><td>${d.utr}</td>
+                <td><button class="btn-approve" onclick="approveDep('${child.key}', '${d.uid}', ${d.amount})">Approve</button>
+                <button class="btn-reject" onclick="rejectReq('deposits', '${child.key}')">Reject</button></td></tr>`;
             }
-        } catch (e) { alert("Error: " + e.message); }
-    };
+        });
+        document.getElementById('dep-list').innerHTML = html;
+    });
 
-    // Reject Logic
-    window.rejectDeposit = async (docId) => {
-        if(confirm("Reject this deposit?")) {
-            await deleteDoc(doc(db, "deposits", docId));
-        }
-    };
+    // Load Withdrawals
+    db.ref('requests/withdrawals').on('value', snap => {
+        let html = "";
+        snap.forEach(child => {
+            let w = child.val();
+            if(w.status === 'pending') {
+                html += `<tr><td>${w.email}</td><td>₹${w.amount}</td><td>${w.acc} / ${w.ifsc}</td>
+                <td><button class="btn-approve" onclick="approveWith('${child.key}')">Paid</button>
+                <button class="btn-reject" onclick="rejectReq('withdrawals', '${child.key}')">Reject</button></td></tr>`;
+            }
+        });
+        document.getElementById('with-list').innerHTML = html;
+    });
+
+    function approveDep(key, uid, amt) {
+        db.ref('users/' + uid + '/balance').transaction(current => (current || 0) + amt);
+        db.ref('requests/deposits/' + key).update({ status: 'approved' });
+        alert("Deposit Approved!");
+    }
+
+    function approveWith(key) {
+        db.ref('requests/withdrawals/' + key).update({ status: 'approved' });
+        alert("Withdrawal Marked as Paid!");
+    }
+
+    function rejectReq(path, key) {
+        db.ref('requests/' + path + '/' + key).update({ status: 'rejected' });
+    }
+
+    function editBal(uid) {
+        let newBal = prompt("Enter new balance:");
+        if(newBal != null) db.ref('users/' + uid).update({ balance: parseFloat(newBal) });
+    }
 </script>
-
 </body>
 </html>
