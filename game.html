@@ -30,7 +30,7 @@
         .history-container { background: #080c14; padding: 8px; position: relative; }
         .history-strip { display: flex; gap: 8px; overflow: hidden; width: 85%; height: 30px; align-items: center; }
         #hist-toggle { position: absolute; right: 10px; top: 10px; background: #252f44; border-radius: 5px; padding: 2px 8px; cursor: pointer; z-index: 2100; font-size: 10px; }
-        #full-history { display: none; position: absolute; top: 40px; left: 0; width: 100%; background: #161d2b; z-index: 2000; max-height: 250px; overflow-y: auto; padding: 15px; border-bottom: 3px solid var(--win-green); border-radius: 0 0 15px 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #full-history { display: none; position: absolute; top: 40px; left: 0; width: 100%; background: #161d2b; z-index: 2000; max-height: 250px; overflow-y: auto; padding: 15px; border-bottom: 3px solid var(--win-green); border-radius: 0 0 15px 15px; }
         .hist-chip { font-size: 11px; padding: 4px 12px; border-radius: 12px; background: #1c2538; color: #9d50ff; font-weight: bold; flex-shrink: 0; border: 1px solid #252f44; }
         .chip-green { color: var(--win-green) !important; border-color: var(--win-green); }
 
@@ -46,7 +46,7 @@
         .auto-row { display: flex; justify-content: space-between; align-items: center; font-size: 9px; margin-bottom: 5px; }
         .input-box { background: #000; border: 1px solid #444; border-radius: 20px; display: flex; justify-content: space-between; padding: 4px 10px; align-items: center; margin-bottom: 8px; }
         .input-box input { background: none; border: none; color: #fff; width: 45px; text-align: center; font-size: 13px; outline: none; }
-        .main-btn { width: 100%; height: 40px; border: none; border-radius: 10px; font-weight: bold; color: white; background: var(--win-green); font-size: 13px; cursor: pointer; }
+        .main-btn { width: 100%; height: 40px; border: none; border-radius: 10px; font-weight: bold; color: white; background: var(--win-green); font-size: 13px; cursor: pointer; transition: 0.2s; }
         .btn-cashout { background: var(--btn-orange) !important; }
 
         .live-section { margin: 10px; background: var(--panel-bg); border-radius: 15px; font-size: 10px; border: 1px solid #252f44; min-height: 200px; }
@@ -58,10 +58,11 @@
 
 <div id="side-menu">
     <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>MENU</b> <span onclick="toggleMenu()" style="cursor:pointer">✕</span></div>
+    
     <div class="menu-item" onclick="toggleSub('dep-form')">💰 Deposit <span>▼</span></div>
     <div id="dep-form" class="form-container">
-        <div class="qr-box"><img id="qr-display" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=YOUR_UPI@okicici"></div>
-        <div class="upi-id-text">UPI: YOUR_UPI@okicici</div>
+        <div class="qr-box"><img id="qr-display" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=demo@upi"></div>
+        <div class="upi-id-text">UPI: demo@upi</div>
         <div class="dep-grid">
             <div class="dep-amt-btn" onclick="setDep(100)">100</div>
             <div class="dep-amt-btn" onclick="setDep(200)">200</div>
@@ -76,11 +77,14 @@
         <input type="text" id="dep-utr" class="f-input" placeholder="UTR Number">
         <button class="f-btn" onclick="requestDeposit()">Submit</button>
     </div>
-    <div class="menu-item" onclick="toggleSub('with-form')">🏦 Withdraw <span>▼</span></div>
+
+    <div class="menu-item" onclick="toggleSub('with-form')">🏦 Withdrawal <span>▼</span></div>
     <div id="with-form" class="form-container">
-        <input type="text" id="w-acc" class="f-input" placeholder="UPI ID / Account">
+        <input type="text" id="w-name" class="f-input" placeholder="Account Holder Name">
+        <input type="text" id="w-acc" class="f-input" placeholder="Bank Account Number">
+        <input type="text" id="w-ifsc" class="f-input" placeholder="IFSC Code">
         <input type="number" id="w-amt" class="f-input" placeholder="Amount">
-        <button class="f-btn" onclick="requestWithdraw()">Withdraw</button>
+        <button class="f-btn" onclick="requestWithdraw()">Submit Withdrawal</button>
     </div>
     <button class="f-btn" style="background:#d11348; margin-top:20px;" onclick="firebase.auth().signOut()">LOGOUT</button>
 </div>
@@ -138,7 +142,7 @@
     const auth = firebase.auth(), db = firebase.database();
 
     let wallet = 0, multiplier = 1.0, isFlying = false, currentUser = null;
-    let results = [1.12, 5.34, 1.05, 2.30, 1.88, 4.22, 1.10, 2.05, 1.45, 3.12, 1.01, 8.44, 2.21, 1.55]; // Dummy to start
+    let results = [1.55, 2.10, 1.05, 3.44, 1.12, 1.90, 4.55, 1.01, 2.30, 1.66, 2.88, 1.25];
     let activeBets = { 1: null, 2: null }, queuedBets = { 1: null, 2: null };
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -164,7 +168,6 @@
 
     function updateUI() {
         document.getElementById('bal-text').innerText = wallet.toFixed(2);
-        // Top row: Exactly 10 results
         document.getElementById('hist-row').innerHTML = results.slice(0,10).map(r => `<div class="hist-chip ${r >= 2 ? 'chip-green' : ''}">${r}x</div>`).join('');
         [1,2].forEach(p => {
             let btn = document.getElementById('btn-'+p);
@@ -198,15 +201,23 @@
         updateUI();
     }
 
+    function requestWithdraw() {
+        const name = document.getElementById('w-name').value;
+        const acc = document.getElementById('w-acc').value;
+        const ifsc = document.getElementById('w-ifsc').value;
+        const amt = parseFloat(document.getElementById('w-amt').value);
+        if(!name || !acc || !ifsc || !amt) return alert("Sari details bharein!");
+        if(amt > wallet) return alert("Balance kam hai!");
+        db.ref('requests/withdrawals').push({ uid: currentUser.uid, name, acc, ifsc, amount: amt, status: "pending", time: new Date().toLocaleString() });
+        alert("Withdrawal Requested!");
+    }
+
     function startLoop() {
         isFlying = false; multiplier = 1.0;
         document.getElementById('flew-away').style.display = 'none';
         document.getElementById('multiplier-text').style.display = 'none';
         document.getElementById('countdown').style.display = 'block';
         
-        let list = document.getElementById('live-list'); list.innerHTML = "";
-        for(let i=0; i<10; i++) list.innerHTML += `<div class="live-row"><span>User${Math.floor(Math.random()*999)}</span><span>₹${(Math.random()*500).toFixed(0)}</span><span>-</span><span>-</span></div>`;
-
         [1,2].forEach(p => {
             if(queuedBets[p]) { activeBets[p] = { amt: queuedBets[p].amt, cashed: false }; queuedBets[p] = null; }
             if(document.getElementById('auto-play-'+p).checked && !activeBets[p]) {
@@ -228,20 +239,18 @@
         isFlying = true;
         document.getElementById('countdown').style.display = 'none';
         document.getElementById('multiplier-text').style.display = 'block';
+        let crashPoint = (1 + Math.pow(Math.random(), 2.8) * 10).toFixed(2);
         
-        // Random crash point every time
-        let crashPoint = (1 + Math.pow(Math.random(), 3) * 12).toFixed(2);
-        if (Math.random() < 0.1) crashPoint = 1.00; // Instant crash chance
-
         let anim = () => {
             if(!isFlying) return;
             if(multiplier >= crashPoint) {
                 isFlying = false; 
                 document.getElementById('flew-away').style.display = 'block';
                 results.unshift(parseFloat(multiplier.toFixed(2)));
-                if(results.length > 50) results.pop(); // Keep buffer
-                activeBets[1] = activeBets[2] = null;
+                if(results.length > 30) results.pop();
+                activeBets[1] = activeBets[2] = null; // Important: Clear bets on crash
                 db.ref('users/' + currentUser.uid).update({ balance: wallet });
+                updateUI(); // Immediate UI update to change cashout to bet
                 setTimeout(startLoop, 3000); return;
             }
             multiplier += (multiplier < 2) ? 0.003 : 0.006;
@@ -254,7 +263,6 @@
                     }
                 }
             });
-
             draw(); updateUI(); requestAnimationFrame(anim);
         };
         requestAnimationFrame(anim);
@@ -274,4 +282,3 @@
 </script>
 </body>
 </html>
-
