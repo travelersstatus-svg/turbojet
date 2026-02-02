@@ -18,13 +18,9 @@
         .f-input { width: 100%; padding: 10px; margin-top: 8px; border-radius: 5px; border: 1px solid #444; background: #000; color: white; }
         .f-btn { background: var(--win-green); color: white; border: none; padding: 10px; margin-top: 10px; border-radius: 5px; width: 100%; font-weight: bold; cursor: pointer; }
 
-        .dep-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-        .dep-amt-btn { background: #1c2538; border: 1px solid #252f44; color: white; padding: 8px 2px; border-radius: 8px; font-size: 11px; cursor: pointer; text-align: center; }
-        .dep-amt-btn span { display: block; color: var(--gold); font-size: 8px; margin-top: 2px; }
-        .direct-pay-btn { background: #007bff; color: white; border: none; padding: 12px; margin-top: 10px; border-radius: 5px; width: 100%; font-weight: bold; cursor: pointer; font-size: 14px; text-decoration: none; display: block; text-align: center; }
-        .qr-box { text-align: center; background: #fff; padding: 10px; border-radius: 10px; margin-top: 10px; }
-        .qr-box img { width: 150px; height: 150px; }
-        .upi-id-text { background: #1c2538; padding: 8px; border-radius: 5px; margin-top: 5px; font-size: 12px; color: var(--gold); text-align: center; border: 1px dashed var(--gold); }
+        .dep-grid, .bet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 10px; }
+        .dep-amt-btn, .quick-bet-btn { background: #1c2538; border: 1px solid #252f44; color: white; padding: 5px; border-radius: 5px; font-size: 10px; cursor: pointer; text-align: center; }
+        .dep-amt-btn span { display: block; color: var(--gold); font-size: 8px; }
 
         .top-nav { background: #0f1521; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
         .balance-box { background: #000; border: 2px solid var(--win-green); padding: 6px 18px; border-radius: 20px; color: var(--win-green); font-weight: bold; font-size: 16px; }
@@ -32,11 +28,6 @@
         .history-container { background: #080c14; padding: 8px; position: relative; }
         .history-strip { display: flex; gap: 8px; overflow: hidden; width: 90%; height: 30px; align-items: center; }
         .hist-chip { font-size: 11px; padding: 4px 12px; border-radius: 12px; background: #1c2538; color: #9d50ff; font-weight: bold; flex-shrink: 0; border: 1px solid #252f44; }
-        .chip-green { color: var(--win-green) !important; border-color: var(--win-green); }
-        .chip-gold { color: var(--gold) !important; border-color: var(--gold); }
-
-        #hist-toggle { position: absolute; right: 10px; top: 10px; background: #252f44; border-radius: 5px; padding: 2px 8px; cursor: pointer; z-index: 2100; font-size: 10px; }
-        #full-history { display: none; position: absolute; top: 40px; left: 0; width: 100%; background: #161d2b; z-index: 2000; max-height: 200px; overflow-y: auto; padding: 10px; border-bottom: 2px solid #ff0055; }
 
         .display-area { position: relative; height: 220px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 70%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; overflow: hidden; }
         #multiplier-text { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 4.5rem; font-weight: 900; z-index: 10; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
@@ -45,29 +36,24 @@
 
         .bet-container { display: flex; flex-direction: row; gap: 8px; padding: 10px; width: 100%; }
         .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 15px; border: 1px solid #252f44; width: 50%; }
-        .auto-row { display: flex; justify-content: space-between; align-items: center; font-size: 8px; margin-bottom: 5px; }
         .input-box { background: #000; border: 1px solid #444; border-radius: 20px; display: flex; justify-content: space-between; padding: 4px 10px; align-items: center; margin-bottom: 8px; }
         .input-box input { background: none; border: none; color: #fff; width: 45px; text-align: center; font-size: 14px; outline: none; }
         .main-btn { width: 100%; height: 45px; border: none; border-radius: 10px; font-weight: bold; color: white; background: var(--win-green); font-size: 14px; cursor: pointer; }
         .btn-cashout { background: var(--btn-orange) !important; }
         .btn-waiting { background: #333 !important; color: #f1c40f; }
 
-        .live-section { margin: 25px 10px 10px 10px; background: var(--panel-bg); border-radius: 15px; font-size: 10px; border: 1px solid #252f44; min-height: 220px; }
+        .live-section { margin: 10px; background: var(--panel-bg); border-radius: 15px; font-size: 10px; border: 1px solid #252f44; min-height: 200px; overflow: hidden; }
         .live-header { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; padding: 8px 10px; background: #0f1521; font-weight: bold; border-bottom: 1px solid #333; }
-        .live-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; padding: 6px 10px; border-bottom: 1px solid #1a2233; }
+        .live-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; padding: 6px 10px; border-bottom: 1px solid #1a2233; color: #9ea0a3; }
+        .win-row { color: var(--win-green); }
     </style>
 </head>
 <body>
 
 <div id="side-menu">
     <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>HOME MENU</b> <span onclick="toggleMenu()" style="cursor:pointer">✕</span></div>
-    
     <div class="menu-item" onclick="toggleSub('dep-form')">💰 Deposit <span>▼</span></div>
     <div id="dep-form" class="form-container">
-        <div class="qr-box"><img id="qr-display" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=YOUR_UPI_ID@okicici"></div>
-        <div class="upi-id-text">UPI ID: YOUR_UPI_ID@okicici</div>
-        <a id="upi-direct-link" href="#" class="direct-pay-btn">Pay Now via UPI App</a>
-        
         <div class="dep-grid">
             <div class="dep-amt-btn" onclick="setDep(100)">₹100<span>+20%</span></div>
             <div class="dep-amt-btn" onclick="setDep(200)">₹200<span>+20%</span></div>
@@ -75,22 +61,17 @@
             <div class="dep-amt-btn" onclick="setDep(500)">₹500<span>+20%</span></div>
             <div class="dep-amt-btn" onclick="setDep(1000)">₹1000<span>+20%</span></div>
             <div class="dep-amt-btn" onclick="setDep(2000)">₹2000<span>+20%</span></div>
-            <div class="dep-amt-btn" onclick="setDep(3000)">₹3000<span>+20%</span></div>
             <div class="dep-amt-btn" onclick="setDep(5000)">₹5000<span>+20%</span></div>
             <div class="dep-amt-btn" onclick="setDep(10000)">₹10000<span>+20%</span></div>
         </div>
-
-        <input type="number" id="dep-amt" class="f-input" placeholder="Amount" oninput="updateMyQR()">
+        <input type="number" id="dep-amt" class="f-input" placeholder="Amount">
         <input type="text" id="dep-utr" class="f-input" placeholder="UTR Number">
-        <button class="f-btn" onclick="requestDeposit()">Submit Transaction</button>
+        <button class="f-btn" onclick="requestDeposit()">Submit</button>
     </div>
-
     <div class="menu-item" onclick="toggleSub('with-form')">🏦 Withdrawal <span>▼</span></div>
     <div id="with-form" class="form-container">
-        <input type="text" id="w-name" class="f-input" placeholder="Bank/UPI Name">
-        <input type="text" id="w-acc" class="f-input" placeholder="A/C No / UPI ID">
-        <input type="text" id="w-ifsc" class="f-input" placeholder="IFSC (Optional)">
         <input type="number" id="w-amt" class="f-input" placeholder="Amount">
+        <input type="text" id="w-acc" class="f-input" placeholder="UPI/Bank Details">
         <button class="f-btn" onclick="requestWithdraw()">Withdraw</button>
     </div>
     <button class="f-btn" style="background:#d11348; margin-top:20px;" onclick="firebase.auth().signOut()">LOGOUT</button>
@@ -98,17 +79,11 @@
 
 <div class="top-nav">
     <div style="color:#ff0055; font-weight:900; font-size:24px;">AVIATOR</div>
-    <div style="display:flex; align-items:center; gap:10px;">
-        <div class="balance-box">₹<span id="bal-text">0.00</span></div>
-        <div onclick="toggleMenu()" style="cursor:pointer; font-size:24px;">☰</div>
-    </div>
+    <div class="balance-box">₹<span id="bal-text">0.00</span></div>
+    <div onclick="toggleMenu()" style="cursor:pointer; font-size:24px;">☰</div>
 </div>
 
-<div class="history-container">
-    <div id="hist-row" class="history-strip"></div>
-    <div id="hist-toggle" onclick="toggleFullHist()">▼</div>
-    <div id="full-history"></div>
-</div>
+<div class="history-container"><div id="hist-row" class="history-strip"></div></div>
 
 <div class="display-area">
     <canvas id="gameCanvas"></canvas>
@@ -119,19 +94,31 @@
 
 <div class="bet-container">
     <div class="bet-card">
-        <div class="auto-row"><label><input type="checkbox" id="auto-play-1"> Auto</label><label><input type="checkbox" id="auto-cash-tick-1"> Cashout</label><input type="number" id="auto-cash-val-1" value="2.00" step="0.1" style="width:30px; background:#000; color:white; border:none; font-size:10px;"></div>
         <div class="input-box"><button onclick="adj(1,-10)">-</button><input type="number" id="amt-1" value="100"><button onclick="adj(1,10)">+</button></div>
+        <div class="bet-grid">
+            <button class="quick-bet-btn" onclick="setAmt(1,10)">10</button>
+            <button class="quick-bet-btn" onclick="setAmt(1,100)">100</button>
+            <button class="quick-bet-btn" onclick="setAmt(1,200)">200</button>
+            <button class="quick-bet-btn" onclick="setAmt(1,500)">500</button>
+            <button class="quick-bet-btn" onclick="setAmt(1,1000)">1k</button>
+        </div>
         <button id="btn-1" class="main-btn" onclick="handleBet(1)">BET</button>
     </div>
     <div class="bet-card">
-        <div class="auto-row"><label><input type="checkbox" id="auto-play-2"> Auto</label><label><input type="checkbox" id="auto-cash-tick-2"> Cashout</label><input type="number" id="auto-cash-val-2" value="2.00" step="0.1" style="width:30px; background:#000; color:white; border:none; font-size:10px;"></div>
         <div class="input-box"><button onclick="adj(2,-10)">-</button><input type="number" id="amt-2" value="100"><button onclick="adj(2,10)">+</button></div>
+        <div class="bet-grid">
+            <button class="quick-bet-btn" onclick="setAmt(2,10)">10</button>
+            <button class="quick-bet-btn" onclick="setAmt(2,100)">100</button>
+            <button class="quick-bet-btn" onclick="setAmt(2,200)">200</button>
+            <button class="quick-bet-btn" onclick="setAmt(2,500)">500</button>
+            <button class="quick-bet-btn" onclick="setAmt(2,1000)">1k</button>
+        </div>
         <button id="btn-2" class="main-btn" onclick="handleBet(2)">BET</button>
     </div>
 </div>
 
 <div class="live-section">
-    <div class="live-header"><span>User</span><span>Bet</span><span>Mult</span><span>CashOut</span></div>
+    <div class="live-header"><span>User</span><span>Bet</span><span>Mult</span><span>Win</span></div>
     <div id="live-list"></div>
 </div>
 
@@ -150,7 +137,7 @@
     const db = firebase.database();
 
     let wallet = 0, multiplier = 1.0, isFlying = false, currentUser = null;
-    let results = [1.2, 3.5, 1.05, 2.3, 1.8];
+    let results = [1.2, 3.5, 1.05, 2.3];
     let activeBets = { 1: null, 2: null }, queuedBets = { 1: null, 2: null };
 
     const canvas = document.getElementById('gameCanvas');
@@ -163,55 +150,41 @@
             currentUser = user;
             db.ref('users/' + user.uid + '/balance').on('value', snap => {
                 wallet = parseFloat(snap.val()) || 0;
-                updateUI();
+                document.getElementById('bal-text').innerText = wallet.toFixed(2);
             });
         } else { window.location.href = "index.html"; }
     });
 
     function toggleMenu() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
     function toggleSub(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
-    function getChipClass(val) { if(val >= 10) return 'chip-gold'; if(val >= 2) return 'chip-green'; return ''; }
-    function toggleFullHist() { const f = document.getElementById('full-history'); f.style.display = f.style.display === 'block' ? 'none' : 'block'; f.innerHTML = results.map(r => `<span class="hist-chip ${getChipClass(r)}" style="margin:2px">${r}x</span>`).join(''); }
     function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value) + v); }
-
-    function setDep(v) { document.getElementById('dep-amt').value = v; updateMyQR(); }
-    function updateMyQR() {
-        let v = document.getElementById('dep-amt').value || 0;
-        let upiLink = "upi://pay?pa=YOUR_UPI_ID@okicici&pn=Admin&am=" + v;
-        document.getElementById('qr-display').src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(upiLink);
-        document.getElementById('upi-direct-link').href = upiLink;
-    }
+    function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
+    function setDep(v) { document.getElementById('dep-amt').value = v; }
 
     function requestDeposit() {
         const amt = document.getElementById('dep-amt').value;
         const utr = document.getElementById('dep-utr').value;
-        if(!amt || !utr || !currentUser) return alert("Sahi details bharein!");
-        db.ref('requests/deposits').push({
-            uid: currentUser.uid,
-            email: currentUser.email,
-            amount: parseFloat(amt),
-            utr: utr,
-            status: "pending",
-            time: new Date().toLocaleString()
-        }).then(() => { alert("Deposit Request Sent!"); toggleMenu(); });
+        if(!amt || !utr) return alert("Fill all details!");
+        db.ref('requests/deposits').push({ uid: currentUser.uid, email: currentUser.email, amount: parseFloat(amt), utr, status: "pending", time: new Date().toLocaleString() });
+        alert("Request Sent!"); toggleMenu();
     }
 
-    function requestWithdraw() {
-        const amt = parseFloat(document.getElementById('w-amt').value);
-        if(!amt || amt > wallet) return alert("Incomplete details ya low balance!");
-        db.ref('requests/withdrawals').push({
-            uid: currentUser.uid,
-            email: currentUser.email,
-            amount: amt,
-            details: document.getElementById('w-acc').value + " " + (document.getElementById('w-ifsc').value || ""),
-            status: "pending",
-            time: new Date().toLocaleString()
-        }).then(() => { alert("Withdrawal Request Sent!"); toggleMenu(); });
+    function handleBet(p) {
+        let amt = parseInt(document.getElementById('amt-'+p).value);
+        if (!isFlying) {
+            if (activeBets[p]) { wallet += activeBets[p].amt; activeBets[p] = null; }
+            else if (amt <= wallet) { wallet -= amt; activeBets[p] = { amt, cashed: false }; }
+        } else {
+            if (activeBets[p] && !activeBets[p].cashed) {
+                wallet += (activeBets[p].amt * multiplier); activeBets[p].cashed = true;
+            } else if (queuedBets[p]) { wallet += queuedBets[p].amt; queuedBets[p] = null; }
+            else if (amt <= wallet) { wallet -= amt; queuedBets[p] = { amt }; }
+        }
+        db.ref('users/' + currentUser.uid).update({ balance: wallet });
+        updateUI();
     }
 
     function updateUI() {
-        document.getElementById('bal-text').innerText = wallet.toFixed(2);
-        document.getElementById('hist-row').innerHTML = results.slice(0, 15).map(r => `<div class="hist-chip ${getChipClass(r)}">${r}x</div>`).join('');
         [1,2].forEach(p => {
             let btn = document.getElementById('btn-'+p);
             if (!isFlying) {
@@ -227,26 +200,25 @@
                 }
             }
         });
+        document.getElementById('hist-row').innerHTML = results.slice(0, 15).map(r => `<div class="hist-chip">${r}x</div>`).join('');
     }
 
-    function handleBet(p) {
-        if(!currentUser) return;
-        let amt = parseInt(document.getElementById('amt-'+p).value);
-        if (!isFlying) {
-            if (activeBets[p]) { wallet += activeBets[p].amt; activeBets[p] = null; }
-            else if (amt <= wallet) { wallet -= amt; activeBets[p] = { amt, cashed: false }; }
-        } else {
-            if (activeBets[p] && !activeBets[p].cashed) cashOut(p);
-            else if (queuedBets[p]) { wallet += queuedBets[p].amt; queuedBets[p] = null; }
-            else if (amt <= wallet) { wallet -= amt; queuedBets[p] = { amt }; }
+    // Fake User Logic
+    function updateFakeUsers() {
+        const users = ["Rahul**", "Aman**", "Sonal**", "Vijay**", "Deepak**", "Lucky**", "User72**"];
+        let html = "";
+        for(let i=0; i<10; i++){
+            let isWin = Math.random() > 0.4 && isFlying;
+            let m = (1 + Math.random() * 2).toFixed(2);
+            let b = (Math.random() * 500).toFixed(0);
+            html += `<div class="live-row ${isWin ? 'win-row' : ''}">
+                <span>${users[i%users.length]}</span>
+                <span>₹${b}</span>
+                <span>${isWin ? m+'x' : '-'}</span>
+                <span>${isWin ? '₹'+(b*m).toFixed(0) : '-'}</span>
+            </div>`;
         }
-        db.ref('users/' + currentUser.uid).update({ balance: wallet });
-    }
-
-    function cashOut(p) {
-        if (!activeBets[p] || activeBets[p].cashed || !isFlying || !currentUser) return;
-        wallet += (activeBets[p].amt * multiplier); activeBets[p].cashed = true;
-        db.ref('users/' + currentUser.uid).update({ balance: wallet });
+        document.getElementById('live-list').innerHTML = html;
     }
 
     function startLoop() {
@@ -254,20 +226,14 @@
         document.getElementById('flew-away').style.display = 'none';
         document.getElementById('multiplier-text').style.display = 'none';
         document.getElementById('countdown').style.display = 'block';
-        [1,2].forEach(p => {
-            if(queuedBets[p]) { activeBets[p] = { amt: queuedBets[p].amt, cashed: false }; queuedBets[p] = null; }
-            if(document.getElementById('auto-play-'+p).checked && !activeBets[p]) {
-                let amt = parseInt(document.getElementById('amt-'+p).value);
-                if(amt <= wallet) { wallet -= amt; activeBets[p] = { amt, cashed: false }; }
-            }
-        });
+        [1,2].forEach(p => { if(queuedBets[p]) { activeBets[p] = { amt: queuedBets[p].amt, cashed: false }; queuedBets[p] = null; } });
         let t = 5;
         let timer = setInterval(() => {
             document.getElementById('countdown').innerText = "NEXT ROUND IN " + t + "s";
             if(t <= 0) { clearInterval(timer); runFlight(); }
             t--;
         }, 1000);
-        updateUI();
+        updateUI(); updateFakeUsers();
     }
 
     function runFlight() {
@@ -281,16 +247,12 @@
                 isFlying = false; document.getElementById('flew-away').style.display = 'block';
                 results.unshift(parseFloat(multiplier.toFixed(2)));
                 activeBets[1] = activeBets[2] = null;
-                if(currentUser) db.ref('users/' + currentUser.uid).update({ balance: wallet });
+                db.ref('users/' + currentUser.uid).update({ balance: wallet });
                 setTimeout(startLoop, 3000); return;
             }
-            multiplier += 0.0015;
+            multiplier += 0.002;
             document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
-            [1,2].forEach(p => {
-                if(document.getElementById('auto-cash-tick-'+p).checked && activeBets[p] && !activeBets[p].cashed) {
-                    if(multiplier >= parseFloat(document.getElementById('auto-cash-val-'+p).value)) cashOut(p);
-                }
-            });
+            if(Math.random() > 0.98) updateFakeUsers();
             draw(); updateUI(); requestAnimationFrame(anim);
         };
         requestAnimationFrame(anim);
@@ -298,16 +260,16 @@
 
     function draw() {
         canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-        let p = Math.min((multiplier - 1) / 2.5, 0.95);
-        let x = p * canvas.width * 0.9 + 20, y = (canvas.height - 40) - (Math.pow(p,0.6) * canvas.height * 0.8);
+        let p = Math.min((multiplier - 1) / 3, 0.9);
+        let x = p * canvas.width + 20, y = (canvas.height - 40) - (Math.pow(p, 0.6) * canvas.height * 0.7);
         ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 5; ctx.beginPath();
+        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 4; ctx.beginPath();
         ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
-        ctx.drawImage(planeImg, x-30, y-30, 60, 60);
+        ctx.drawImage(planeImg, x-25, y-25, 50, 50);
     }
 
     planeImg.onload = startLoop;
 </script>
 </body>
-</html>
-
+                            </html>
+                            
