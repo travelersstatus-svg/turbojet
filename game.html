@@ -138,16 +138,32 @@
     const auth = firebase.auth(), db = firebase.database();
 
     let wallet = 0, multiplier = 1.0, isFlying = false, currentUser = null;
-    let results = [1.50, 2.33, 1.08, 4.20, 1.15, 5.00, 1.01, 2.10];
+    let results = [];
     let activeBets = { 1: null, 2: null }, queuedBets = { 1: null, 2: null };
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const planeImg = new Image();
     planeImg.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNMzIgMjU2TDE2MCAxOTJMMjI0IDMyLDI4OCAxOTJMNTAwIDI1NkwyODggMzI0TDIyNCA0ODBMMTYwIDMyNEwzMiAyNTZ6IiBmaWxsPSIjZmYwMDQ0Ii8+PC9zdmc+";
 
+    // Random Results Logic on Refresh
+    function initResults() {
+        const stored = localStorage.getItem('aviator_results');
+        if (stored) {
+            results = JSON.parse(stored);
+        } else {
+            // Generate completely new random data for new users
+            for(let i=0; i<30; i++) results.push((1 + Math.pow(Math.random(), 3) * 10).toFixed(2));
+            localStorage.setItem('aviator_results', JSON.stringify(results));
+        }
+    }
+
     auth.onAuthStateChanged(user => {
-        if (user) { currentUser = user; db.ref('users/' + user.uid + '/balance').on('value', snap => { wallet = parseFloat(snap.val()) || 0; updateUI(); }); }
-        else { window.location.href = "index.html"; }
+        if (user) { 
+            currentUser = user; 
+            db.ref('users/' + user.uid + '/balance').on('value', snap => { wallet = parseFloat(snap.val()) || 0; updateUI(); });
+            initResults();
+            updateUI();
+        } else { window.location.href = "index.html"; }
     });
 
     function toggleMenu() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
@@ -231,14 +247,18 @@
         isFlying = true;
         document.getElementById('countdown').style.display = 'none';
         document.getElementById('multiplier-text').style.display = 'block';
-        let crashPoint = (1 + Math.pow(Math.random(), 3) * 12).toFixed(2);
         
+        // Random crash point every round
+        let crashPoint = (1 + Math.pow(Math.random(), 2.8) * 10).toFixed(2);
+        if(Math.random() < 0.1) crashPoint = 1.00;
+
         let anim = () => {
             if(!isFlying) return;
             if(multiplier >= crashPoint) {
                 isFlying = false; document.getElementById('flew-away').style.display = 'block';
                 results.unshift(parseFloat(multiplier.toFixed(2)));
-                if(results.length > 40) results.pop();
+                if(results.length > 50) results.pop();
+                localStorage.setItem('aviator_results', JSON.stringify(results));
                 activeBets[1] = activeBets[2] = null;
                 db.ref('users/' + currentUser.uid).update({ balance: wallet });
                 updateUI(); setTimeout(startLoop, 3000); return;
@@ -246,7 +266,6 @@
             multiplier += (multiplier < 2) ? 0.003 : 0.006;
             document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
             
-            // Randomly cash out fake users
             for(let i=0; i<12; i++) {
                 if(Math.random() < 0.01 && document.getElementById('fake-m-'+i).innerText === "-") {
                     document.getElementById('fake-m-'+i).innerText = multiplier.toFixed(2) + "x";
@@ -273,10 +292,4 @@
         let x = p * canvas.width * 0.9 + 20, y = (canvas.height - 40) - (Math.pow(p,0.6) * canvas.height * 0.8);
         ctx.clearRect(0,0,canvas.width,canvas.height);
         ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 5; ctx.beginPath();
-        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
-        ctx.drawImage(planeImg, x-30, y-30, 60, 60);
-    }
-    planeImg.onload = startLoop;
-</script>
-</body>
-</html>
+        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y)
