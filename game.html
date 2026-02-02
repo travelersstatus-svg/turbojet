@@ -28,9 +28,9 @@
         .balance-box { background: #000; border: 2px solid var(--win-green); padding: 6px 18px; border-radius: 20px; color: var(--win-green); font-weight: bold; font-size: 16px; }
 
         .history-container { background: #080c14; padding: 8px; position: relative; }
-        .history-strip { display: flex; gap: 8px; overflow: hidden; width: 90%; height: 30px; align-items: center; }
+        .history-strip { display: flex; gap: 8px; overflow: hidden; width: 85%; height: 30px; align-items: center; }
         #hist-toggle { position: absolute; right: 10px; top: 10px; background: #252f44; border-radius: 5px; padding: 2px 8px; cursor: pointer; z-index: 2100; font-size: 10px; }
-        #full-history { display: none; position: absolute; top: 40px; left: 0; width: 100%; background: #161d2b; z-index: 2000; max-height: 250px; overflow-y: auto; padding: 15px; border-bottom: 2px solid #ff0055; }
+        #full-history { display: none; position: absolute; top: 40px; left: 0; width: 100%; background: #161d2b; z-index: 2000; max-height: 250px; overflow-y: auto; padding: 15px; border-bottom: 3px solid var(--win-green); border-radius: 0 0 15px 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .hist-chip { font-size: 11px; padding: 4px 12px; border-radius: 12px; background: #1c2538; color: #9d50ff; font-weight: bold; flex-shrink: 0; border: 1px solid #252f44; }
         .chip-green { color: var(--win-green) !important; border-color: var(--win-green); }
 
@@ -138,7 +138,7 @@
     const auth = firebase.auth(), db = firebase.database();
 
     let wallet = 0, multiplier = 1.0, isFlying = false, currentUser = null;
-    let results = [];
+    let results = [1.12, 5.34, 1.05, 2.30, 1.88, 4.22, 1.10, 2.05, 1.45, 3.12, 1.01, 8.44, 2.21, 1.55]; // Dummy to start
     let activeBets = { 1: null, 2: null }, queuedBets = { 1: null, 2: null };
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -164,17 +164,20 @@
 
     function updateUI() {
         document.getElementById('bal-text').innerText = wallet.toFixed(2);
+        // Top row: Exactly 10 results
         document.getElementById('hist-row').innerHTML = results.slice(0,10).map(r => `<div class="hist-chip ${r >= 2 ? 'chip-green' : ''}">${r}x</div>`).join('');
         [1,2].forEach(p => {
             let btn = document.getElementById('btn-'+p);
             if (!isFlying) {
                 btn.innerText = activeBets[p] ? "CANCEL" : "BET";
+                btn.className = "main-btn";
             } else {
                 if (activeBets[p] && !activeBets[p].cashed) {
                     btn.innerText = "CASH OUT " + (activeBets[p].amt * multiplier).toFixed(1);
                     btn.className = "main-btn btn-cashout";
                 } else {
                     btn.innerText = queuedBets[p] ? "CANCEL" : "BET NEXT";
+                    btn.className = "main-btn";
                 }
             }
         });
@@ -225,14 +228,18 @@
         isFlying = true;
         document.getElementById('countdown').style.display = 'none';
         document.getElementById('multiplier-text').style.display = 'block';
-        let crashPoint = (1 + Math.pow(Math.random(), 2.5) * 12).toFixed(2);
         
+        // Random crash point every time
+        let crashPoint = (1 + Math.pow(Math.random(), 3) * 12).toFixed(2);
+        if (Math.random() < 0.1) crashPoint = 1.00; // Instant crash chance
+
         let anim = () => {
             if(!isFlying) return;
             if(multiplier >= crashPoint) {
                 isFlying = false; 
                 document.getElementById('flew-away').style.display = 'block';
                 results.unshift(parseFloat(multiplier.toFixed(2)));
+                if(results.length > 50) results.pop(); // Keep buffer
                 activeBets[1] = activeBets[2] = null;
                 db.ref('users/' + currentUser.uid).update({ balance: wallet });
                 setTimeout(startLoop, 3000); return;
@@ -266,5 +273,5 @@
     planeImg.onload = startLoop;
 </script>
 </body>
-    </html>
-    
+</html>
+
