@@ -18,6 +18,11 @@
         .dropdown-content { display: none; background: #05080f; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #252f44; }
         .f-input { width: 100%; padding: 10px; margin: 8px 0; background: #000; color: white; border: 1px solid #333; border-radius: 5px; }
 
+        /* Referral Box Style */
+        .ref-box { background: #1c2538; padding: 10px; border-radius: 8px; border: 1px dashed var(--win-green); margin-top: 10px; }
+        .ref-id { color: var(--win-green); font-weight: bold; font-size: 14px; margin-bottom: 5px; }
+        .share-btn { background: var(--win-green); color: white; border: none; padding: 8px; border-radius: 5px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 5px; }
+
         /* Navigation */
         .top-nav { background: #0f1521; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
         .balance-box { background: #000; border: 2px solid var(--win-green); padding: 5px 15px; border-radius: 20px; color: var(--win-green); font-weight: bold; }
@@ -81,6 +86,15 @@
 <div id="side-menu">
     <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>MENU</b> <span onclick="toggleMenu()" style="cursor:pointer">✕</span></div>
     
+    <div class="menu-btn" onclick="toggleDrop('ref-drop')">👥 Refer & Earn ₹100 <span>▼</span></div>
+    <div id="ref-drop" class="dropdown-content">
+        <div class="ref-box">
+            <div class="ref-id">ID: <span id="my-unique-id">Loading...</span></div>
+            <p style="font-size: 11px; color: #ccc;">Share your link and get ₹100 bonus on every friend's join!</p>
+            <button class="share-btn" onclick="shareReferral()">SHARE LINK</button>
+        </div>
+    </div>
+
     <div class="menu-btn" onclick="toggleDrop('dep-drop')">💰 Deposit (20% Bonus) <span>▼</span></div>
     <div id="dep-drop" class="dropdown-content">
         <center><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=upi://pay?pa=demo@upi"></center>
@@ -194,6 +208,7 @@
     auth.onAuthStateChanged(user => {
         if (user) { 
             currentUser = user; 
+            document.getElementById('my-unique-id').innerText = user.uid.substring(0,8).toUpperCase();
             db.ref('users/' + user.uid + '/balance').on('value', snap => { 
                 wallet = snap.val() || 0; 
                 document.getElementById('bal-text').innerText = wallet.toFixed(2);
@@ -201,6 +216,18 @@
             initHistory(); startLoop();
         } else { window.location.href = "index.html"; }
     });
+
+    function shareReferral() {
+        const refId = currentUser.uid.substring(0,8).toUpperCase();
+        const shareText = `🚀 Aviator Pro Game: Join using my ID [${refId}] and get ₹100 FREE JOINING BONUS! 💰\nPlay and Win Big! Link: ${window.location.href}?ref=${refId}`;
+        
+        if (navigator.share) {
+            navigator.share({ title: 'Aviator Pro', text: shareText, url: window.location.href });
+        } else {
+            navigator.clipboard.writeText(shareText);
+            alert("Referral link with ₹100 bonus message copied to clipboard!");
+        }
+    }
 
     function initHistory() {
         const strip = document.getElementById('hist-row'), full = document.getElementById('full-history');
