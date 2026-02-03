@@ -39,12 +39,11 @@
         .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 15px; border: 1px solid #252f44; width: 50%; }
         .auto-row { display: flex; justify-content: space-between; font-size: 8px; margin-bottom: 5px; color: #ccc; align-items: center; }
         
-        /* COLORFUL AUTO CASH BOX - VISIBLE & HIGHLIGHTED */
         .auto-cash-box {
             display: flex;
             align-items: center;
             background: #000;
-            border: 1px solid #3b82f6; /* Blue Glow Border */
+            border: 1px solid #3b82f6; 
             border-radius: 12px;
             padding: 1px 6px;
             box-shadow: 0 0 5px rgba(59, 130, 246, 0.6);
@@ -70,7 +69,6 @@
         .main-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; font-weight: bold; color: white; background: var(--win-green); cursor: pointer; }
         .btn-cashout { background: #d97706 !important; }
 
-        /* Fake Users */
         .live-section { margin: 10px; background: var(--panel-bg); border-radius: 10px; border: 1px solid #252f44; height: 180px; overflow-y: auto; }
         .live-header { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; padding: 8px; font-size: 9px; font-weight: bold; background: #0f1521; position: sticky; top:0; }
         .live-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; padding: 6px 8px; font-size: 9px; border-bottom: 1px solid #252f44; }
@@ -104,6 +102,9 @@
 
     <div class="menu-btn" onclick="toggleDrop('bet-hist')">📜 Bet History <span>▼</span></div>
     <div id="bet-hist" class="dropdown-content">No records.</div>
+
+    <div class="menu-btn" onclick="toggleDrop('trans-hist')">💸 Transaction History <span>▼</span></div>
+    <div id="trans-hist" class="dropdown-content">No transactions.</div>
 
     <div class="menu-btn" style="background:var(--accent-red); margin-top:50px;" onclick="firebase.auth().signOut()">🚪 Logout</div>
 </div>
@@ -322,5 +323,4 @@
     }
 </script>
 </body>
-            </html>
-
+</html>
