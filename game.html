@@ -225,18 +225,19 @@
             if(multiplier >= crash) {
                 isFlying = false;
                 
-                // Result Update Logic (Strip & Dropdown)
-                let chipHTML = `<div class="hist-chip ${crash >= 2 ? 'chip-green' : ''}">${crash}x</div>`;
+                // --- NEW RESULT UPDATE LOGIC ---
+                const chipHTML = `<div class="hist-chip ${crash >= 2 ? 'chip-green' : ''}">${crash}x</div>`;
                 
-                // Update Top Strip (Max 6)
-                let strip = document.getElementById('hist-row');
-                strip.innerHTML = chipHTML + strip.innerHTML;
-                if(strip.children.length > 6) strip.removeChild(strip.lastChild);
+                // 1. Upar ki strip (hist-row) update: Naya result add aur sabse purana hataye
+                const strip = document.getElementById('hist-row');
+                strip.insertAdjacentHTML('afterbegin', chipHTML);
+                if(strip.children.length > 6) strip.lastElementChild.remove();
 
-                // Update Dropdown (Max 25, old one removed)
-                let fullHist = document.getElementById('full-history');
-                fullHist.innerHTML = chipHTML + fullHist.innerHTML;
-                if(fullHist.children.length > 25) fullHist.removeChild(fullHist.lastChild);
+                // 2. Dropdown (full-history) update: Naya result add aur sabse purana hataye
+                const fullHist = document.getElementById('full-history');
+                fullHist.insertAdjacentHTML('afterbegin', chipHTML);
+                if(fullHist.children.length > 25) fullHist.lastElementChild.remove();
+                // --------------------------------
 
                 activeBets[1] = activeBets[2] = null;
                 setTimeout(startLoop, 3000);
@@ -286,5 +287,5 @@
     }
 </script>
 </body>
-    </html>
+</html>
 
