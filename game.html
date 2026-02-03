@@ -37,7 +37,21 @@
         /* Bet Card */
         .bet-container { display: flex; gap: 8px; padding: 10px; }
         .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 15px; border: 1px solid #252f44; width: 50%; }
-        .auto-row { display: flex; justify-content: space-between; font-size: 8px; margin-bottom: 5px; color: #ccc; }
+        .auto-row { display: flex; justify-content: space-between; align-items: center; font-size: 9px; margin-bottom: 8px; color: #ccc; }
+        
+        /* UPDATED: Visible Auto Cashout Box Style */
+        .auto-cash-input { 
+            width: 35px; 
+            background: #000; 
+            border: 1px solid #444; 
+            color: #ffc107; 
+            border-radius: 4px; 
+            text-align: center;
+            font-size: 10px;
+            padding: 2px;
+            margin-left: 2px;
+        }
+
         .amt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 5px 0; }
         .amt-btn { background: #1c2538; border: 1px solid #252f44; color: white; font-size: 9px; padding: 4px 0; border-radius: 4px; }
         
@@ -107,7 +121,8 @@
 <div class="bet-container">
     <div class="bet-card">
         <div class="auto-row">
-            <label><input type="checkbox" id="auto-p1"> Auto Play</label> <label>Cash <input type="checkbox" id="auto-c1"> <input type="number" id="ac-val1" value="2.0" style="width:22px; background:none; border:none; color:white;"></label>
+            <label><input type="checkbox" id="auto-p1"> Auto</label> 
+            <label>Cash <input type="checkbox" id="auto-c1"> <input type="number" id="ac-val1" value="2.00" step="0.1" class="auto-cash-input"></label>
         </div>
         <div class="manual-input"> <button onclick="adj(1, -10)">-</button><input type="number" id="amt-1" value="100"><button onclick="adj(1, 10)">+</button>
         </div>
@@ -124,8 +139,8 @@
 
     <div class="bet-card">
         <div class="auto-row">
-            <label><input type="checkbox" id="auto-p2"> Auto Play</label>
-            <label>Cash <input type="checkbox" id="auto-c2"> <input type="number" id="ac-val2" value="2.0" style="width:22px; background:none; border:none; color:white;"></label>
+            <label><input type="checkbox" id="auto-p2"> Auto</label>
+            <label>Cash <input type="checkbox" id="auto-c2"> <input type="number" id="ac-val2" value="2.00" step="0.1" class="auto-cash-input"></label>
         </div>
         <div class="manual-input">
             <button onclick="adj(2, -10)">-</button><input type="number" id="amt-2" value="100"><button onclick="adj(2, 10)">+</button>
@@ -292,3 +307,4 @@
 </script>
 </body>
 </html>
+
