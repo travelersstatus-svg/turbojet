@@ -12,6 +12,31 @@
         * { box-sizing: border-box; font-family: sans-serif; margin: 0; padding: 0; }
         body { background: var(--bg-dark); color: white; overflow-x: hidden; touch-action: none; user-select: none; }
 
+        /* Splash Animation Style */
+        .cashout-splash {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(40, 167, 69, 0.9);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 24px;
+            z-index: 1000;
+            animation: splashAnim 2s ease-out forwards;
+            pointer-events: none;
+            border: 2px solid #fff;
+            box-shadow: 0 0 20px rgba(40, 167, 69, 0.5);
+        }
+
+        @keyframes splashAnim {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            20% { transform: translate(-50%, -70%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -120%) scale(1); opacity: 0; }
+        }
+
         /* Sidebar & Menus */
         #side-menu { position: fixed; top: 0; right: -100%; width: 85%; height: 100%; background: #0f1521; z-index: 5000; transition: 0.4s; padding: 20px; overflow-y: auto; }
         .menu-btn { width: 100%; padding: 15px; background: #1c2538; border: 1px solid #252f44; color: white; border-radius: 8px; margin-bottom: 10px; text-align: left; display: flex; justify-content: space-between; cursor: pointer; }
@@ -83,6 +108,8 @@
 </head>
 <body onbeforeunload="return 'No Refresh'">
 
+<audio id="coin-sound" src="https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3" preload="auto"></audio>
+
 <div id="side-menu">
     <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>MENU</b> <span onclick="toggleMenu()" style="cursor:pointer">✕</span></div>
     
@@ -135,7 +162,7 @@
     <div id="full-history"></div>
 </div>
 
-<div class="display-area">
+<div class="display-area" id="game-container">
     <canvas id="gameCanvas"></canvas>
     <div id="multiplier-text">1.00x</div>
     <div id="countdown-box"><div id="cd-num" style="font-size:30px; font-weight:bold;">5</div></div>
@@ -321,33 +348,22 @@
 
     function cashOut(p) {
         if(activeBets[p] && !activeBets[p].cashed) {
-            wallet += (activeBets[p].amt * multiplier); activeBets[p].cashed = true;
+            let winAmt = (activeBets[p].amt * multiplier);
+            wallet += winAmt; 
+            activeBets[p].cashed = true;
             db.ref('users/'+currentUser.uid).update({balance:wallet});
+            
+            // Animation and Sound Implementation
+            triggerCashoutEffects(winAmt);
         }
     }
 
-    function draw() {
-        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-        let p = Math.min((multiplier - 1) / 10, 0.9);
-        let x = p * canvas.width * 0.9 + 20, y = (canvas.height-40) - (Math.pow(p,0.6)*canvas.height*0.7);
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 4; ctx.beginPath();
-        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
-        ctx.drawImage(planeImg, x-25, y-25, 50, 50);
-    }
+    function triggerCashoutEffects(amount) {
+        // 1. Play Coin Sound
+        const audio = document.getElementById('coin-sound');
+        audio.currentTime = 0;
+        audio.play().catch(e => console.log("Audio play deferred"));
 
-    function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value)+v); }
-    function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
-    function setDep(v) { document.getElementById('dep-amt').value = v; }
-    function toggleMenu() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
-    function toggleDrop(id) { const el = document.getElementById(id); el.style.display = (el.style.display==='block'||el.style.display==='grid')?'none':(id==='full-history'?'grid':'block'); }
-    function updateUI() {
-        [1,2].forEach(p => {
-            let btn = document.getElementById('btn-'+p);
-            if(isFlying && activeBets[p] && !activeBets[p].cashed) { btn.innerText = "CASH OUT"; btn.classList.add('btn-cashout'); }
-            else if(!isFlying) { btn.innerText = activeBets[p] ? "CANCEL" : "BET"; btn.classList.remove('btn-cashout'); }
-        });
-    }
-</script>
-</body>
-</html>
+        // 2. Create Splash Animation
+        const splash = document.createElement('div');
+        splash.className = 'ca
