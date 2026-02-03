@@ -3,85 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviator Pro Max - Fixed Loop</title>
+    <title>Aviator Master - Full Fix</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
-        :root { --bg-dark: #0a0e17; --panel-bg: #161d2b; --win-green: #28a745; --accent-red: #d11348; --gold: #ffc107; --text-gray: #9ea0a3; }
-        * { box-sizing: border-box; font-family: 'Roboto', sans-serif; }
-        body { background: var(--bg-dark); color: white; margin: 0; padding: 0; overflow-x: hidden; }
-        
-        /* Navbar & Balance */
-        .top-nav { background: #0f1521; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
+        :root { --bg-dark: #0a0e17; --panel-bg: #161d2b; --win-green: #28a745; --accent-red: #d11348; --gold: #ffc107; }
+        * { box-sizing: border-box; font-family: 'Arial', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg-dark); color: white; margin: 0; overflow-x: hidden; touch-action: manipulation; }
+
+        /* Top Bar */
+        .top-nav { background: #0f1521; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
         .balance-box { background: #000; border: 2px solid var(--win-green); padding: 5px 15px; border-radius: 20px; color: var(--win-green); font-weight: bold; }
 
-        /* Side Menu */
-        #side-menu { position: fixed; top: 0; right: -100%; width: 85%; height: 100%; background: #0f1521; z-index: 5000; transition: 0.4s; padding: 20px; border-left: 1px solid #252f44; overflow-y: auto; }
-        .menu-item { padding: 15px; background: #161d2b; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; cursor: pointer; border: 1px solid #252f44; }
+        /* Sidebar Menu */
+        #side-menu { position: fixed; top: 0; right: -100%; width: 85%; height: 100%; background: #0f1521; z-index: 9999; transition: 0.4s; padding: 20px; border-left: 1px solid #252f44; overflow-y: auto; }
+        .menu-item { padding: 15px; background: #161d2b; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; cursor: pointer; border: 1px solid #252f44; font-weight: bold; }
         .form-container { display: none; background: #05080f; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #252f44; }
-        .f-input { width: 100%; padding: 10px; margin-top: 8px; border-radius: 5px; border: 1px solid #444; background: #000; color: white; }
-        .bonus-tag { color: var(--win-green); font-size: 11px; font-weight: bold; margin-bottom: 5px; display: block; }
+        .f-input { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #444; background: #000; color: white; outline: none; }
+        .f-btn { background: var(--win-green); color: white; border: none; padding: 12px; margin-top: 10px; border-radius: 8px; width: 100%; font-weight: bold; font-size: 16px; }
 
-        /* Game Display */
-        .display-area { position: relative; height: 220px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 70%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; overflow: hidden; }
-        #multiplier-text { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 3.5rem; font-weight: 900; z-index: 10; display:none; }
-        #flew-away { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); color: #ff0055; font-size: 1.5rem; font-weight: bold; display: none; z-index: 11; }
-        #countdown-box { position: absolute; bottom: 20px; width: 100%; text-align: center; color: var(--win-green); font-size: 16px; font-weight: bold; }
+        /* Game Screen */
+        .display-area { position: relative; height: 240px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 80%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; overflow: hidden; }
+        #multiplier-text { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 4rem; font-weight: 900; z-index: 10; display:none; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        #flew-away { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); color: #ff0055; font-size: 1.8rem; font-weight: bold; display: none; z-index: 11; }
+        #countdown-box { position: absolute; bottom: 30px; width: 100%; text-align: center; color: var(--win-green); font-size: 18px; font-weight: bold; }
 
         /* History */
-        .history-bar { background: #080c14; padding: 5px; display: flex; gap: 8px; overflow-x: auto; height: 40px; }
-        .hist-chip { font-size: 11px; padding: 3px 10px; border-radius: 12px; background: #1c2538; color: #9d50ff; border: 1px solid #252f44; flex-shrink: 0; }
+        .history-bar { background: #080c14; padding: 8px; display: flex; gap: 8px; overflow-x: auto; border-bottom: 1px solid #252f44; }
+        .hist-chip { font-size: 11px; padding: 4px 12px; border-radius: 15px; background: #1c2538; color: #9d50ff; border: 1px solid #252f44; flex-shrink: 0; font-weight: bold; }
         .chip-green { color: var(--win-green); border-color: var(--win-green); }
 
-        /* Betting Section */
-        .bet-container { display: flex; gap: 8px; padding: 10px; }
-        .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 15px; border: 1px solid #252f44; width: 50%; }
-        .amt-ctrl { display: flex; justify-content: space-between; align-items: center; background: #000; border-radius: 20px; border: 1px solid #444; margin-bottom: 5px; padding: 2px 10px; }
-        .ctrl-btn { background: none; border: none; color: white; font-size: 20px; font-weight: bold; cursor: pointer; }
-        .amt-input { background: none; border: none; color: white; text-align: center; width: 50px; font-weight: bold; }
+        /* Betting Controls */
+        .bet-container { display: flex; gap: 10px; padding: 10px; }
+        .bet-card { background: var(--panel-bg); padding: 12px; border-radius: 18px; border: 1px solid #252f44; width: 50%; }
+        .amt-ctrl { display: flex; justify-content: space-between; align-items: center; background: #000; border-radius: 25px; border: 1px solid #444; margin-bottom: 8px; padding: 5px 15px; }
+        .ctrl-btn { background: none; border: none; color: white; font-size: 22px; cursor: pointer; font-weight: bold; }
+        .amt-input { background: none; border: none; color: white; text-align: center; width: 60px; font-size: 16px; font-weight: bold; }
+        .main-btn { width: 100%; height: 50px; border: none; border-radius: 12px; font-weight: bold; color: white; background: var(--win-green); font-size: 16px; box-shadow: 0 4px #1b702e; }
+        .main-btn:active { transform: translateY(2px); box-shadow: 0 2px #1b702e; }
 
-        .amt-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin-bottom: 8px; }
-        .amt-btn { background: #1c2538; border: 1px solid #252f44; color: white; padding: 5px 0; border-radius: 5px; font-size: 10px; }
-        .main-btn { width: 100%; height: 45px; border: none; border-radius: 10px; font-weight: bold; color: white; background: var(--win-green); font-size: 15px; }
-
-        /* Live Bets */
-        .live-section { margin: 10px; background: var(--panel-bg); border-radius: 10px; font-size: 10px; }
-        .live-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr; padding: 6px 10px; border-bottom: 1px solid #1a2233; }
+        .live-bets { margin: 10px; background: var(--panel-bg); border-radius: 12px; font-size: 12px; overflow: hidden; }
+        .live-header { display: grid; grid-template-columns: 1.5fr 1fr 1fr; padding: 10px; background: #0f1521; font-weight: bold; color: var(--text-gray); }
+        .live-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr; padding: 8px 10px; border-bottom: 1px solid #1a2233; }
+        
+        canvas { width: 100%; height: 100%; }
     </style>
 </head>
 <body>
 
 <div id="side-menu">
-    <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>GAMING MENU</b> <span onclick="toggleMenu()" style="cursor:pointer">✕</span></div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>DASHBOARD</b> <span onclick="toggleMenu()" style="cursor:pointer; font-size:24px;">✕</span></div>
     
-    <div class="menu-item" onclick="toggleSub('dep-sec')">💰 Deposit <span>▼</span></div>
+    <div class="menu-item" onclick="toggleSub('dep-sec')">💰 Deposit Money (20% Bonus) <span>▼</span></div>
     <div id="dep-sec" class="form-container">
-        <span class="bonus-tag">🎁 GET 20% EXTRA BONUS ON EVERY DEPOSIT</span>
-        <div class="amt-grid">
-            <button class="amt-btn" onclick="setDep(100)">100 (+20)</button>
-            <button class="amt-btn" onclick="setDep(500)">500 (+100)</button>
-            <button class="amt-btn" onclick="setDep(1000)">1000 (+200)</button>
-            <button class="amt-btn" onclick="setDep(2000)">2000 (+400)</button>
-            <button class="amt-btn" onclick="setDep(5000)">5000 (+1000)</button>
+        <div style="text-align:center; background:#fff; padding:15px; border-radius:15px; margin-bottom:15px;">
+            <img id="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=your-upi-id@okicici&pn=AviatorAdmin" width="150">
+            <p style="color:#000; margin:10px 0 0 0; font-weight:bold; font-size:14px;">UPI ID: your-upi-id@okicici</p>
         </div>
-        <input type="number" id="dep-amt" class="f-input" placeholder="Amount">
-        <input type="text" id="dep-utr" class="f-input" placeholder="UTR Number">
-        <button class="f-btn" onclick="alert('Sent!')">SUBMIT</button>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:5px; margin-bottom:10px;">
+            <button class="f-btn" style="padding:8px; font-size:12px;" onclick="setDep(100)">100</button>
+            <button class="f-btn" style="padding:8px; font-size:12px;" onclick="setDep(500)">500</button>
+            <button class="f-btn" style="padding:8px; font-size:12px;" onclick="setDep(1000)">1000</button>
+            <button class="f-btn" style="padding:8px; font-size:12px;" onclick="setDep(2000)">2000</button>
+            <button class="f-btn" style="padding:8px; font-size:12px;" onclick="setDep(5000)">5000</button>
+        </div>
+        <input type="number" id="dep-amt" class="f-input" placeholder="Enter Amount">
+        <input type="text" id="dep-utr" class="f-input" placeholder="Enter UTR / Transaction ID">
+        <button class="f-btn" onclick="alert('Deposit Request Sent!')">SUBMIT PAYMENT</button>
     </div>
 
     <div class="menu-item" onclick="toggleSub('with-sec')">🏦 Withdrawal <span>▼</span></div>
     <div id="with-sec" class="form-container">
-        <input type="text" id="w-acc" class="f-input" placeholder="Bank Account/UPI">
-        <input type="number" id="w-amt" class="f-input" placeholder="Amount">
-        <button class="f-btn" style="background:var(--accent-red)" onclick="alert('Requested!')">WITHDRAW</button>
+        <input type="text" id="w-bank" class="f-input" placeholder="Bank Name / UPI ID">
+        <input type="text" id="w-acc" class="f-input" placeholder="Account Number / UPI Phone">
+        <input type="text" id="w-ifsc" class="f-input" placeholder="IFSC Code (For Bank)">
+        <input type="number" id="w-amt" class="f-input" placeholder="Withdrawal Amount">
+        <button class="f-btn" style="background:var(--accent-red)" onclick="alert('Withdrawal Request Sent!')">WITHDRAW NOW</button>
     </div>
+
+    <button class="f-btn" style="background:#444; margin-top:30px;" onclick="firebase.auth().signOut()">LOGOUT</button>
 </div>
 
 <div class="top-nav">
-    <div style="color:#ff0055; font-weight:900; font-size:22px;">AVIATOR</div>
-    <div class="balance-box">₹<span id="bal-text">0.00</span></div>
-    <div onclick="toggleMenu()" style="cursor:pointer; font-size:24px;">☰</div>
+    <div style="color:#ff0055; font-weight:900; font-size:24px; letter-spacing:1px;">AVIATOR</div>
+    <div style="display:flex; align-items:center; gap:12px;">
+        <div class="balance-box">₹<span id="bal-text">0.00</span></div>
+        <div onclick="toggleMenu()" style="cursor:pointer; font-size:28px;">☰</div>
+    </div>
 </div>
 
 <div class="history-bar" id="hist-row"></div>
@@ -90,7 +99,7 @@
     <canvas id="gameCanvas"></canvas>
     <div id="multiplier-text">1.00x</div>
     <div id="flew-away">FLEW AWAY!</div>
-    <div id="countdown-box">CONNECTING...</div>
+    <div id="countdown-box">INITIALIZING...</div>
 </div>
 
 <div class="bet-container">
@@ -100,10 +109,6 @@
             <input type="number" id="amt-1" value="100" class="amt-input">
             <button class="ctrl-btn" onclick="stepAmt(1,10)">+</button>
         </div>
-        <div class="amt-grid">
-            <button class="amt-btn" onclick="setAmt(1,100)">100</button>
-            <button class="amt-btn" onclick="setAmt(1,500)">500</button>
-        </div>
         <button id="btn-1" class="main-btn" onclick="handleBet(1)">BET</button>
     </div>
     <div class="bet-card">
@@ -112,15 +117,14 @@
             <input type="number" id="amt-2" value="100" class="amt-input">
             <button class="ctrl-btn" onclick="stepAmt(2,10)">+</button>
         </div>
-        <div class="amt-grid">
-            <button class="amt-btn" onclick="setAmt(2,100)">100</button>
-            <button class="amt-btn" onclick="setAmt(2,500)">500</button>
-        </div>
         <button id="btn-2" class="main-btn" onclick="handleBet(2)">BET</button>
     </div>
 </div>
 
-<div class="live-section" id="fake-bets"></div>
+<div class="live-bets">
+    <div class="live-header"><span>User</span><span>Bet</span><span>Win</span></div>
+    <div id="fake-list"></div>
+</div>
 
 <script>
     const firebaseConfig = {
@@ -136,7 +140,7 @@
     const auth = firebase.auth(), db = firebase.database();
 
     let wallet = 0, multiplier = 1.0, isFlying = false, currentUser = null, serverTimeOffset = 0;
-    let results = [1.20, 3.50, 1.02, 5.00, 1.80];
+    let results = [1.55, 3.20, 1.05, 12.50, 2.10];
     let activeBets = { 1: null, 2: null };
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -146,10 +150,10 @@
     auth.onAuthStateChanged(user => { if (user) { currentUser = user; db.ref('users/' + user.uid + '/balance').on('value', snap => { wallet = snap.val() || 0; updateUI(); }); } });
     db.ref(".info/serverTimeOffset").on("value", snap => serverTimeOffset = snap.val());
 
-    // --- AUTOMATIC RESTART ENGINE ---
+    // --- CRITICAL AUTO-RESTART SYNC ---
     db.ref('game_state').on('value', (snap) => {
         const data = snap.val();
-        if (!data) { startLoop(); return; }
+        if (!data) { if(currentUser) startLoop(); return; }
 
         const now = Date.now() + serverTimeOffset;
         const waitTime = 6000; 
@@ -158,7 +162,7 @@
             isFlying = false;
             let rem = Math.ceil((data.startTime + waitTime - now) / 1000);
             updateDisplay('countdown', rem);
-            showFakeUsers();
+            genFakeUsers();
         } else if (!isFlying) {
             runFlight(data.crashPoint, data.startTime + waitTime);
         }
@@ -189,10 +193,11 @@
                 results.unshift(parseFloat(crashPoint));
                 activeBets[1] = activeBets[2] = null;
                 updateUI();
-                setTimeout(startLoop, 3000); // 3 sec pause after crash
+                // Reset Firebase for next round after 3s
+                setTimeout(startLoop, 3000);
                 return;
             }
-            draw(); updateUI();
+            drawPlane(); updateUI();
             requestAnimationFrame(anim);
         };
         requestAnimationFrame(anim);
@@ -213,44 +218,44 @@
 
     function updateDisplay(phase, val) {
         const cd = document.getElementById('countdown-box'), mt = document.getElementById('multiplier-text'), fa = document.getElementById('flew-away');
-        if(phase === 'countdown') { cd.style.display='block'; cd.innerText="ROUND STARTS IN: "+val+"s"; mt.style.display='none'; fa.style.display='none'; }
+        if(phase === 'countdown') { cd.style.display='block'; cd.innerText="WAITING FOR NEXT ROUND: "+val+"s"; mt.style.display='none'; fa.style.display='none'; }
         else if(phase === 'fly') { cd.style.display='none'; mt.style.display='block'; fa.style.display='none'; }
         else if(phase === 'crash') { mt.innerText=val+"x"; fa.style.display='block'; }
     }
 
-    function draw() {
+    function drawPlane() {
         canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
         let p = Math.min((multiplier - 1) / 10, 0.9);
         let x = p * canvas.width * 0.9 + 20, y = (canvas.height - 40) - (Math.pow(p, 0.6) * canvas.height * 0.7);
         ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 4; ctx.beginPath();
+        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 5; ctx.beginPath();
         ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
-        ctx.drawImage(planeImg, x-20, y-20, 40, 40);
+        ctx.drawImage(planeImg, x-25, y-25, 50, 50);
     }
 
-    function showFakeUsers() {
-        const div = document.getElementById('fake-bets');
-        div.innerHTML = `<div class="live-row" style="background:#0f1521"><b>User</b><b>Bet</b><b>Win</b></div>`;
-        const players = ["Rahul***", "Amit***", "Soni***", "Luck***", "Avi***", "Game***"];
-        players.forEach(p => {
-            div.innerHTML += `<div class="live-row"><span>${p}</span><span>₹${Math.floor(Math.random()*500+10)}</span><span>-</span></div>`;
+    function genFakeUsers() {
+        const list = document.getElementById('fake-list'); list.innerHTML = "";
+        const names = ["Rohan***", "Amit***", "Soni***", "Luck***", "Avi***", "King***", "Pilot***"];
+        names.forEach(n => {
+            list.innerHTML += `<div class="live-row"><span>${n}</span><span>₹${Math.floor(Math.random()*500+20)}</span><span>-</span></div>`;
         });
     }
 
     function stepAmt(p, s) { let el = document.getElementById('amt-'+p); el.value = Math.max(10, parseInt(el.value)+s); }
-    function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
     function setDep(v) { document.getElementById('dep-amt').value = v; }
+    function toggleMenu() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
+    function toggleSub(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
+    
     function updateUI() {
         document.getElementById('bal-text').innerText = wallet.toFixed(2);
-        document.getElementById('hist-row').innerHTML = results.slice(0,10).map(r => `<div class="hist-chip ${r >= 2 ? 'chip-green' : ''}">${r}x</div>`).join('');
+        document.getElementById('hist-row').innerHTML = results.slice(0,12).map(r => `<div class="hist-chip ${r >= 2 ? 'chip-green' : ''}">${r}x</div>`).join('');
         [1,2].forEach(p => {
             const btn = document.getElementById('btn-'+p);
             if (!isFlying) btn.innerText = activeBets[p] ? "CANCEL" : "BET";
             else btn.innerText = (activeBets[p] && !activeBets[p].cashed) ? "CASH OUT" : "BET NEXT";
         });
     }
-    function toggleMenu() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
-    function toggleSub(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
 </script>
 </body>
 </html>
+
