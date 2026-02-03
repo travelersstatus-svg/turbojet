@@ -214,7 +214,7 @@
 
         function step() {
             if(!isFlying) return;
-            multiplier = Math.pow(1.15, (Date.now() - start) / 1000);
+            multiplier = Math.pow(1.05, (Date.now() - start) / 1000);
 
             // Fake User Cashout logic
             if(Math.random() > 0.98) {
@@ -312,3 +312,4 @@ function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
 </script>
 </body>
 </html>
+
