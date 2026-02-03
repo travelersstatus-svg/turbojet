@@ -23,8 +23,8 @@
 
         .history-section { position: relative; background: #080c14; padding: 10px; display: flex; align-items: center; }
         .history-strip { display: flex; gap: 8px; overflow: hidden; width: 85%; }
-        #full-history { display: none; position: absolute; top: 45px; left: 0; width: 100%; background: #161d2b; z-index: 2000; padding: 15px; border-bottom: 2px solid var(--win-green); grid-template-columns: repeat(5, 1fr); gap: 8px; }
-        .hist-chip { font-size: 10px; padding: 4px 8px; border-radius: 10px; background: #1c2538; color: #9d50ff; font-weight: bold; }
+        #full-history { display: none; position: absolute; top: 45px; left: 0; width: 100%; background: #161d2b; z-index: 2000; padding: 15px; border-bottom: 2px solid var(--win-green); grid-template-columns: repeat(5, 1fr); gap: 8px; max-height: 250px; overflow-y: auto; }
+        .hist-chip { font-size: 10px; padding: 4px 8px; border-radius: 10px; background: #1c2538; color: #9d50ff; font-weight: bold; text-align: center; }
         .chip-green { color: var(--win-green) !important; border: 1px solid var(--win-green); }
 
         .display-area { position: relative; height: 180px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 70%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; overflow: hidden; }
@@ -34,6 +34,11 @@
 
         .bet-container { display: flex; gap: 8px; padding: 10px; }
         .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 15px; border: 1px solid #252f44; width: 50%; }
+        
+        .auto-row { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 8px; color: #ccc; align-items: center; }
+        .auto-cash-box { display: flex; align-items: center; background: #000; border: 1px solid var(--accent-blue); border-radius: 12px; padding: 1px 6px; }
+        .auto-cash-box input { width: 35px; background: none; border: none; color: #fff; font-size: 11px; outline: none; text-align: center; }
+
         .amt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 5px 0; }
         .amt-btn { background: #1c2538; border: 1px solid #252f44; color: white; font-size: 9px; padding: 6px 0; border-radius: 4px; cursor: pointer; }
         .manual-input { display: flex; justify-content: space-between; align-items: center; background: #000; border-radius: 20px; padding: 2px 8px; border: 1px solid #444; margin-bottom: 5px; }
@@ -63,8 +68,7 @@
     <div class="menu-btn" onclick="toggleDrop('dep-drop')">💰 Deposit (20% Bonus) <span>▼</span></div>
     <div id="dep-drop" class="dropdown-content">
         <center><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=upi://pay?pa=demo@upi"></center>
-        <p style="text-align:center; font-size:11px; margin:5px;">UPI: demo@upi</p>
-        <div class="amt-grid">
+        <div class="amt-grid" style="margin-top:10px;">
             <button class="amt-btn" onclick="setDep(100)">100</button><button class="amt-btn" onclick="setDep(200)">200</button><button class="amt-btn" onclick="setDep(500)">500</button>
             <button class="amt-btn" onclick="setDep(1000)">1000</button><button class="amt-btn" onclick="setDep(2000)">2000</button><button class="amt-btn" onclick="setDep(3000)">3000</button>
             <button class="amt-btn" onclick="setDep(5000)">5000</button><button class="amt-btn" onclick="setDep(10000)">10000</button>
@@ -106,12 +110,13 @@
 <div class="display-area" id="game-container">
     <canvas id="gameCanvas"></canvas>
     <div id="multiplier-text">1.00x</div>
-    <div id="crash-msg"><span style="color:#ff0055; font-weight:bold; font-size:1.5rem;">FLEW AWAY!</span><br><span id="crash-val" style="font-size:3rem; font-weight:900;">1.00x</span></div>
+    <div id="crash-msg"><span style="color:#ff0055; font-weight:bold; font-size:1.2rem;">FLEW AWAY!</span><br><span id="crash-val" style="font-size:2.5rem; font-weight:900;">1.00x</span></div>
     <div id="countdown-box"><div id="cd-num" style="font-size:30px; font-weight:bold;">5</div></div>
 </div>
 
 <div class="bet-container">
     <div class="bet-card">
+        <div class="auto-row"><label><input type="checkbox" id="auto-p1"> Auto Play</label><div class="auto-cash-box"><input type="checkbox" id="auto-c1"> <input type="number" id="ac-val1" value="2.0" step="0.1"></div></div>
         <div class="manual-input"><button onclick="adj(1,-10)">-</button><input type="number" id="amt-1" value="100"><button onclick="adj(1,10)">+</button></div>
         <div class="amt-grid">
             <button class="amt-btn" onclick="setAmt(1,10)">10</button><button class="amt-btn" onclick="setAmt(1,100)">100</button><button class="amt-btn" onclick="setAmt(1,200)">200</button>
@@ -120,6 +125,7 @@
         <button id="btn-1" class="main-btn" onclick="handleBet(1)">BET</button>
     </div>
     <div class="bet-card">
+        <div class="auto-row"><label><input type="checkbox" id="auto-p2"> Auto Play</label><div class="auto-cash-box"><input type="checkbox" id="auto-c2"> <input type="number" id="ac-val2" value="2.0" step="0.1"></div></div>
         <div class="manual-input"><button onclick="adj(2,-10)">-</button><input type="number" id="amt-2" value="100"><button onclick="adj(2,10)">+</button></div>
         <div class="amt-grid">
             <button class="amt-btn" onclick="setAmt(2,10)">10</button><button class="amt-btn" onclick="setAmt(2,100)">100</button><button class="amt-btn" onclick="setAmt(2,200)">200</button>
@@ -157,10 +163,7 @@
         }
     });
 
-    function initHistory() {
-        for(let i=0; i<20; i++) addHistoryChip((Math.random() * 2 + 1).toFixed(2));
-    }
-
+    function initHistory() { for(let i=0; i<15; i++) addHistoryChip((Math.random() * 2 + 1).toFixed(2)); }
     function addHistoryChip(v) {
         let chip = `<div class="hist-chip ${v >= 2 ? 'chip-green' : ''}">${v}x</div>`;
         document.getElementById('hist-row').insertAdjacentHTML('afterbegin', chip);
@@ -169,14 +172,18 @@
 
     function startLoop() {
         isFlying = false;
+        multiplier = 1.0;
+        ctx.clearRect(0,0,canvas.width,canvas.height); // Clear plane on reset
         document.getElementById('multiplier-text').style.display = 'none';
         document.getElementById('crash-msg').style.display = 'none';
         document.getElementById('countdown-box').style.display = 'block';
         
-        const list = document.getElementById('fake-list'); list.innerHTML = "";
-        for(let i=0; i<15; i++) {
-            list.innerHTML += `<div class="live-row" id="fake-${i}"><span>User***${Math.floor(Math.random()*99)}</span><span>₹${Math.floor(Math.random()*500)}</span><span class="m-col">-</span><span class="w-col">-</span></div>`;
-        }
+        [1,2].forEach(p => {
+            if(document.getElementById('auto-p'+p).checked && !activeBets[p]) {
+                let a = parseInt(document.getElementById('amt-'+p).value);
+                if(a <= wallet) { wallet -= a; activeBets[p] = {amt:a, cashed:false}; db.ref('users/'+currentUser.uid).update({balance:wallet}); }
+            }
+        });
 
         updateUI();
         let t = 5;
@@ -195,6 +202,12 @@
         function step() {
             if(!isFlying) return;
             multiplier = Math.pow(1.15, (Date.now() - start) / 1000);
+
+            [1,2].forEach(p => {
+                if(document.getElementById('auto-c'+p).checked && activeBets[p] && !activeBets[p].cashed) {
+                    if(multiplier >= parseFloat(document.getElementById('ac-val'+p).value)) cashOut(p);
+                }
+            });
 
             if(multiplier >= crash) {
                 isFlying = false;
@@ -220,13 +233,17 @@
                 if(a > wallet) { showIns(); return; }
                 wallet -= a; activeBets[p] = {amt:a, cashed:false};
             } else { wallet += activeBets[p].amt; activeBets[p] = null; }
-        } else {
-            if(activeBets[p] && !activeBets[p].cashed) {
-                wallet += activeBets[p].amt * multiplier; activeBets[p].cashed = true;
-            }
-        }
+        } else { if(activeBets[p] && !activeBets[p].cashed) cashOut(p); }
         db.ref('users/'+currentUser.uid).update({balance:wallet});
         updateUI();
+    }
+
+    function cashOut(p) {
+        if(activeBets[p] && !activeBets[p].cashed) {
+            wallet += activeBets[p].amt * multiplier; activeBets[p].cashed = true;
+            db.ref('users/'+currentUser.uid).update({balance:wallet});
+            updateUI();
+        }
     }
 
     function updateUI() {
@@ -257,8 +274,7 @@
     function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value)+v); }
     function showIns() { let m = document.getElementById('insufficient-bal'); m.style.display='block'; setTimeout(()=>m.style.display='none', 2000); }
     function toggleMenu() { let m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
-    function toggleDrop(id) { let el = document.getElementById(id); el.style.display = el.style.display === 'block' ? 'none' : (id==='full-history'?'grid':'block'); }
+    function toggleDrop(id) { let el = document.getElementById(id); el.style.display = (el.style.display === 'block' || el.style.display === 'grid') ? 'none' : (id==='full-history'?'grid':'block'); }
 </script>
 </body>
 </html>
-
