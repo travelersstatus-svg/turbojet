@@ -12,21 +12,24 @@
         * { box-sizing: border-box; font-family: sans-serif; margin: 0; padding: 0; }
         body { background: var(--bg-dark); color: white; overflow-x: hidden; touch-action: none; user-select: none; }
 
-        /* Sidebar & Menus aur baki CSS same rahegi */
+        /* Sidebar & Menus */
         #side-menu { position: fixed; top: 0; right: -100%; width: 85%; height: 100%; background: #0f1521; z-index: 5000; transition: 0.4s; padding: 20px; overflow-y: auto; }
         .menu-btn { width: 100%; padding: 15px; background: #1c2538; border: 1px solid #252f44; color: white; border-radius: 8px; margin-bottom: 10px; text-align: left; display: flex; justify-content: space-between; cursor: pointer; }
         .dropdown-content { display: none; background: #05080f; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #252f44; }
         .f-input { width: 100%; padding: 10px; margin: 8px 0; background: #000; color: white; border: 1px solid #333; border-radius: 5px; }
 
+        /* Navigation */
         .top-nav { background: #0f1521; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
         .balance-box { background: #000; border: 2px solid var(--win-green); padding: 5px 15px; border-radius: 20px; color: var(--win-green); font-weight: bold; }
 
+        /* History */
         .history-section { position: relative; background: #080c14; padding: 10px; display: flex; align-items: center; }
         .history-strip { display: flex; gap: 8px; overflow: hidden; width: 80%; }
         #full-history { display: none; position: absolute; top: 45px; left: 0; width: 100%; background: #161d2b; z-index: 2000; padding: 15px; border-bottom: 2px solid var(--win-green); grid-template-columns: repeat(5, 1fr); gap: 8px; }
         .hist-chip { font-size: 10px; padding: 4px 8px; border-radius: 10px; background: #1c2538; color: #9d50ff; font-weight: bold; text-align: center; }
         .chip-green { color: var(--win-green) !important; border: 1px solid var(--win-green); }
 
+        /* Game Display */
         .display-area { position: relative; height: 180px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 70%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; overflow: hidden; }
         #multiplier-text { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 3.5rem; font-weight: 900; z-index: 10; display: none; }
         #countdown-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--win-green); }
@@ -34,40 +37,40 @@
         /* Bet Card */
         .bet-container { display: flex; gap: 8px; padding: 10px; }
         .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 15px; border: 1px solid #252f44; width: 50%; }
+        .auto-row { display: flex; justify-content: space-between; font-size: 8px; margin-bottom: 5px; color: #ccc; align-items: center; }
         
-        /* UPDATED AUTO ROW & BOX STYLE */
-        .auto-row { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 8px; color: #ccc; align-items: center; }
-        
-        .auto-cash-container {
+        /* COLORFUL AUTO CASH BOX - VISIBLE & HIGHLIGHTED */
+        .auto-cash-box {
             display: flex;
             align-items: center;
             background: #000;
-            border: 1.5px solid #3b82f6; /* Blue Neon Border */
-            border-radius: 20px;
-            padding: 2px 8px;
-            box-shadow: 0 0 8px rgba(59, 130, 246, 0.4); /* Glow effect */
+            border: 1px solid #3b82f6; /* Blue Glow Border */
+            border-radius: 12px;
+            padding: 1px 6px;
+            box-shadow: 0 0 5px rgba(59, 130, 246, 0.6);
         }
-        
-        .auto-cash-container input[type="number"] {
-            width: 35px;
-            background: transparent;
+        .auto-cash-box input[type="number"] {
+            width: 32px !important;
+            background: none;
             border: none;
             color: #fff;
             font-weight: bold;
             font-size: 11px;
-            text-align: center;
             outline: none;
+            text-align: center;
         }
 
+        .amt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 5px 0; }
+        .amt-btn { background: #1c2538; border: 1px solid #252f44; color: white; font-size: 9px; padding: 4px 0; border-radius: 4px; }
+        
         .manual-input { display: flex; justify-content: space-between; align-items: center; background: #000; border-radius: 20px; padding: 2px 8px; border: 1px solid #444; margin-bottom: 5px; }
         .manual-input button { background: none; border: none; color: white; font-size: 18px; width: 25px; cursor: pointer; }
         .manual-input input { background: none; border: none; color: white; width: 45px; text-align: center; outline: none; font-size: 12px; }
 
-        .amt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 5px 0; }
-        .amt-btn { background: #1c2538; border: 1px solid #252f44; color: white; font-size: 9px; padding: 4px 0; border-radius: 4px; }
         .main-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; font-weight: bold; color: white; background: var(--win-green); cursor: pointer; }
         .btn-cashout { background: #d97706 !important; }
 
+        /* Fake Users */
         .live-section { margin: 10px; background: var(--panel-bg); border-radius: 10px; border: 1px solid #252f44; height: 180px; overflow-y: auto; }
         .live-header { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; padding: 8px; font-size: 9px; font-weight: bold; background: #0f1521; position: sticky; top:0; }
         .live-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; padding: 6px 8px; font-size: 9px; border-bottom: 1px solid #252f44; }
@@ -79,6 +82,7 @@
 
 <div id="side-menu">
     <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>MENU</b> <span onclick="toggleMenu()" style="cursor:pointer">✕</span></div>
+    
     <div class="menu-btn" onclick="toggleDrop('dep-drop')">💰 Deposit (20% Bonus) <span>▼</span></div>
     <div id="dep-drop" class="dropdown-content">
         <center><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=upi://pay?pa=demo@upi"></center>
@@ -91,13 +95,16 @@
         <input type="text" class="f-input" placeholder="UTR Number">
         <button class="main-btn">Submit</button>
     </div>
+
     <div class="menu-btn" onclick="toggleDrop('with-drop')">🏦 Withdrawal <span>▼</span></div>
     <div id="with-drop" class="dropdown-content">
         <input type="text" class="f-input" placeholder="A/C Holder Name"><input type="text" class="f-input" placeholder="Account Number"><input type="number" class="f-input" placeholder="Amount">
         <button class="main-btn" style="background:var(--accent-red)">Request</button>
     </div>
+
     <div class="menu-btn" onclick="toggleDrop('bet-hist')">📜 Bet History <span>▼</span></div>
     <div id="bet-hist" class="dropdown-content">No records.</div>
+
     <div class="menu-btn" style="background:var(--accent-red); margin-top:50px;" onclick="firebase.auth().signOut()">🚪 Logout</div>
 </div>
 
@@ -122,12 +129,11 @@
 <div class="bet-container">
     <div class="bet-card">
         <div class="auto-row">
-            <label><input type="checkbox" id="auto-p1"> Auto</label>
-            <div class="auto-cash-container">
-                <span style="font-size:8px; color:#3b82f6; margin-right:4px;">CASH</span>
+            <label><input type="checkbox" id="auto-p1"> Auto Play</label> 
+            <div class="auto-cash-box">
+                <span style="color:#bbb; font-size:7px;">CASH</span>
                 <input type="checkbox" id="auto-c1"> 
                 <input type="number" id="ac-val1" value="2.0">
-                <span style="font-size:10px; color:#3b82f6;">x</span>
             </div>
         </div>
         <div class="manual-input"> <button onclick="adj(1, -10)">-</button><input type="number" id="amt-1" value="100"><button onclick="adj(1, 10)">+</button>
@@ -145,12 +151,11 @@
 
     <div class="bet-card">
         <div class="auto-row">
-            <label><input type="checkbox" id="auto-p2"> Auto</label>
-            <div class="auto-cash-container">
-                <span style="font-size:8px; color:#3b82f6; margin-right:4px;">CASH</span>
+            <label><input type="checkbox" id="auto-p2"> Auto Play</label>
+            <div class="auto-cash-box">
+                <span style="color:#bbb; font-size:7px;">CASH</span>
                 <input type="checkbox" id="auto-c2"> 
                 <input type="number" id="ac-val2" value="2.0">
-                <span style="font-size:10px; color:#3b82f6;">x</span>
             </div>
         </div>
         <div class="manual-input">
@@ -174,7 +179,6 @@
 </div>
 
 <script>
-    // Baki sara logic same hai, bas UI update function thoda refined hai
     const firebaseConfig = { apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc", authDomain: "myaviatoregame.firebaseapp.com", databaseURL: "https://myaviatoregame-default-rtdb.firebaseio.com", projectId: "myaviatoregame", storageBucket: "myaviatoregame.firebasestorage.app", messagingSenderId: "286687400349", appId: "1:286687400349:web:e01e2cff439a3267de1f74" };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth(), db = firebase.database();
@@ -243,6 +247,16 @@
             let elapsed = (Date.now() - start) / 1000;
             multiplier = Math.pow(1.15, elapsed);
 
+            if(Math.random() > 0.96) {
+                let row = document.getElementById('fake-'+Math.floor(Math.random()*12));
+                if(row && row.querySelector('.w-col').innerText === "-") {
+                    let b = parseInt(row.children[1].innerText.replace('₹',''));
+                    row.querySelector('.m-col').innerText = multiplier.toFixed(2)+"x";
+                    row.querySelector('.w-col').innerText = "₹"+(b*multiplier).toFixed(0);
+                    row.querySelector('.w-col').classList.add('win-txt');
+                }
+            }
+
             [1,2].forEach(p => {
                 if(document.getElementById('auto-c'+p).checked && activeBets[p] && !activeBets[p].cashed && multiplier >= parseFloat(document.getElementById('ac-val'+p).value)) {
                     cashOut(p);
@@ -255,6 +269,11 @@
                 const strip = document.getElementById('hist-row');
                 strip.insertAdjacentHTML('afterbegin', chipHTML);
                 if(strip.children.length > 6) strip.lastElementChild.remove();
+
+                const fullHist = document.getElementById('full-history');
+                fullHist.insertAdjacentHTML('afterbegin', chipHTML);
+                if(fullHist.children.length > 25) fullHist.lastElementChild.remove();
+
                 activeBets[1] = activeBets[2] = null;
                 setTimeout(startLoop, 3000);
                 return;
@@ -303,5 +322,5 @@
     }
 </script>
 </body>
-</html>
+            </html>
 
