@@ -3,91 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviator Pro - Fixed Engine</title>
+    <title>Aviator - Infinite Loop Fix</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
-        :root { --bg-dark: #0a0e17; --panel-bg: #161d2b; --win-green: #28a745; --accent-red: #d11348; --gold: #ffc107; }
-        * { box-sizing: border-box; font-family: sans-serif; margin: 0; padding: 0; }
-        body { background: var(--bg-dark); color: white; overflow-x: hidden; }
-
-        /* Navigation */
+        :root { --bg-dark: #0a0e17; --panel-bg: #161d2b; --win-green: #28a745; --accent-red: #d11348; }
+        body { background: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; overflow: hidden; }
+        
         .top-nav { background: #0f1521; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
-        .balance-box { background: #000; border: 2px solid var(--win-green); padding: 6px 15px; border-radius: 20px; color: var(--win-green); font-weight: bold; }
+        .balance-box { background: #000; border: 2px solid var(--win-green); padding: 5px 15px; border-radius: 20px; color: var(--win-green); font-weight: bold; }
 
-        /* History Strip */
-        .history-strip { background: #080c14; padding: 8px; display: flex; gap: 8px; overflow-x: auto; min-height: 40px; border-bottom: 1px solid #252f44; }
-        .hist-chip { font-size: 11px; padding: 4px 12px; border-radius: 15px; background: #1c2538; color: #9d50ff; border: 1px solid #252f44; font-weight: bold; }
-        .chip-green { color: var(--win-green) !important; border-color: var(--win-green); }
+        .display-area { position: relative; height: 250px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 80%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; overflow: hidden; }
+        #multiplier-text { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 4.5rem; font-weight: 900; z-index: 10; display: none; }
+        #flew-away { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); color: #ff0055; font-size: 2rem; font-weight: bold; display: none; z-index: 11; }
+        #countdown-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+        .cd-circle { width: 60px; height: 60px; border: 4px solid var(--win-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; margin: 0 auto 10px; }
 
-        /* Animation Display */
-        .display-area { position: relative; height: 220px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 70%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; overflow: hidden; }
-        #multiplier-text { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 4rem; font-weight: 900; z-index: 10; display:none; }
-        #flew-away { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); color: #ff0055; font-size: 1.8rem; font-weight: bold; display: none; z-index: 11; }
-        #countdown-box { position: absolute; bottom: 20px; width: 100%; text-align: center; color: var(--win-green); font-size: 16px; font-weight: bold; }
-
-        /* Betting Section */
-        .bet-container { display: flex; gap: 8px; padding: 10px; }
-        .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 15px; border: 1px solid #252f44; width: 50%; }
-        .amt-ctrl { display: flex; justify-content: space-between; align-items: center; background: #000; border-radius: 20px; padding: 5px 10px; margin-bottom: 8px; }
-        .amt-ctrl input { background: none; border: none; color: white; width: 50px; text-align: center; font-weight: bold; outline: none; }
-        .main-btn { width: 100%; height: 45px; border: none; border-radius: 10px; font-weight: bold; color: white; background: var(--win-green); cursor: pointer; }
+        .bet-container { display: flex; gap: 10px; padding: 10px; }
+        .bet-card { background: var(--panel-bg); padding: 12px; border-radius: 18px; border: 1px solid #252f44; width: 50%; text-align: center; }
+        .main-btn { width: 100%; height: 50px; border: none; border-radius: 12px; font-weight: bold; color: white; background: var(--win-green); font-size: 16px; margin-top: 10px; cursor: pointer; }
         .btn-cashout { background: #d97706 !important; }
-
-        /* Sidebar/Deposit */
-        #side-menu { position: fixed; top: 0; right: -100%; width: 85%; height: 100%; background: #0f1521; z-index: 5000; transition: 0.4s; padding: 20px; overflow-y: auto; }
-        .form-container { display: none; background: #05080f; padding: 15px; border-radius: 10px; border: 1px solid #252f44; margin-top: 10px; }
-        .f-input { width: 100%; padding: 10px; margin: 8px 0; border-radius: 5px; border: 1px solid #444; background: #000; color: white; }
         canvas { width: 100%; height: 100%; }
+        
+        /* History chips */
+        .history-bar { display: flex; gap: 8px; padding: 10px; overflow-x: auto; background: #080c14; }
+        .chip { padding: 4px 10px; background: #1c2538; border-radius: 10px; font-size: 12px; font-weight: bold; color: #9d50ff; }
     </style>
 </head>
 <body>
 
-<div id="side-menu">
-    <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>MENU</b> <span onclick="toggleMenu()" style="cursor:pointer">✕</span></div>
-    <div onclick="toggleSub('dep-form')" style="padding:15px; background:#161d2b; border-radius:10px; cursor:pointer">💰 Deposit</div>
-    <div id="dep-form" class="form-container">
-        <div style="text-align:center; background:#fff; padding:10px; border-radius:10px;">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=demo@upi">
-            <p style="color:#000; font-size:12px; margin-top:5px; font-weight:bold;">UPI: demo@upi</p>
-        </div>
-        <input type="number" id="dep-amt" class="f-input" placeholder="Amount">
-        <input type="text" id="dep-utr" class="f-input" placeholder="UTR Number">
-        <button class="main-btn" onclick="alert('Sent!')">Submit Deposit</button>
-    </div>
-</div>
-
 <div class="top-nav">
-    <div style="color:#ff0055; font-weight:900; font-size:22px;">AVIATOR</div>
+    <div style="color:#ff0044; font-weight:bold; font-size:20px;">AVIATOR</div>
     <div class="balance-box">₹<span id="bal-text">0.00</span></div>
-    <div onclick="toggleMenu()" style="cursor:pointer; font-size:24px;">☰</div>
 </div>
 
-<div class="history-strip" id="hist-row"></div>
+<div class="history-bar" id="hist-row"></div>
 
 <div class="display-area">
     <canvas id="gameCanvas"></canvas>
     <div id="multiplier-text">1.00x</div>
     <div id="flew-away">FLEW AWAY!</div>
-    <div id="countdown-box">WAITING...</div>
+    <div id="countdown-box">
+        <div class="cd-circle" id="cd-num">5</div>
+        <div style="font-size: 12px; color: var(--win-green);">NEXT ROUND</div>
+    </div>
 </div>
 
 <div class="bet-container">
     <div class="bet-card">
-        <div class="amt-ctrl">
-            <button onclick="adj(1,-10)" style="color:white; background:none; border:none; font-size:20px;">-</button>
-            <input type="number" id="amt-1" value="100">
-            <button onclick="adj(1,10)" style="color:white; background:none; border:none; font-size:20px;">+</button>
-        </div>
+        <input type="number" id="amt-1" value="100" style="width: 80%; background: #000; border: 1px solid #444; color: white; padding: 5px; border-radius: 5px;">
         <button id="btn-1" class="main-btn" onclick="handleBet(1)">BET</button>
     </div>
     <div class="bet-card">
-        <div class="amt-ctrl">
-            <button onclick="adj(2,-10)" style="color:white; background:none; border:none; font-size:20px;">-</button>
-            <input type="number" id="amt-2" value="100">
-            <button onclick="adj(2,10)" style="color:white; background:none; border:none; font-size:20px;">+</button>
-        </div>
+        <input type="number" id="amt-2" value="100" style="width: 80%; background: #000; border: 1px solid #444; color: white; padding: 5px; border-radius: 5px;">
         <button id="btn-2" class="main-btn" onclick="handleBet(2)">BET</button>
     </div>
 </div>
@@ -116,75 +85,82 @@
         if (user) { 
             currentUser = user; 
             db.ref('users/' + user.uid + '/balance').on('value', snap => { 
-                wallet = parseFloat(snap.val()) || 0; 
+                wallet = snap.val() || 0; 
                 document.getElementById('bal-text').innerText = wallet.toFixed(2);
-            }); 
+            });
+            startNextRound(); // Pehli baar game shuru karne ke liye
         } else { window.location.href = "index.html"; }
     });
 
-    // --- GAME ENGINE SYNC ---
-    db.ref('game_state').on('value', snap => {
-        const data = snap.val();
-        const now = Date.now();
-        const BET_TIME = 6000; // 6 sec betting
+    // --- INFINITE LOOP ENGINE ---
 
-        if (!data || (now > data.startTime + 30000)) { // 30 sec dead check
-            forceNewRound();
-            return;
-        }
+    function startNextRound() {
+        isFlying = false;
+        multiplier = 1.0;
+        
+        // 1. Reset UI for Countdown
+        document.getElementById('multiplier-text').style.display = 'none';
+        document.getElementById('flew-away').style.display = 'none';
+        document.getElementById('countdown-box').style.display = 'block';
+        updateButtons();
 
-        if (now < data.startTime + BET_TIME) {
-            // Betting phase
-            isFlying = false;
-            let timeleft = Math.ceil((data.startTime + BET_TIME - now) / 1000);
-            updateUI('betting', timeleft);
-        } else if (!isFlying) {
-            // Flying phase
-            startFlyingAnimation(data.crashPoint, data.startTime + BET_TIME);
-        }
-    });
-
-    // --- RECENT RESULTS SYNC ---
-    db.ref('history').limitToLast(10).on('value', snap => {
-        const row = document.getElementById('hist-row');
-        row.innerHTML = "";
-        snap.forEach(child => {
-            const val = child.val();
-            row.innerHTML = `<div class="hist-chip ${val >= 2 ? 'chip-green' : ''}">${val}x</div>` + row.innerHTML;
-        });
-    });
-
-    function forceNewRound() {
-        db.ref('game_state').set({
-            startTime: Date.now(),
-            crashPoint: (1 + Math.pow(Math.random(), 3) * 12).toFixed(2)
-        });
+        // 2. 5 Second Countdown
+        let timeLeft = 5;
+        let cdInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('cd-num').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(cdInterval);
+                document.getElementById('countdown-box').style.display = 'none';
+                beginFlight();
+            }
+        }, 1000);
     }
 
-    function startFlyingAnimation(crash, startTime) {
+    function beginFlight() {
         isFlying = true;
-        updateUI('flying');
+        document.getElementById('multiplier-text').style.display = 'block';
+        let crashPoint = (1 + Math.pow(Math.random(), 3) * 15).toFixed(2); // Random crash point
         
+        let startTime = Date.now();
+
         function animate() {
             if (!isFlying) return;
-            const elapsed = (Date.now() - startTime) / 1000;
-            multiplier = Math.pow(1.15, elapsed);
+            
+            let elapsed = (Date.now() - startTime) / 1000;
+            multiplier = Math.pow(1.15, elapsed); // Smooth growth
 
-            if (multiplier >= crash) {
-                isFlying = false;
-                updateUI('crashed', crash);
-                db.ref('history').push(parseFloat(crash));
-                activeBets[1] = activeBets[2] = null;
-                setTimeout(forceNewRound, 4000); // 4 sec gap
+            if (multiplier >= crashPoint) {
+                endRound(crashPoint);
                 return;
             }
 
             document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
-            drawPlane();
-            updateBetButtons();
+            draw(multiplier);
+            updateButtons();
             requestAnimationFrame(animate);
         }
         requestAnimationFrame(animate);
+    }
+
+    function endRound(cp) {
+        isFlying = false;
+        document.getElementById('flew-away').style.display = 'block';
+        document.getElementById('multiplier-text').innerText = cp + "x";
+        
+        // Add to history
+        const hist = document.getElementById('hist-row');
+        hist.innerHTML = `<div class="chip">${cp}x</div>` + hist.innerHTML;
+
+        // Reset bets
+        activeBets[1] = activeBets[2] = null;
+        db.ref('users/' + currentUser.uid).update({ balance: wallet });
+
+        // 3 Second wait then Auto-Restart
+        setTimeout(() => {
+            document.getElementById('cd-num').innerText = "5";
+            startNextRound();
+        }, 3000);
     }
 
     function handleBet(p) {
@@ -200,29 +176,10 @@
             activeBets[p].cashed = true;
             db.ref('users/' + currentUser.uid).update({ balance: wallet });
         }
-        updateBetButtons();
+        updateButtons();
     }
 
-    function drawPlane() {
-        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-        let p = Math.min((multiplier - 1) / 10, 0.9);
-        let x = p * canvas.width * 0.9 + 20;
-        let y = (canvas.height - 40) - (Math.pow(p, 0.6) * canvas.height * 0.7);
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 5; ctx.beginPath();
-        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
-        ctx.drawImage(planeImg, x-25, y-25, 50, 50);
-    }
-
-    function updateUI(state, val) {
-        const cd = document.getElementById('countdown-box'), mt = document.getElementById('multiplier-text'), fa = document.getElementById('flew-away');
-        if(state === 'betting') { cd.style.display='block'; cd.innerText="WAITING FOR NEXT ROUND: "+val+"s"; mt.style.display='none'; fa.style.display='none'; }
-        if(state === 'flying') { cd.style.display='none'; mt.style.display='block'; fa.style.display='none'; }
-        if(state === 'crashed') { mt.innerText = val+"x"; fa.style.display='block'; }
-        updateBetButtons();
-    }
-
-    function updateBetButtons() {
+    function updateButtons() {
         [1,2].forEach(p => {
             const btn = document.getElementById('btn-'+p);
             if (!isFlying) {
@@ -230,7 +187,7 @@
                 btn.className = "main-btn";
             } else {
                 if (activeBets[p] && !activeBets[p].cashed) {
-                    btn.innerText = "CASH OUT " + (activeBets[p].amt * multiplier).toFixed(1);
+                    btn.innerText = "CASH OUT";
                     btn.className = "main-btn btn-cashout";
                 } else {
                     btn.innerText = "WAITING...";
@@ -240,9 +197,15 @@
         });
     }
 
-    function toggleMenu() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
-    function toggleSub(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
-    function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value) + v); }
+    function draw(m) {
+        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+        let p = Math.min((m - 1) / 10, 0.9);
+        let x = p * canvas.width * 0.9 + 20, y = (canvas.height - 40) - (Math.pow(p, 0.6) * canvas.height * 0.7);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = "#ff0044"; ctx.lineWidth = 5; ctx.beginPath();
+        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
+        ctx.drawImage(planeImg, x - 25, y - 25, 50, 50);
+    }
 </script>
 </body>
 </html>
