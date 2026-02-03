@@ -12,55 +12,69 @@
         * { box-sizing: border-box; font-family: sans-serif; margin: 0; padding: 0; }
         body { background: var(--bg-dark); color: white; overflow-x: hidden; touch-action: none; user-select: none; }
 
+        /* Splash Animation */
         .cashout-splash { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(40, 167, 69, 0.9); color: white; padding: 15px 30px; border-radius: 50px; font-weight: bold; font-size: 24px; z-index: 1000; animation: splashAnim 2s ease-out forwards; pointer-events: none; border: 2px solid #fff; }
         @keyframes splashAnim { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } 20% { transform: translate(-50%, -70%) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -120%) scale(1); opacity: 0; } }
 
+        /* Sidebar */
         #side-menu { position: fixed; top: 0; right: -100%; width: 85%; height: 100%; background: #0f1521; z-index: 5000; transition: 0.4s; padding: 20px; overflow-y: auto; }
         .menu-btn { width: 100%; padding: 15px; background: #1c2538; border: 1px solid #252f44; color: white; border-radius: 8px; margin-bottom: 10px; text-align: left; display: flex; justify-content: space-between; cursor: pointer; }
         .dropdown-content { display: none; background: #05080f; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #252f44; }
         .f-input { width: 100%; padding: 10px; margin: 8px 0; background: #000; color: white; border: 1px solid #333; border-radius: 5px; }
 
+        /* Navigation */
         .top-nav { background: #0f1521; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
         .balance-box { background: #000; border: 2px solid var(--win-green); padding: 5px 15px; border-radius: 20px; color: var(--win-green); font-weight: bold; }
 
+        /* History */
         .history-section { position: relative; background: #080c14; padding: 10px; display: flex; align-items: center; }
         .history-strip { display: flex; gap: 8px; overflow: hidden; width: 80%; }
         #full-history { display: none; position: absolute; top: 45px; left: 0; width: 100%; background: #161d2b; z-index: 2000; padding: 15px; border-bottom: 2px solid var(--win-green); grid-template-columns: repeat(5, 1fr); gap: 8px; }
         .hist-chip { font-size: 10px; padding: 4px 8px; border-radius: 10px; background: #1c2538; color: #9d50ff; font-weight: bold; text-align: center; }
         .chip-green { color: var(--win-green) !important; border: 1px solid var(--win-green); }
 
+        /* Display */
         .display-area { position: relative; height: 180px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 70%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; overflow: hidden; }
         #multiplier-text { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 3.5rem; font-weight: 900; z-index: 10; display: none; }
         #crash-msg { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 11; display: none; }
-        #crash-msg .flew-txt { color: #ff0055; font-size: 2rem; font-weight: bold; display: block; }
-        #crash-msg .crash-val { font-size: 3rem; font-weight: 900; }
+        .flew-txt { color: #ff0055; font-size: 1.5rem; font-weight: bold; display: block; }
+        .crash-val { font-size: 3rem; font-weight: 900; color: white; }
         #countdown-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--win-green); }
 
+        /* Bet Section */
         .bet-container { display: flex; gap: 8px; padding: 10px; }
         .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 15px; border: 1px solid #252f44; width: 50%; }
-        .auto-row { display: flex; justify-content: space-between; font-size: 8px; margin-bottom: 5px; color: #ccc; align-items: center; }
-        .auto-cash-box { display: flex; align-items: center; background: #000; border: 1px solid #3b82f6; border-radius: 12px; padding: 1px 6px; }
-        .auto-cash-box input[type="number"] { width: 32px !important; background: none; border: none; color: #fff; font-size: 11px; outline: none; text-align: center; }
-
         .amt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 5px 0; }
-        .amt-btn { background: #1c2538; border: 1px solid #252f44; color: white; font-size: 9px; padding: 4px 0; border-radius: 4px; }
+        .amt-btn { background: #1c2538; border: 1px solid #252f44; color: white; font-size: 9px; padding: 4px 0; border-radius: 4px; cursor: pointer; }
         .manual-input { display: flex; justify-content: space-between; align-items: center; background: #000; border-radius: 20px; padding: 2px 8px; border: 1px solid #444; margin-bottom: 5px; }
+        .manual-input input { background: none; border: none; color: white; width: 45px; text-align: center; outline: none; }
         .manual-input button { background: none; border: none; color: white; font-size: 18px; width: 25px; }
-        .manual-input input { background: none; border: none; color: white; width: 45px; text-align: center; font-size: 12px; }
 
-        .main-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; font-weight: bold; color: white; background: var(--win-green); cursor: pointer; font-size: 12px; }
+        .main-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; font-weight: bold; color: white; background: var(--win-green); cursor: pointer; }
         .btn-cashout { background: #d97706 !important; }
-        .btn-cancel { background: #6c757d !important; }
+        .btn-cancel { background: #d11348 !important; }
 
+        /* Live List */
         .live-section { margin: 10px; background: var(--panel-bg); border-radius: 10px; border: 1px solid #252f44; height: 180px; overflow-y: auto; }
         .live-header { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; padding: 8px; font-size: 9px; font-weight: bold; background: #0f1521; position: sticky; top:0; }
         .live-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; padding: 6px 8px; font-size: 9px; border-bottom: 1px solid #252f44; }
+        .win-txt { color: var(--win-green); font-weight: bold; }
         canvas { width: 100%; height: 100%; }
     </style>
 </head>
 <body>
 
 <audio id="coin-sound" src="https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3" preload="auto"></audio>
+
+<div id="side-menu">
+    <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>MENU</b> <span onclick="toggleMenu()" style="cursor:pointer">✕</span></div>
+    <div class="menu-btn" onclick="toggleDrop('dep-drop')">💰 Deposit <span>▼</span></div>
+    <div id="dep-drop" class="dropdown-content">
+        <input type="number" id="dep-amt" class="f-input" placeholder="Amount">
+        <button class="main-btn">Submit</button>
+    </div>
+    <div class="menu-btn" onclick="firebase.auth().signOut()">🚪 Logout</div>
+</div>
 
 <div class="top-nav">
     <div style="color:#ff0055; font-weight:900; font-size:24px;">AVIATOR</div>
@@ -83,19 +97,19 @@
 
 <div class="bet-container">
     <div class="bet-card">
-        <div class="auto-row">
-            <label><input type="checkbox" id="auto-p1"> Auto Play</label> 
-            <div class="auto-cash-box"><input type="checkbox" id="auto-c1"> <input type="number" id="ac-val1" value="2.0"></div>
-        </div>
         <div class="manual-input"><button onclick="adj(1,-10)">-</button><input type="number" id="amt-1" value="100"><button onclick="adj(1,10)">+</button></div>
+        <div class="amt-grid">
+            <button class="amt-btn" onclick="setAmt(1,10)">10</button><button class="amt-btn" onclick="setAmt(1,100)">100</button><button class="amt-btn" onclick="setAmt(1,200)">200</button>
+            <button class="amt-btn" onclick="setAmt(1,500)">500</button><button class="amt-btn" onclick="setAmt(1,1000)">1000</button><button class="amt-btn" onclick="setAmt(1,2000)">2000</button>
+        </div>
         <button id="btn-1" class="main-btn" onclick="handleBet(1)">BET</button>
     </div>
     <div class="bet-card">
-        <div class="auto-row">
-            <label><input type="checkbox" id="auto-p2"> Auto Play</label>
-            <div class="auto-cash-box"><input type="checkbox" id="auto-c2"> <input type="number" id="ac-val2" value="2.0"></div>
-        </div>
         <div class="manual-input"><button onclick="adj(2,-10)">-</button><input type="number" id="amt-2" value="100"><button onclick="adj(2,10)">+</button></div>
+        <div class="amt-grid">
+            <button class="amt-btn" onclick="setAmt(2,10)">10</button><button class="amt-btn" onclick="setAmt(2,100)">100</button><button class="amt-btn" onclick="setAmt(2,200)">200</button>
+            <button class="amt-btn" onclick="setAmt(2,500)">500</button><button class="amt-btn" onclick="setAmt(2,1000)">1000</button><button class="amt-btn" onclick="setAmt(2,2000)">2000</button>
+        </div>
         <button id="btn-2" class="main-btn" onclick="handleBet(2)">BET</button>
     </div>
 </div>
@@ -112,7 +126,7 @@
 
     let wallet = 0, multiplier = 1.0, isFlying = false, currentUser = null;
     let activeBets = { 1: null, 2: null };
-    let nextBets = { 1: null, 2: null }; 
+    let nextBets = { 1: null, 2: null };
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -126,9 +140,23 @@
                 wallet = snap.val() || 0; 
                 document.getElementById('bal-text').innerText = wallet.toFixed(2);
             });
-            startLoop();
+            initHistory(); startLoop();
         }
     });
+
+    function initHistory() {
+        const strip = document.getElementById('hist-row'), full = document.getElementById('full-history');
+        strip.innerHTML = ""; full.innerHTML = "";
+        for(let i=0; i<20; i++) {
+            addHistoryChip((Math.random() * 2 + 1).toFixed(2));
+        }
+    }
+
+    function addHistoryChip(val) {
+        const chip = `<div class="hist-chip ${val >= 2 ? 'chip-green' : ''}">${val}x</div>`;
+        document.getElementById('hist-row').insertAdjacentHTML('afterbegin', chip);
+        document.getElementById('full-history').insertAdjacentHTML('afterbegin', chip);
+    }
 
     function startLoop() {
         isFlying = false;
@@ -136,21 +164,14 @@
         document.getElementById('crash-msg').style.display = 'none';
         document.getElementById('countdown-box').style.display = 'block';
         
-        // Process next bets
         [1,2].forEach(p => {
-            if (nextBets[p]) {
-                activeBets[p] = nextBets[p];
-                nextBets[p] = null;
-            }
-            // Auto Bet
-            if(document.getElementById('auto-p'+p).checked && !activeBets[p]) {
-                let a = parseInt(document.getElementById('amt-'+p).value);
-                if(a <= wallet) { 
-                    wallet -= a; activeBets[p] = {amt:a, cashed:false}; 
-                    db.ref('users/'+currentUser.uid).update({balance:wallet}); 
-                }
-            }
+            if(nextBets[p]) { activeBets[p] = nextBets[p]; nextBets[p] = null; }
         });
+
+        const list = document.getElementById('fake-list'); list.innerHTML = "";
+        for(let i=0; i<10; i++) {
+            list.innerHTML += `<div class="live-row" id="fake-${i}"><span>User***${Math.floor(Math.random()*99)}</span><span>₹${Math.floor(Math.random()*200+10)}</span><span class="m-col">-</span><span class="w-col">-</span></div>`;
+        }
 
         updateUI();
         let t = 5;
@@ -168,22 +189,24 @@
 
         function step() {
             if(!isFlying) return;
-            let elapsed = (Date.now() - start) / 1000;
-            multiplier = Math.pow(1.15, elapsed);
+            multiplier = Math.pow(1.15, (Date.now() - start) / 1000);
 
-            // Auto cashout
-            [1,2].forEach(p => {
-                if(document.getElementById('auto-c'+p).checked && activeBets[p] && !activeBets[p].cashed && multiplier >= parseFloat(document.getElementById('ac-val'+p).value)) {
-                    cashOut(p);
+            if(Math.random() > 0.97) {
+                let row = document.getElementById('fake-'+Math.floor(Math.random()*10));
+                if(row && row.querySelector('.w-col').innerText === "-") {
+                    let b = parseInt(row.children[1].innerText.replace('₹',''));
+                    row.querySelector('.m-col').innerText = multiplier.toFixed(2)+"x";
+                    row.querySelector('.w-col').innerText = "₹"+(b*multiplier).toFixed(0);
+                    row.querySelector('.w-col').classList.add('win-txt');
                 }
-            });
+            }
 
             if(multiplier >= crash) {
                 isFlying = false;
                 document.getElementById('multiplier-text').style.display = 'none';
                 document.getElementById('crash-msg').style.display = 'block';
                 document.getElementById('crash-val').innerText = crash + "x";
-                
+                addHistoryChip(crash);
                 activeBets[1] = activeBets[2] = null;
                 setTimeout(startLoop, 3000);
                 return;
@@ -199,19 +222,12 @@
         if(!isFlying) {
             if(!activeBets[p]) {
                 if(a <= wallet) { wallet -= a; activeBets[p] = {amt:a, cashed:false}; }
-            } else {
-                wallet += activeBets[p].amt; activeBets[p] = null;
-            }
+            } else { wallet += activeBets[p].amt; activeBets[p] = null; }
         } else {
-            if(activeBets[p] && !activeBets[p].cashed) {
-                cashOut(p);
-            } else {
-                // Queue for next round
-                if(!nextBets[p]) {
-                    if(a <= wallet) { wallet -= a; nextBets[p] = {amt:a, cashed:false}; }
-                } else {
-                    wallet += nextBets[p].amt; nextBets[p] = null;
-                }
+            if(activeBets[p] && !activeBets[p].cashed) { cashOut(p); }
+            else {
+                if(!nextBets[p]) { if(a <= wallet) { wallet -= a; nextBets[p] = {amt:a}; } }
+                else { wallet += nextBets[p].amt; nextBets[p] = null; }
             }
         }
         db.ref('users/'+currentUser.uid).update({balance:wallet});
@@ -220,21 +236,19 @@
 
     function cashOut(p) {
         if(activeBets[p] && !activeBets[p].cashed) {
-            let win = (activeBets[p].amt * multiplier);
+            let win = activeBets[p].amt * multiplier;
             wallet += win; activeBets[p].cashed = true;
             db.ref('users/'+currentUser.uid).update({balance:wallet});
-            triggerCashoutEffects(win);
+            
+            const audio = document.getElementById('coin-sound');
+            audio.currentTime = 0; audio.play().catch(()=>{});
+            
+            const splash = document.createElement('div');
+            splash.className = 'cashout-splash';
+            splash.innerText = `+₹${win.toFixed(2)}`;
+            document.getElementById('game-container').appendChild(splash);
+            setTimeout(() => splash.remove(), 2000);
         }
-    }
-
-    function triggerCashoutEffects(amount) {
-        const audio = document.getElementById('coin-sound');
-        audio.currentTime = 0; audio.play().catch(e => {});
-        const splash = document.createElement('div');
-        splash.className = 'cashout-splash';
-        splash.innerText = `+₹${amount.toFixed(2)}`;
-        document.getElementById('game-container').appendChild(splash);
-        setTimeout(() => splash.remove(), 2000);
     }
 
     function updateUI() {
@@ -244,21 +258,11 @@
                 if(activeBets[p] && !activeBets[p].cashed) {
                     btn.innerText = `CASH OUT ₹${(activeBets[p].amt * multiplier).toFixed(2)}`;
                     btn.className = "main-btn btn-cashout";
-                } else if(nextBets[p]) {
-                    btn.innerText = "CANCEL NEXT";
-                    btn.className = "main-btn btn-cancel";
-                } else {
-                    btn.innerText = "BET NEXT";
-                    btn.className = "main-btn";
-                }
+                } else if(nextBets[p]) { btn.innerText = "CANCEL NEXT"; btn.className = "main-btn btn-cancel"; }
+                else { btn.innerText = "BET NEXT"; btn.className = "main-btn"; }
             } else {
-                if(activeBets[p]) {
-                    btn.innerText = "CANCEL";
-                    btn.className = "main-btn btn-cancel";
-                } else {
-                    btn.innerText = "BET";
-                    btn.className = "main-btn";
-                }
+                if(activeBets[p]) { btn.innerText = "CANCEL"; btn.className = "main-btn btn-cancel"; }
+                else { btn.innerText = "BET"; btn.className = "main-btn"; }
             }
         });
     }
@@ -273,7 +277,10 @@
         ctx.drawImage(planeImg, x-25, y-25, 50, 50);
     }
 
+    function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
     function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value)+v); }
+    function toggleMenu() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
+    function toggleDrop(id) { const el = document.getElementById(id); el.style.display = (el.style.display==='block'||el.style.display==='grid')?'none':(id==='full-history'?'grid':'block'); }
 </script>
 </body>
 </html>
