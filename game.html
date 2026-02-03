@@ -366,4 +366,36 @@
 
         // 2. Create Splash Animation
         const splash = document.createElement('div');
-        splash.className = 'ca
+        splash.className = 'cashout-splash';
+        splash.innerText = `+₹${amount.toFixed(2)}`;
+        document.getElementById('game-container').appendChild(splash);
+
+        // Remove splash after animation
+        setTimeout(() => splash.remove(), 2000);
+    }
+
+    function draw() {
+        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+        let p = Math.min((multiplier - 1) / 10, 0.9);
+        let x = p * canvas.width * 0.9 + 20, y = (canvas.height-40) - (Math.pow(p,0.6)*canvas.height*0.7);
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 4; ctx.beginPath();
+        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
+        ctx.drawImage(planeImg, x-25, y-25, 50, 50);
+    }
+
+    function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value)+v); }
+    function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
+    function setDep(v) { document.getElementById('dep-amt').value = v; }
+    function toggleMenu() { const m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
+    function toggleDrop(id) { const el = document.getElementById(id); el.style.display = (el.style.display==='block'||el.style.display==='grid')?'none':(id==='full-history'?'grid':'block'); }
+    function updateUI() {
+        [1,2].forEach(p => {
+            let btn = document.getElementById('btn-'+p);
+            if(isFlying && activeBets[p] && !activeBets[p].cashed) { btn.innerText = "CASH OUT"; btn.classList.add('btn-cashout'); }
+            else if(!isFlying) { btn.innerText = activeBets[p] ? "CANCEL" : "BET"; btn.classList.remove('btn-cashout'); }
+        });
+    }
+</script>
+</body>
+</html>
