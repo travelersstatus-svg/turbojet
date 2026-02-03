@@ -41,7 +41,6 @@
         .amt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 5px 0; }
         .amt-btn { background: #1c2538; border: 1px solid #252f44; color: white; font-size: 9px; padding: 4px 0; border-radius: 4px; }
         
-        /* Manual Input Point 2 */
         .manual-input { display: flex; justify-content: space-between; align-items: center; background: #000; border-radius: 20px; padding: 2px 8px; border: 1px solid #444; margin-bottom: 5px; }
         .manual-input button { background: none; border: none; color: white; font-size: 18px; width: 25px; cursor: pointer; }
         .manual-input input { background: none; border: none; color: white; width: 45px; text-align: center; outline: none; font-size: 12px; }
@@ -177,7 +176,6 @@
         document.getElementById('multiplier-text').style.display = 'none';
         document.getElementById('countdown-box').style.display = 'block';
         
-        // Auto Play Check
         [1,2].forEach(p => {
             if(document.getElementById('auto-p'+p).checked && !activeBets[p]) {
                 let a = parseInt(document.getElementById('amt-'+p).value);
@@ -208,7 +206,6 @@
             let elapsed = (Date.now() - start) / 1000;
             multiplier = Math.pow(1.15, elapsed);
 
-            // Fake User Cashout
             if(Math.random() > 0.96) {
                 let row = document.getElementById('fake-'+Math.floor(Math.random()*12));
                 if(row && row.querySelector('.w-col').innerText === "-") {
@@ -219,7 +216,6 @@
                 }
             }
 
-            // Auto Cashout
             [1,2].forEach(p => {
                 if(document.getElementById('auto-c'+p).checked && activeBets[p] && !activeBets[p].cashed && multiplier >= parseFloat(document.getElementById('ac-val'+p).value)) {
                     cashOut(p);
@@ -228,7 +224,20 @@
 
             if(multiplier >= crash) {
                 isFlying = false;
-                document.getElementById('hist-row').innerHTML = `<div class="hist-chip ${crash>=2?'chip-green':''}">${crash}x</div>` + document.getElementById('hist-row').innerHTML;
+                
+                // Result Update Logic (Strip & Dropdown)
+                let chipHTML = `<div class="hist-chip ${crash >= 2 ? 'chip-green' : ''}">${crash}x</div>`;
+                
+                // Update Top Strip (Max 6)
+                let strip = document.getElementById('hist-row');
+                strip.innerHTML = chipHTML + strip.innerHTML;
+                if(strip.children.length > 6) strip.removeChild(strip.lastChild);
+
+                // Update Dropdown (Max 25, old one removed)
+                let fullHist = document.getElementById('full-history');
+                fullHist.innerHTML = chipHTML + fullHist.innerHTML;
+                if(fullHist.children.length > 25) fullHist.removeChild(fullHist.lastChild);
+
                 activeBets[1] = activeBets[2] = null;
                 setTimeout(startLoop, 3000);
                 return;
@@ -277,5 +286,5 @@
     }
 </script>
 </body>
-</html>
+    </html>
 
