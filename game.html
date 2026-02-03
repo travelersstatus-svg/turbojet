@@ -112,7 +112,12 @@
         <div class="manual-input"> <button onclick="adj(1, -10)">-</button><input type="number" id="amt-1" value="100"><button onclick="adj(1, 10)">+</button>
         </div>
         <div class="amt-grid">
-            <button class="amt-btn" onclick="setAmt(1,10)">10</button><button class="amt-btn" onclick="setAmt(1,100)">100</button><button class="amt-btn" onclick="setAmt(1,500)">500</button>
+            <button class="amt-btn" onclick="setAmt(1,10)">10</button>
+            <button class="amt-btn" onclick="setAmt(1,100)">100</button>
+            <button class="amt-btn" onclick="setAmt(1,200)">200</button>
+            <button class="amt-btn" onclick="setAmt(1,300)">300</button>
+            <button class="amt-btn" onclick="setAmt(1,500)">500</button>
+            <button class="amt-btn" onclick="setAmt(1,1000)">1000</button>
         </div>
         <button id="btn-1" class="main-btn" onclick="handleBet(1)">BET</button>
     </div>
@@ -126,7 +131,12 @@
             <button onclick="adj(2, -10)">-</button><input type="number" id="amt-2" value="100"><button onclick="adj(2, 10)">+</button>
         </div>
         <div class="amt-grid">
-            <button class="amt-btn" onclick="setAmt(2,10)">10</button><button class="amt-btn" onclick="setAmt(2,100)">100</button><button class="amt-btn" onclick="setAmt(2,500)">500</button>
+            <button class="amt-btn" onclick="setAmt(2,10)">10</button>
+            <button class="amt-btn" onclick="setAmt(2,100)">100</button>
+            <button class="amt-btn" onclick="setAmt(2,200)">200</button>
+            <button class="amt-btn" onclick="setAmt(2,300)">300</button>
+            <button class="amt-btn" onclick="setAmt(2,500)">500</button>
+            <button class="amt-btn" onclick="setAmt(2,1000)">1000</button>
         </div>
         <button id="btn-2" class="main-btn" onclick="handleBet(2)">BET</button>
     </div>
@@ -224,20 +234,14 @@
 
             if(multiplier >= crash) {
                 isFlying = false;
-                
-                // --- NEW RESULT UPDATE LOGIC ---
                 const chipHTML = `<div class="hist-chip ${crash >= 2 ? 'chip-green' : ''}">${crash}x</div>`;
-                
-                // 1. Upar ki strip (hist-row) update: Naya result add aur sabse purana hataye
                 const strip = document.getElementById('hist-row');
                 strip.insertAdjacentHTML('afterbegin', chipHTML);
                 if(strip.children.length > 6) strip.lastElementChild.remove();
 
-                // 2. Dropdown (full-history) update: Naya result add aur sabse purana hataye
                 const fullHist = document.getElementById('full-history');
                 fullHist.insertAdjacentHTML('afterbegin', chipHTML);
                 if(fullHist.children.length > 25) fullHist.lastElementChild.remove();
-                // --------------------------------
 
                 activeBets[1] = activeBets[2] = null;
                 setTimeout(startLoop, 3000);
@@ -288,4 +292,3 @@
 </script>
 </body>
 </html>
-
