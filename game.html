@@ -55,6 +55,7 @@
         .live-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; padding: 6px 8px; font-size: 9px; border-bottom: 1px solid #252f44; }
         .win-txt { color: var(--win-green); font-weight: bold; }
         canvas { width: 100%; height: 100%; }
+        .history-item { border-bottom: 1px solid #252f44; padding: 5px 0; font-size: 11px; }
     </style>
 </head>
 <body>
@@ -82,7 +83,7 @@
         </div>
         <input type="number" id="dep-amt-input" class="f-input" placeholder="Amount">
         <input type="text" id="dep-utr-input" class="f-input" placeholder="Enter UTR (12 Digit Transaction ID)">
-        <button class="main-btn">Deposit Now</button>
+        <button class="main-btn" onclick="handleDeposit()">Deposit Now</button>
     </div>
 
     <div class="menu-btn" onclick="toggleDrop('with-drop')">🏦 Withdrawal <span>▼</span></div>
@@ -90,8 +91,8 @@
         <input type="text" class="f-input" placeholder="Account Holder Name">
         <input type="text" class="f-input" placeholder="Account Number">
         <input type="text" class="f-input" placeholder="IFSC Code">
-        <input type="number" class="f-input" placeholder="Amount">
-        <button class="main-btn" style="background:var(--accent-red)">Withdraw Now</button>
+        <input type="number" class="f-input" id="with-amt-input" placeholder="Amount">
+        <button class="main-btn" style="background:var(--accent-red)" onclick="handleWithdrawal()">Withdraw Now</button>
     </div>
 
     <div class="menu-btn" onclick="toggleDrop('bet-history')">📜 Bet History <span>▼</span></div>
@@ -100,7 +101,7 @@
     <div class="menu-btn" onclick="toggleDrop('trans-history')">💸 Transaction History <span>▼</span></div>
     <div id="trans-history" class="dropdown-content">No Transactions Available</div>
 
-    <div class="menu-btn" style="margin-top:20px; background:var(--accent-red)" onclick="firebase.auth().signOut()">🚪 Logout</div>
+    <div class="menu-btn" style="margin-top:20px; background:var(--accent-red)" onclick="logout()">🚪 Logout</div>
 </div>
 
 <div class="top-nav">
@@ -167,9 +168,43 @@
                 wallet = snap.val() || 0; 
                 document.getElementById('bal-text').innerText = wallet.toFixed(2);
             });
+            // Fetch Histories
+            loadUserHistories(user.uid);
             initHistory(); startLoop();
+        } else {
+            // Redirect to login or handle unauthenticated state
         }
     });
+
+    function logout() {
+        auth.signOut().then(() => {
+            alert("Logged out successfully");
+            window.location.reload();
+        });
+    }
+
+    function loadUserHistories(uid) {
+        db.ref('users/' + uid + '/bets').limitToLast(10).on('value', snap => {
+            const bh = document.getElementById('bet-history');
+            bh.innerHTML = "";
+            if(snap.exists()){
+                snap.forEach(child => {
+                    let d = child.val();
+                    bh.innerHTML = `<div class="history-item">Amt: ₹${d.amt} | Mult: ${d.mult}x | Win: ₹${d.win}</div>` + bh.innerHTML;
+                });
+            } else bh.innerText = "No History Available";
+        });
+        db.ref('users/' + uid + '/transactions').limitToLast(10).on('value', snap => {
+            const th = document.getElementById('trans-history');
+            th.innerHTML = "";
+            if(snap.exists()){
+                snap.forEach(child => {
+                    let d = child.val();
+                    th.innerHTML = `<div class="history-item">${d.type}: ₹${d.amt} (${d.status})</div>` + th.innerHTML;
+                });
+            } else th.innerText = "No Transactions Available";
+        });
+    }
 
     function initHistory() { for(let i=0; i<15; i++) addHistoryChip((Math.random() * 2 + 1).toFixed(2)); }
     function addHistoryChip(v) {
@@ -185,7 +220,6 @@
         document.getElementById('crash-msg').style.display = 'none';
         document.getElementById('countdown-box').style.display = 'block';
 
-        // Fake Users Setup
         const list = document.getElementById('fake-list'); list.innerHTML = "";
         for(let i=0; i<15; i++) {
             list.innerHTML += `<div class="live-row" id="fake-${i}"><span>User***${Math.floor(Math.random()*99)}</span><span>₹${Math.floor(Math.random()*500+10)}</span><span class="m-col">-</span><span class="w-col">-</span></div>`;
@@ -216,7 +250,6 @@
             if(!isFlying) return;
             multiplier = Math.pow(1.06, (Date.now() - start) / 1000);
 
-            // Fake User Cashout logic
             if(Math.random() > 0.98) {
                 let idx = Math.floor(Math.random()*15);
                 let row = document.getElementById('fake-'+idx);
@@ -236,6 +269,11 @@
 
             if(multiplier >= crash) {
                 isFlying = false;
+                [1,2].forEach(p => {
+                   if(activeBets[p] && !activeBets[p].cashed) {
+                       saveBetHistory(activeBets[p].amt, crash, 0); // Lost bet
+                   }
+                });
                 document.getElementById('multiplier-text').style.display = 'none';
                 document.getElementById('crash-msg').style.display = 'block';
                 document.getElementById('crash-val').innerText = crash + "x";
@@ -262,14 +300,13 @@
         db.ref('users/'+currentUser.uid).update({balance:wallet});
         updateUI();
     }
-
     function cashOut(p) {
         if(activeBets[p] && !activeBets[p].cashed) {
             let winAmt = activeBets[p].amt * multiplier;
             wallet += winAmt; activeBets[p].cashed = true;
             db.ref('users/'+currentUser.uid).update({balance:wallet});
+            saveBetHistory(activeBets[p].amt, multiplier.toFixed(2), winAmt.toFixed(2));
             
-            // Sound & Splash
             document.getElementById('coin-sound').play().catch(()=>{});
             const splash = document.createElement('div');
             splash.className = 'cashout-splash';
@@ -279,6 +316,33 @@
 
             updateUI();
         }
+    }
+
+    function saveBetHistory(amt, mult, win) {
+        if(!currentUser) return;
+        db.ref('users/' + currentUser.uid + '/bets').push({
+            amt: amt, mult: mult, win: win, time: Date.now()
+        });
+    }
+
+    function handleDeposit() {
+        let amt = document.getElementById('dep-amt-input').value;
+        if(!amt || amt < 100) { alert("Min 100"); return; }
+        db.ref('users/' + currentUser.uid + '/transactions').push({
+            type: "Deposit", amt: amt, status: "Pending", time: Date.now()
+        });
+        alert("Deposit Request Sent!");
+    }
+
+    function handleWithdrawal() {
+        let amt = document.getElementById('with-amt-input').value;
+        if(amt > wallet) { showIns(); return; }
+        wallet -= amt;
+        db.ref('users/'+currentUser.uid).update({balance:wallet});
+        db.ref('users/' + currentUser.uid + '/transactions').push({
+            type: "Withdrawal", amt: amt, status: "Pending", time: Date.now()
+        });
+        alert("Withdrawal Request Sent!");
     }
 
     function updateUI() {
@@ -303,7 +367,8 @@
         ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
         ctx.drawImage(planeImg, x-25, y-25, 50, 50);
     }
-function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
+
+    function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
     function setDep(v) { document.getElementById('dep-amt-input').value = v; }
     function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value)+v); }
     function showIns() { let m = document.getElementById('insufficient-bal'); m.style.display='block'; setTimeout(()=>m.style.display='none', 2000); }
@@ -313,4 +378,4 @@ function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
 </body>
 </html>
 
-
+    
