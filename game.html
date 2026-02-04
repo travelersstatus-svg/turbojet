@@ -168,18 +168,21 @@
                 wallet = snap.val() || 0; 
                 document.getElementById('bal-text').innerText = wallet.toFixed(2);
             });
-            // Fetch Histories
             loadUserHistories(user.uid);
             initHistory(); startLoop();
         } else {
-            // Redirect to login or handle unauthenticated state
+            // User login nahi hai toh login page par bhej do
+            window.location.href = "index.html";
         }
     });
 
+    // FIXED LOGOUT FUNCTION
     function logout() {
         auth.signOut().then(() => {
             alert("Logged out successfully");
-            window.location.reload();
+            window.location.href = "index.html"; // Seedhe login page par redirect
+        }).catch((error) => {
+            console.error("Logout Error:", error);
         });
     }
 
@@ -271,7 +274,7 @@
                 isFlying = false;
                 [1,2].forEach(p => {
                    if(activeBets[p] && !activeBets[p].cashed) {
-                       saveBetHistory(activeBets[p].amt, crash, 0); // Lost bet
+                       saveBetHistory(activeBets[p].amt, crash, 0); 
                    }
                 });
                 document.getElementById('multiplier-text').style.display = 'none';
@@ -377,5 +380,3 @@
 </script>
 </body>
 </html>
-
-    
