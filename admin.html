@@ -52,6 +52,61 @@
             </div>
         </div>
     </div>
+    <div class="card">
+    <h3>🏦 WITHDRAWAL REQUESTS (Pending)</h3>
+    <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Amount</th>
+                    <th>Details</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="with-list"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // startLoading() function ke andar is part ko add karein
+    function startLoading() {
+        // ... (Users aur Deposits wala code pehle jaisa rahega) ...
+
+        // Load Withdrawals Data
+        db.ref('requests/withdrawals').on('value', snap => {
+            let html = "";
+            let count = 0;
+            snap.forEach(child => {
+                let w = child.val();
+                if(w.status === 'pending') {
+                    count++;
+                    html += `<tr>
+                        <td>${w.email}</td>
+                        <td>₹${w.amount}</td>
+                        <td><small>${w.details || 'N/A'}</small></td>
+                        <td>
+                            <button onclick="approveWith('${child.key}')" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Mark Paid</button>
+                            <button onclick="rejectReq('withdrawals','${child.key}')" style="background:#d11348; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-left:5px;">Reject</button>
+                        </td>
+                    </tr>`;
+                }
+            });
+            document.getElementById('with-list').innerHTML = count > 0 ? html : "<tr><td colspan='4'>No Pending Withdrawals</td></tr>";
+        });
+    }
+
+    // Is naye function ko baki functions ke saath niche add karein
+    function approveWith(key) {
+        if(confirm("Kya aapne ye payment kar di hai? Isse status 'approved' ho jayega.")) {
+            db.ref('requests/withdrawals/' + key).update({ status: 'approved' })
+            .then(() => alert("Withdrawal marked as Paid!"))
+            .catch(err => alert("Error: " + err.message));
+        }
+    }
+</script>
+    
 
 <script>
     const firebaseConfig = {
@@ -129,3 +184,4 @@
 </script>
 </body>
 </html>
+
