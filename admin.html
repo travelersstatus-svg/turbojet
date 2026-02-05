@@ -3,34 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Final Fix</title>
+    <title>Master Admin Dashboard</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <style>
-        body { background: #05080f; color: white; font-family: sans-serif; margin: 0; padding: 15px; }
-        #login-box { max-width: 350px; margin: 100px auto; background: #161d2b; padding: 25px; border-radius: 12px; text-align: center; border: 1px solid #252f44; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #252f44; background: #05080f; color: white; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #28a745; color: white; }
+        body { background: #05080f; color: white; font-family: sans-serif; padding: 15px; margin: 0; }
+        .card { background: #161d2b; border: 1px solid #252f44; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
+        h3 { color: #ff0055; margin-top: 0; border-bottom: 1px solid #252f44; padding-bottom: 10px; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #252f44; font-size: 12px; }
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; }
+        #login-box { text-align: center; margin-top: 50px; background: #161d2b; padding: 30px; border-radius: 12px; max-width: 400px; margin-left: auto; margin-right: auto; }
+        input { padding: 12px; width: 90%; margin-bottom: 15px; border-radius: 5px; border: 1px solid #252f44; background: #05080f; color: white; }
         #admin-content { display: none; }
-        .card { background: #161d2b; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #252f44; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #252f44; }
-        .btn-edit { background: #5a32a8; color: white; padding: 5px 10px; border-radius: 4px; border:none; cursor:pointer; }
-        .btn-rej { background: #d11348; color: white; padding: 5px 10px; border-radius: 4px; border:none; cursor:pointer; }
     </style>
 </head>
 <body>
 
     <div id="login-box">
-        <h2 style="color: #ff0055;">Admin Login</h2>
+        <h2 style="color:#ff0055">Admin Login</h2>
         <input type="email" id="email" placeholder="Admin Email">
         <input type="password" id="pass" placeholder="Password">
-        <button class="btn" onclick="login()">Login to Dashboard</button>
+        <button class="btn" style="background:#28a745; color:white; width:95%; font-size:14px;" onclick="login()">Login to Dashboard</button>
     </div>
 
     <div id="admin-content">
-        <h1 style="text-align:center;">ADMIN DASHBOARD</h1>
+        <h1 style="text-align:center; font-size: 20px;">ADMIN DASHBOARD</h1>
         
         <div class="card">
             <h3>👥 ALL USERS</h3>
@@ -51,62 +50,17 @@
                 </table>
             </div>
         </div>
+
+        <div class="card">
+            <h3>🏦 PENDING WITHDRAWALS</h3>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>Email</th><th>Amount</th><th>Details</th><th>Action</th></tr></thead>
+                    <tbody id="with-list"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
-    <div class="card">
-    <h3>🏦 WITHDRAWAL REQUESTS (Pending)</h3>
-    <div style="overflow-x:auto;">
-        <table>
-            <thead>
-                <tr>
-                    <th>Email</th>
-                    <th>Amount</th>
-                    <th>Details</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="with-list"></tbody>
-        </table>
-    </div>
-</div>
-
-<script>
-    // startLoading() function ke andar is part ko add karein
-    function startLoading() {
-        // ... (Users aur Deposits wala code pehle jaisa rahega) ...
-
-        // Load Withdrawals Data
-        db.ref('requests/withdrawals').on('value', snap => {
-            let html = "";
-            let count = 0;
-            snap.forEach(child => {
-                let w = child.val();
-                if(w.status === 'pending') {
-                    count++;
-                    html += `<tr>
-                        <td>${w.email}</td>
-                        <td>₹${w.amount}</td>
-                        <td><small>${w.details || 'N/A'}</small></td>
-                        <td>
-                            <button onclick="approveWith('${child.key}')" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Mark Paid</button>
-                            <button onclick="rejectReq('withdrawals','${child.key}')" style="background:#d11348; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-left:5px;">Reject</button>
-                        </td>
-                    </tr>`;
-                }
-            });
-            document.getElementById('with-list').innerHTML = count > 0 ? html : "<tr><td colspan='4'>No Pending Withdrawals</td></tr>";
-        });
-    }
-
-    // Is naye function ko baki functions ke saath niche add karein
-    function approveWith(key) {
-        if(confirm("Kya aapne ye payment kar di hai? Isse status 'approved' ho jayega.")) {
-            db.ref('requests/withdrawals/' + key).update({ status: 'approved' })
-            .then(() => alert("Withdrawal marked as Paid!"))
-            .catch(err => alert("Error: " + err.message));
-        }
-    }
-</script>
-    
 
 <script>
     const firebaseConfig = {
@@ -126,62 +80,71 @@
     function login() {
         const e = document.getElementById('email').value;
         const p = document.getElementById('pass').value;
-        
         auth.signInWithEmailAndPassword(e, p)
-            .then((res) => {
-                // Yahan UID check ko remove kar diya hai taaki aap login kar sakein
+            .then(() => {
                 document.getElementById('login-box').style.display = 'none';
                 document.getElementById('admin-content').style.display = 'block';
-                loadData();
+                startLoading();
             })
             .catch(err => alert("Login Error: " + err.message));
     }
 
-    function loadData() {
-        // Load Users
+    function startLoading() {
+        // 1. Users
         db.ref('users').on('value', snap => {
-            let html = "";
+            let h = "";
             snap.forEach(c => {
                 let u = c.val();
-                html += `<tr><td>${u.email}</td><td style="color:#28a745;">₹${(u.balance || 0).toFixed(2)}</td>
-                <td><button class="btn-edit" onclick="manualEdit('${c.key}')">Edit</button></td></tr>`;
+                h += `<tr><td>${u.email}</td><td style="color:#28a745">₹${(u.balance || 0).toFixed(2)}</td>
+                <td><button onclick="editBal('${c.key}')" class="btn" style="background:#5a32a8; color:white;">Edit</button></td></tr>`;
             });
-            document.getElementById('users-list').innerHTML = html || "<tr><td colspan='3'>No Users</td></tr>";
+            document.getElementById('users-list').innerHTML = h || "<tr><td colspan='3'>No Users Found</td></tr>";
         });
 
-        // Load Deposits
+        // 2. Deposits
         db.ref('requests/deposits').on('value', snap => {
-            let html = "";
+            let h = "";
             snap.forEach(c => {
                 let d = c.val();
                 if(d.status === 'pending') {
-                    html += `<tr><td>${d.email}</td><td>₹${d.amount}</td><td>${d.utr}</td>
-                    <td><button class="btn-edit" style="background:#28a745" onclick="approveDep('${c.key}','${d.uid}',${d.amount})">Approve</button>
-                    <button class="btn-rej" onclick="rejectReq('deposits','${c.key}')">Reject</button></td></tr>`;
+                    h += `<tr><td>${d.email}</td><td>₹${d.amount}</td><td>${d.utr}</td>
+                    <td><button onclick="approveDep('${c.key}','${d.uid}',${d.amount})" class="btn" style="background:#28a745; color:white;">Approve</button></td></tr>`;
                 }
             });
-            document.getElementById('dep-list').innerHTML = html || "<tr><td colspan='4'>No Pending Deposits</td></tr>";
+            document.getElementById('dep-list').innerHTML = h || "<tr><td colspan='4'>No Pending Deposits</td></tr>";
+        });
+
+        // 3. Withdrawals
+        db.ref('requests/withdrawals').on('value', snap => {
+            let h = "";
+            snap.forEach(c => {
+                let w = c.val();
+                if(w.status === 'pending') {
+                    h += `<tr><td>${w.email}</td><td>₹${w.amount}</td><td>${w.details || 'N/A'}</td>
+                    <td><button onclick="approveWith('${c.key}')" class="btn" style="background:#28a745; color:white;">Mark Paid</button></td></tr>`;
+                }
+            });
+            document.getElementById('with-list').innerHTML = h || "<tr><td colspan='4'>No Pending Withdrawals</td></tr>";
         });
     }
 
-    function approveDep(k, uid, a) {
-        if(confirm("Approve ₹" + a + "?")) {
-            db.ref('users/' + uid + '/balance').transaction(curr => (curr || 0) + a);
-            db.ref('requests/deposits/' + k).update({ status: 'approved' });
+    function editBal(uid) {
+        let amt = prompt("Enter new balance:");
+        if(amt) db.ref('users/' + uid).update({ balance: parseFloat(amt) });
+    }
+
+    function approveDep(key, uid, amt) {
+        if(confirm("Approve ₹" + amt + "?")) {
+            db.ref('users/' + uid + '/balance').transaction(c => (c || 0) + amt);
+            db.ref('requests/deposits/' + key).update({ status: 'approved' });
         }
     }
 
-    function rejectReq(path, k) {
-        if(confirm("Reject this request?")) {
-            db.ref('requests/' + path + '/' + k).update({ status: 'rejected' });
+    function approveWith(key) {
+        if(confirm("Mark this Withdrawal as Paid?")) {
+            db.ref('requests/withdrawals/' + key).update({ status: 'approved' });
         }
-    }
-
-    function manualEdit(uid) {
-        let b = prompt("Enter new balance:");
-        if(b) db.ref('users/' + uid).update({ balance: parseFloat(b) });
     }
 </script>
 </body>
 </html>
-
