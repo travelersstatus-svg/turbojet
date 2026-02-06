@@ -30,7 +30,7 @@
     </div>
 
     <div id="admin-content">
-        <h2 style="text-align:center; font-size: 18px;">ADMIN PANEL</h2>
+        <h2 style="text-align:center; font-size: 18px; color:#ff0055;">ADMIN PANEL</h2>
         
         <div class="card">
             <h3>👥 USERS</h3>
@@ -46,6 +46,7 @@
             <h3>🏦 WITHDRAWALS</h3>
             <div style="overflow-x:auto;"><table><tbody id="with-list"></tbody></table></div>
         </div>
+        <button onclick="auth.signOut(); location.reload();" style="background:#444; color:white; border:none; padding:10px; width:100%; border-radius:5px;">Logout</button>
     </div>
 
 <script>
@@ -63,17 +64,19 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
+    // Correct Admin UID (Updated with '0' zero)
+    const ADMIN_UID = "iirH6H3tL0dJaTGPvCeigpRJQ8j1";
+
     function login() {
         const e = document.getElementById('email').value;
         const p = document.getElementById('pass').value;
         auth.signInWithEmailAndPassword(e, p).then((res) => {
-            // FIXED UID (Case sensitive)
-            if(res.user.uid === "iirH6H3tLOdJaTGPvCeigpRJQ8j1") {
+            if(res.user.uid === ADMIN_UID) {
                 document.getElementById('login-box').style.display = 'none';
                 document.getElementById('admin-content').style.display = 'block';
                 loadData();
             } else {
-                alert("Unauthorized! UID: " + res.user.uid);
+                alert("Unauthorized Access! UID: " + res.user.uid);
                 auth.signOut();
             }
         }).catch(err => alert("Error: " + err.message));
@@ -83,7 +86,8 @@
         db.ref('users').on('value', snap => {
             let h = "<tr><th>Email</th><th>Bal</th><th>Action</th></tr>"; 
             snap.forEach(c => {
-                let u = c.val(); h += `<tr><td>${u.email}</td><td style="color:#28a745">₹${(u.balance || 0).toFixed(2)}</td><td><button onclick="editBal('${c.key}')" style="background:#4b0082; color:white; border:none; border-radius:3px;">Edit</button></td></tr>`;
+                let u = c.val(); 
+                h += `<tr><td>${u.email}</td><td style="color:#28a745">₹${(u.balance || 0).toFixed(2)}</td><td><button onclick="editBal('${c.key}')" style="background:#4b0082; color:white; border:none; border-radius:3px; padding:4px 8px;">Edit</button></td></tr>`;
             });
             document.getElementById('users-list').innerHTML = h;
         });
