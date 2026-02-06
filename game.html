@@ -66,6 +66,11 @@
 <div id="side-menu">
     <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>HOME MENU</b> <span onclick="toggleMenu()" style="cursor:pointer">✕</span></div>
     
+    <a href="https://t.me/turbojetAviator_" target="_blank" style="text-decoration: none;">
+        <div class="menu-btn" style="background: #0088cc; border: none; justify-content: center; font-weight: bold; color: white;">
+            📱 Join Telegram (Support)
+        </div>
+    </a>
     <div class="menu-btn" onclick="toggleDrop('ref-drop')">👥 Referral & Earn <span>▼</span></div>
     <div id="ref-drop" class="dropdown-content">
         <p style="font-size:12px;">Referral ID: <b id="ref-id-display">---</b></p>
@@ -171,16 +176,14 @@
             loadUserHistories(user.uid);
             initHistory(); startLoop();
         } else {
-            // User login nahi hai toh login page par bhej do
             window.location.href = "index.html";
         }
     });
 
-    // FIXED LOGOUT FUNCTION
     function logout() {
         auth.signOut().then(() => {
             alert("Logged out successfully");
-            window.location.href = "index.html"; // Seedhe login page par redirect
+            window.location.href = "index.html"; 
         }).catch((error) => {
             console.error("Logout Error:", error);
         });
@@ -380,3 +383,4 @@
 </script>
 </body>
 </html>
+    
