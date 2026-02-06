@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard Fixed</title>
+    <title>Admin Dashboard - Final Fix</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -18,6 +18,7 @@
         #login-box { text-align: center; margin: 50px auto; background: #161d2b; padding: 25px; border-radius: 12px; max-width: 300px; border: 1px solid #252f44; }
         input { padding: 12px; width: 90%; margin-bottom: 15px; border-radius: 5px; border: 1px solid #252f44; background: #05080f; color: white; }
         #admin-content { display: none; }
+        .utr-box { color: #ffc107; font-weight: bold; font-family: monospace; font-size: 13px; background: #000; padding: 2px 5px; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -30,25 +31,30 @@
     </div>
 
     <div id="admin-content">
-        <h2 style="text-align:center; font-size: 18px;">ADMIN PANEL</h2>
+        <h2 style="text-align:center; font-size: 18px; color:#ff0055;">ADMIN PANEL</h2>
         
         <div class="card">
-            <h3>👥 USERS</h3>
+            <h3>💰 DEPOSITS (NEW REQUESTS)</h3>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr><th>User/Status</th><th>UTR & Amount</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="dep-list"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>👥 ALL USERS</h3>
             <div style="overflow-x:auto;"><table><tbody id="users-list"></tbody></table></div>
         </div>
-
-        <div class="card">
-            <h3>💰 DEPOSITS</h3>
-            <div style="overflow-x:auto;"><table><tbody id="dep-list"></tbody></table></div>
-        </div>
-
-        <div class="card">
-            <h3>🏦 WITHDRAWALS</h3>
-            <div style="overflow-x:auto;"><table><tbody id="with-list"></tbody></table></div>
-        </div>
+        
+        <button onclick="auth.signOut(); location.reload();" style="background:#444; color:white; border:none; padding:10px; width:100%; border-radius:5px; cursor:pointer;">Logout</button>
     </div>
 
 <script>
+    // Firebase Config (Same as before)
     const firebaseConfig = {
         apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc",
         authDomain: "myaviatoregame.firebaseapp.com",
@@ -63,55 +69,61 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
+    const ADMIN_UID = "iirH6H3tL0dJaTGPvCeigpRJQ8j1"; // Fixed UID
+
     function login() {
         const e = document.getElementById('email').value;
         const p = document.getElementById('pass').value;
         auth.signInWithEmailAndPassword(e, p).then((res) => {
-            // FIXED UID (Case sensitive)
-            if(res.user.uid === "iirH6H3tLOdJaTGPvCeigpRJQ8j1") {
+            if(res.user.uid === ADMIN_UID) {
                 document.getElementById('login-box').style.display = 'none';
                 document.getElementById('admin-content').style.display = 'block';
                 loadData();
             } else {
-                alert("Unauthorized! UID: " + res.user.uid);
+                alert("Unauthorized Access!");
                 auth.signOut();
             }
         }).catch(err => alert("Error: " + err.message));
     }
 
     function loadData() {
+        // Deposits - REALTIME
+        db.ref('requests/deposits').on('value', snap => {
+            let h = ""; 
+            let items = [];
+            snap.forEach(c => { items.push({key: c.key, ...c.val()}); });
+            items.reverse(); // Newest first
+
+            items.forEach(d => {
+                let sCol = d.status === 'pending' ? '#ffc107' : '#28a745';
+                h += `<tr>
+                    <td>${d.email}<br><small style="color:${sCol}">${d.status}</small></td>
+                    <td>UTR: <span class="utr-box">${d.utr || 'No UTR'}</span><br>₹${d.amount}</td>
+                    <td>
+                        <button onclick="approve('${d.key}','${d.uid}',${d.amount})" class="btn btn-app" style="font-size:10px;">Approve</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('dep-list').innerHTML = h || "<tr><td colspan='3'>No Data</td></tr>";
+        });
+
+        // Users - REALTIME
         db.ref('users').on('value', snap => {
-            let h = "<tr><th>Email</th><th>Bal</th><th>Action</th></tr>"; 
+            let h = "<tr><th>Email</th><th>Bal</th></tr>"; 
             snap.forEach(c => {
-                let u = c.val(); h += `<tr><td>${u.email}</td><td style="color:#28a745">₹${(u.balance || 0).toFixed(2)}</td><td><button onclick="editBal('${c.key}')" style="background:#4b0082; color:white; border:none; border-radius:3px;">Edit</button></td></tr>`;
+                let u = c.val();
+                h += `<tr><td>${u.email}</td><td>₹${(u.balance || 0).toFixed(2)}</td></tr>`;
             });
             document.getElementById('users-list').innerHTML = h;
         });
-
-        db.ref('requests/deposits').on('value', snap => {
-            let h = "<tr><th>Email</th><th>Amt</th><th>Action</th></tr>"; 
-            snap.forEach(c => {
-                let d = c.val(); if(d.status === 'pending') {
-                    h += `<tr><td>${d.email}</td><td>₹${d.amount}</td><td><button onclick="appDep('${c.key}','${d.uid}',${d.amount})" class="btn btn-app" style="font-size:10px;">Approve</button></td></tr>`;
-                }
-            });
-            document.getElementById('dep-list').innerHTML = h;
-        });
-
-        db.ref('requests/withdrawals').on('value', snap => {
-            let h = "<tr><th>Email</th><th>Amt</th><th>Action</th></tr>"; 
-            snap.forEach(c => {
-                let w = c.val(); if(w.status === 'pending') {
-                    h += `<tr><td>${w.email}</td><td>₹${w.amount}</td><td><button onclick="appWith('${c.key}')" class="btn btn-app" style="font-size:10px;">Paid</button></td></tr>`;
-                }
-            });
-            document.getElementById('with-list').innerHTML = h;
-        });
     }
 
-    function editBal(id) { let a = prompt("New Balance:"); if(a) db.ref('users/' + id).update({balance: parseFloat(a)}); }
-    function appDep(k, u, a) { if(confirm("Confirm?")) { db.ref('users/'+u+'/balance').transaction(c => (c||0)+a); db.ref('requests/deposits/'+k).update({status:'approved'}); } }
-    function appWith(k) { if(confirm("Confirm Paid?")) { db.ref('requests/withdrawals/'+k).update({status:'approved'}); } }
+    function approve(key, uid, amt) {
+        if(confirm("Verify UTR and Approve?")) {
+            db.ref('users/' + uid + '/balance').transaction(c => (c || 0) + amt);
+            db.ref('requests/deposits/' + key).update({status: 'approved'});
+        }
+    }
 </script>
 </body>
 </html>
