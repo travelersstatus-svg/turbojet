@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard Fixed - Final</title>
+    <title>Admin Dashboard - UTR Fix</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -18,7 +18,8 @@
         #login-box { text-align: center; margin: 50px auto; background: #161d2b; padding: 25px; border-radius: 12px; max-width: 300px; border: 1px solid #252f44; }
         input { padding: 12px; width: 90%; margin-bottom: 15px; border-radius: 5px; border: 1px solid #252f44; background: #05080f; color: white; }
         #admin-content { display: none; }
-        .status-badge { font-size: 9px; padding: 2px 5px; border-radius: 3px; background: #444; }
+        .status-badge { font-size: 9px; padding: 2px 5px; border-radius: 3px; background: #444; display: inline-block; margin-top: 4px; }
+        .utr-text { color: #ffc107; font-weight: bold; font-family: monospace; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -39,7 +40,7 @@
         </div>
 
         <div class="card">
-            <h3>💰 DEPOSITS</h3>
+            <h3>💰 DEPOSITS (Verify UTR)</h3>
             <div style="overflow-x:auto;"><table><tbody id="dep-list"></tbody></table></div>
         </div>
 
@@ -48,7 +49,7 @@
             <div style="overflow-x:auto;"><table><tbody id="with-list"></tbody></table></div>
         </div>
 
-        <button onclick="auth.signOut(); location.reload();" style="background:#444; color:white; border:none; padding:10px; width:100%; border-radius:5px; cursor:pointer;">Logout</button>
+        <button onclick="auth.signOut(); location.reload();" style="background:#444; color:white; border:none; padding:10px; width:100%; border-radius:5px; cursor:pointer; margin-bottom: 20px;">Logout</button>
     </div>
 
 <script>
@@ -66,7 +67,6 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
-    // FIXED UID (Using 0 instead of O)
     const ADMIN_UID = "iirH6H3tL0dJaTGPvCeigpRJQ8j1";
 
     function login() {
@@ -78,14 +78,14 @@
                 document.getElementById('admin-content').style.display = 'block';
                 loadData();
             } else {
-                alert("Unauthorized Access! Your UID: " + res.user.uid);
+                alert("Unauthorized!");
                 auth.signOut();
             }
         }).catch(err => alert("Error: " + err.message));
     }
 
     function loadData() {
-        // Load Users
+        // Users
         db.ref('users').on('value', snap => {
             let h = "<tr><th>Email</th><th>Bal</th><th>Action</th></tr>"; 
             snap.forEach(c => {
@@ -95,26 +95,41 @@
             document.getElementById('users-list').innerHTML = h;
         });
 
-        // Load Deposits
+        // Deposits with UTR & NEWEST FIRST
         db.ref('requests/deposits').on('value', snap => {
-            let h = "<tr><th>Email</th><th>Amt</th><th>Action</th></tr>"; 
-            if(!snap.exists()) h += "<tr><td colspan='3' style='text-align:center'>No Deposits</td></tr>";
-            snap.forEach(c => {
-                let d = c.val();
-                let statusColor = d.status === 'pending' ? '#ffc107' : '#28a745';
-                h += `<tr><td>${d.email || 'User'}<br><span class="status-badge" style="color:${statusColor}">${d.status}</span></td><td>₹${d.amount}</td><td><button onclick="appDep('${c.key}','${d.uid}',${d.amount})" class="btn btn-app" style="font-size:10px;">Approve</button></td></tr>`;
+            let h = "<tr><th>Details</th><th>UTR / Amount</th><th>Action</th></tr>"; 
+            let items = [];
+            snap.forEach(c => { items.push({key: c.key, ...c.val()}); });
+            items.reverse(); // New requests on top
+
+            items.forEach(d => {
+                let statusColor = d.status === 'pending' ? '#ffc107' : (d.status === 'approved' ? '#28a745' : '#ff0055');
+                h += `<tr>
+                    <td>${d.email}<br><span class="status-badge" style="color:${statusColor}">${d.status}</span></td>
+                    <td>UTR: <span class="utr-text">${d.utr || 'N/A'}</span><br>₹${d.amount}</td>
+                    <td>
+                        <button onclick="appDep('${d.key}','${d.uid}',${d.amount})" class="btn btn-app" style="font-size:10px; margin-bottom:4px;">Approve</button>
+                        <button onclick="rejDep('${d.key}')" class="btn" style="font-size:10px; background:#dc3545; color:white;">Reject</button>
+                    </td>
+                </tr>`;
             });
             document.getElementById('dep-list').innerHTML = h;
         });
 
-        // Load Withdrawals
+        // Withdrawals
         db.ref('requests/withdrawals').on('value', snap => {
-            let h = "<tr><th>Email</th><th>Amt</th><th>Action</th></tr>"; 
-            if(!snap.exists()) h += "<tr><td colspan='3' style='text-align:center'>No Withdrawals</td></tr>";
-            snap.forEach(c => {
-                let w = c.val();
+            let h = "<tr><th>User</th><th>Amount</th><th>Action</th></tr>"; 
+            let items = [];
+            snap.forEach(c => { items.push({key: c.key, ...c.val()}); });
+            items.reverse();
+
+            items.forEach(w => {
                 let statusColor = w.status === 'pending' ? '#ffc107' : '#28a745';
-                h += `<tr><td>${w.email || 'User'}<br><span class="status-badge" style="color:${statusColor}">${w.status}</span></td><td>₹${w.amount}</td><td><button onclick="appWith('${c.key}')" class="btn btn-app" style="font-size:10px; background:#007bff;">Paid</button></td></tr>`;
+                h += `<tr>
+                    <td>${w.email || 'User'}<br><span class="status-badge" style="color:${statusColor}">${w.status}</span></td>
+                    <td>₹${w.amount}</td>
+                    <td><button onclick="appWith('${w.key}')" class="btn btn-app" style="font-size:10px; background:#007bff;">Mark Paid</button></td>
+                </tr>`;
             });
             document.getElementById('with-list').innerHTML = h;
         });
@@ -126,17 +141,21 @@
     }
 
     function appDep(key, uid, amt) { 
-        if(confirm("Approve this deposit?")) { 
+        if(confirm("Verify UTR and Approve ₹" + amt + "?")) { 
             db.ref('users/' + uid + '/balance').transaction(current => (current || 0) + amt); 
             db.ref('requests/deposits/' + key).update({status: 'approved'}); 
-            alert("Deposit Approved!");
         } 
     }
 
+    function rejDep(key) {
+        if(confirm("Reject this deposit?")) {
+            db.ref('requests/deposits/' + key).update({status: 'rejected'});
+        }
+    }
+
     function appWith(key) { 
-        if(confirm("Mark as Paid?")) { 
+        if(confirm("Confirm Payment Done?")) { 
             db.ref('requests/withdrawals/' + key).update({status: 'approved'}); 
-            alert("Withdrawal Marked as Paid!");
         } 
     }
 </script>
