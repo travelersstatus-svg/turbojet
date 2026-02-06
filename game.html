@@ -12,7 +12,6 @@
         * { box-sizing: border-box; font-family: sans-serif; margin: 0; padding: 0; }
         body { background: var(--bg-dark); color: white; overflow-x: hidden; touch-action: none; user-select: none; }
 
-        /* Splash Animation */
         .cashout-splash { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(40, 167, 69, 0.9); color: white; padding: 12px 25px; border-radius: 50px; font-weight: bold; font-size: 20px; z-index: 1000; animation: splashAnim 1.5s ease-out forwards; pointer-events: none; border: 2px solid #fff; }
         @keyframes splashAnim { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } 20% { transform: translate(-50%, -70%) scale(1.1); opacity: 1; } 100% { transform: translate(-50%, -110%) scale(1); opacity: 0; } }
 
@@ -71,6 +70,7 @@
             📱 Join Telegram (Support)
         </div>
     </a>
+
     <div class="menu-btn" onclick="toggleDrop('ref-drop')">👥 Referral & Earn <span>▼</span></div>
     <div id="ref-drop" class="dropdown-content">
         <p style="font-size:12px;">Referral ID: <b id="ref-id-display">---</b></p>
@@ -79,8 +79,10 @@
 
     <div class="menu-btn" onclick="toggleDrop('dep-drop')">💰 Deposit (20% Bonus) <span>▼</span></div>
     <div id="dep-drop" class="dropdown-content">
-        <center><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=upi://pay?pa=demo@upi"></center>
-        <p style="text-align:center; font-weight:bold; color:var(--win-green); margin:5px 0;">UPI ID: demo@upi</p>
+        <center>
+            <img id="deposit-qr" src="" style="width:180px; height:180px; border-radius:10px; border:2px solid white; margin-bottom:10px; background: white;">
+        </center>
+        <p id="upi-id-text" style="text-align:center; font-weight:bold; color:var(--win-green); margin:5px 0; font-size: 14px;"></p>
         <div class="amt-grid">
             <button class="amt-btn" onclick="setDep(100)">100</button><button class="amt-btn" onclick="setDep(200)">200</button><button class="amt-btn" onclick="setDep(500)">500</button>
             <button class="amt-btn" onclick="setDep(1000)">1000</button><button class="amt-btn" onclick="setDep(2000)">2000</button><button class="amt-btn" onclick="setDep(3000)">3000</button>
@@ -159,11 +161,24 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth(), db = firebase.database();
 
+    // ROTATING UPI LIST FROM YOUR IMAGES
+    const upiList = [
+        "7067109812@ybl",
+        "7067109812@ibl",
+        "7772968823@ybl"
+    ];
+
     let wallet = 0, multiplier = 1.0, isFlying = false, currentUser = null;
     let activeBets = { 1: null, 2: null };
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const planeImg = new Image(); planeImg.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNMzIgMjU2TDE2MCAxOTJMMjI0IDMyLDI4OCAxOTJMNTAwIDI1NkwyODggMzI0TDIyNCA0ODBMMTYwIDMyNEwzMiAyNTZ6IiBmaWxsPSIjZmYwMDQ0Ii8+PC9zdmc+";
+
+    function refreshUPI() {
+        const randomUPI = upiList[Math.floor(Math.random() * upiList.length)];
+        document.getElementById('deposit-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=${randomUPI}`;
+        document.getElementById('upi-id-text').innerText = "UPI ID: " + randomUPI;
+    }
 
     auth.onAuthStateChanged(user => {
         if (user) { 
@@ -294,7 +309,6 @@
         }
         step();
     }
-
     function handleBet(p) {
         let a = parseInt(document.getElementById('amt-'+p).value);
         if(!isFlying) {
@@ -379,8 +393,15 @@
     function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value)+v); }
     function showIns() { let m = document.getElementById('insufficient-bal'); m.style.display='block'; setTimeout(()=>m.style.display='none', 2000); }
     function toggleMenu() { let m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
-    function toggleDrop(id) { let el = document.getElementById(id); el.style.display = (el.style.display === 'block' || el.style.display === 'grid') ? 'none' : (id==='full-history'?'grid':'block'); }
+    
+    function toggleDrop(id) { 
+        let el = document.getElementById(id); 
+        let isOpening = (el.style.display !== 'block' && el.style.display !== 'grid');
+        el.style.display = isOpening ? (id === 'full-history' ? 'grid' : 'block') : 'none';
+        
+        // Refresh UPI only when opening the deposit dropdown
+        if(id === 'dep-drop' && isOpening) refreshUPI(); 
+    }
 </script>
 </body>
 </html>
-    
