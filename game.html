@@ -55,6 +55,13 @@
         .win-txt { color: var(--win-green); font-weight: bold; }
         canvas { width: 100%; height: 100%; }
         .history-item { border-bottom: 1px solid #252f44; padding: 5px 0; font-size: 11px; }
+
+        /* UPI Copy & App Styles */
+        .upi-copy-box { background: #000; border: 1px dashed var(--win-green); padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .copy-btn { background: var(--win-green); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .app-link { text-decoration: none; text-align: center; color: white; font-size: 10px; }
+        .app-icon { width: 40px; height: 40px; border-radius: 8px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -80,9 +87,20 @@
     <div class="menu-btn" onclick="toggleDrop('dep-drop')">💰 Deposit (20% Bonus) <span>▼</span></div>
     <div id="dep-drop" class="dropdown-content">
         <center>
-            <img id="deposit-qr" src="" style="width:180px; height:180px; border-radius:10px; border:2px solid white; margin-bottom:10px; background: white;">
+            <img id="deposit-qr" src="" style="width:160px; height:160px; border-radius:10px; border:2px solid white; margin-bottom:10px; background: white;">
         </center>
-        <p id="upi-id-text" style="text-align:center; font-weight:bold; color:var(--win-green); margin:5px 0; font-size: 14px;"></p>
+        
+        <div class="upi-copy-box">
+            <span id="upi-id-display" style="font-size: 12px; font-weight: bold;">---</span>
+            <button class="copy-btn" onclick="copyUPI()">COPY ID</button>
+        </div>
+
+        <div class="app-grid">
+            <a href="#" id="phonepe-link" class="app-link"><img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/phonepe-logo-icon.png" class="app-icon"><br>PhonePe</a>
+            <a href="#" id="gpay-link" class="app-link"><img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/google-pay-icon.png" class="app-icon"><br>GPay</a>
+            <a href="#" id="paytm-link" class="app-link"><img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/paytm-icon.png" class="app-icon"><br>Paytm</a>
+        </div>
+
         <div class="amt-grid">
             <button class="amt-btn" onclick="setDep(100)">100</button><button class="amt-btn" onclick="setDep(200)">200</button><button class="amt-btn" onclick="setDep(500)">500</button>
             <button class="amt-btn" onclick="setDep(1000)">1000</button><button class="amt-btn" onclick="setDep(2000)">2000</button><button class="amt-btn" onclick="setDep(3000)">3000</button>
@@ -161,13 +179,13 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth(), db = firebase.database();
 
-    // ROTATING UPI LIST FROM YOUR IMAGES
     const upiList = [
         "7067109812@ybl",
         "7067109812@ibl",
         "7772968823@ybl"
     ];
 
+    let currentUPI = "";
     let wallet = 0, multiplier = 1.0, isFlying = false, currentUser = null;
     let activeBets = { 1: null, 2: null };
     const canvas = document.getElementById('gameCanvas');
@@ -175,9 +193,22 @@
     const planeImg = new Image(); planeImg.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNMzIgMjU2TDE2MCAxOTJMMjI0IDMyLDI4OCAxOTJMNTAwIDI1NkwyODggMzI0TDIyNCA0ODBMMTYwIDMyNEwzMiAyNTZ6IiBmaWxsPSIjZmYwMDQ0Ii8+PC9zdmc+";
 
     function refreshUPI() {
-        const randomUPI = upiList[Math.floor(Math.random() * upiList.length)];
-        document.getElementById('deposit-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=${randomUPI}`;
-        document.getElementById('upi-id-text').innerText = "UPI ID: " + randomUPI;
+        currentUPI = upiList[Math.floor(Math.random() * upiList.length)];
+        const amt = document.getElementById('dep-amt-input').value || "100";
+        const upiLink = `upi://pay?pa=${currentUPI}&am=${amt}&cu=INR`;
+        
+        document.getElementById('deposit-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiLink)}`;
+        document.getElementById('upi-id-display').innerText = currentUPI;
+        
+        // App links
+        document.getElementById('phonepe-link').href = `phonepe://pay?pa=${currentUPI}&am=${amt}&cu=INR`;
+        document.getElementById('gpay-link').href = `tez://upi/pay?pa=${currentUPI}&am=${amt}&cu=INR`;
+        document.getElementById('paytm-link').href = `paytmmp://cash_wallet?featuretype=cash_on_delivery&pa=${currentUPI}&am=${amt}&cu=INR`;
+    }
+
+    function copyUPI() {
+        navigator.clipboard.writeText(currentUPI);
+        alert("UPI ID Copied: " + currentUPI);
     }
 
     auth.onAuthStateChanged(user => {
@@ -260,7 +291,6 @@
             if(t <= 0) { clearInterval(timer); document.getElementById('countdown-box').style.display = 'none'; launch(); }
         }, 1000);
     }
-
     function launch() {
         isFlying = true;
         document.getElementById('multiplier-text').style.display = 'block';
@@ -309,6 +339,7 @@
         }
         step();
     }
+
     function handleBet(p) {
         let a = parseInt(document.getElementById('amt-'+p).value);
         if(!isFlying) {
@@ -389,7 +420,10 @@
     }
 
     function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
-    function setDep(v) { document.getElementById('dep-amt-input').value = v; }
+    function setDep(v) { 
+        document.getElementById('dep-amt-input').value = v;
+        refreshUPI();
+    }
     function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value)+v); }
     function showIns() { let m = document.getElementById('insufficient-bal'); m.style.display='block'; setTimeout(()=>m.style.display='none', 2000); }
     function toggleMenu() { let m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
@@ -398,8 +432,6 @@
         let el = document.getElementById(id); 
         let isOpening = (el.style.display !== 'block' && el.style.display !== 'grid');
         el.style.display = isOpening ? (id === 'full-history' ? 'grid' : 'block') : 'none';
-        
-        // Refresh UPI only when opening the deposit dropdown
         if(id === 'dep-drop' && isOpening) refreshUPI(); 
     }
 </script>
