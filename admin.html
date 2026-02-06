@@ -3,157 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Control Panel</title>
+    <title>Admin Dashboard Fixed</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <style>
-        :root { --bg: #0a0e17; --card: #161d2b; --accent: #ff0055; --green: #28a745; --blue: #3b82f6; }
-        body { background: var(--bg); color: white; font-family: sans-serif; padding: 15px; margin: 0; }
-        .header { text-align: center; color: var(--accent); margin: 20px 0; text-transform: uppercase; }
-        .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #252f44; }
-        h2 { font-size: 16px; border-bottom: 1px solid #252f44; padding-bottom: 10px; color: var(--accent); }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; font-size: 12px; color: #8892b0; padding: 8px; border-bottom: 2px solid #252f44; }
-        td { padding: 10px 8px; font-size: 13px; border-bottom: 1px solid #252f44; }
-        .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; font-size: 11px; }
-        .btn-edit { background: #6366f1; }
-        .btn-approve { background: var(--green); }
-        .btn-paid { background: var(--blue); }
-        .btn-reject { background: #d11348; }
-        .no-data { text-align: center; padding: 20px; color: #4b5563; font-style: italic; }
+        body { background: #05080f; color: white; font-family: sans-serif; padding: 10px; margin: 0; }
+        .card { background: #161d2b; border: 1px solid #252f44; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
+        h3 { color: #ff0055; margin-top: 0; border-bottom: 1px solid #252f44; padding-bottom: 8px; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #252f44; font-size: 11px; }
+        .btn { padding: 8px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
+        .btn-app { background: #28a745; color: white; }
+        #login-box { text-align: center; margin: 50px auto; background: #161d2b; padding: 25px; border-radius: 12px; max-width: 300px; border: 1px solid #252f44; }
+        input { padding: 12px; width: 90%; margin-bottom: 15px; border-radius: 5px; border: 1px solid #252f44; background: #05080f; color: white; }
+        #admin-content { display: none; }
     </style>
 </head>
 <body>
 
-    <h1 class="header">Admin Control Panel</h1>
-
-    <div class="card">
-        <h2>👥 ALL USERS</h2>
-        <table>
-            <thead><tr><th>Email</th><th>Balance</th><th>Action</th></tr></thead>
-            <tbody id="user-list"><tr><td colspan="3" class="no-data">Loading users...</td></tr></tbody>
-        </table>
+    <div id="login-box">
+        <h2 style="color:#ff0055">Admin Login</h2>
+        <input type="email" id="email" placeholder="Email" value="travelersstatus@gmail.com">
+        <input type="password" id="pass" placeholder="Password">
+        <button class="btn btn-app" onclick="login()">Login</button>
     </div>
 
-    <div class="card">
-        <h2>💰 DEPOSIT REQUESTS</h2>
-        <table>
-            <thead><tr><th>User</th><th>Details</th><th>Action</th></tr></thead>
-            <tbody id="deposit-list"><tr><td colspan="3" class="no-data">No pending deposits</td></tr></tbody>
-        </table>
-    </div>
+    <div id="admin-content">
+        <h2 style="text-align:center; font-size: 18px;">ADMIN PANEL</h2>
+        
+        <div class="card">
+            <h3>👥 USERS</h3>
+            <div style="overflow-x:auto;"><table><tbody id="users-list"></tbody></table></div>
+        </div>
 
-    <div class="card">
-        <h2>🏦 WITHDRAWAL REQUESTS</h2>
-        <table>
-            <thead><tr><th>User</th><th>Amount</th><th>Action</th></tr></thead>
-            <tbody id="withdrawal-list"><tr><td colspan="3" class="no-data">No pending withdrawals</td></tr></tbody>
-        </table>
-    </div>
+        <div class="card">
+            <h3>💰 DEPOSITS</h3>
+            <div style="overflow-x:auto;"><table><tbody id="dep-list"></tbody></table></div>
+        </div>
 
-    <center><button class="btn btn-reject" onclick="logout()" style="padding:10px 30px;">LOGOUT</button></center>
+        <div class="card">
+            <h3>🏦 WITHDRAWALS</h3>
+            <div style="overflow-x:auto;"><table><tbody id="with-list"></tbody></table></div>
+        </div>
+    </div>
 
 <script>
-    const firebaseConfig = { 
-        apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc", 
+    const firebaseConfig = {
+        apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc",
         authDomain: "myaviatoregame.firebaseapp.com",
         databaseURL: "https://myaviatoregame-default-rtdb.firebaseio.com",
-        projectId: "myaviatoregame"
+        projectId: "myaviatoregame",
+        storageBucket: "myaviatoregame.firebasestorage.app",
+        messagingSenderId: "286687400349",
+        appId: "1:286687400349:web:e01e2cff439a3267de1f74"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
 
-    // AUTHORIZED ADMIN UID FROM YOUR SCREENSHOT
-    const ADMIN_UID = "iirH6H3tLOdJaTGPvCeigpRJQ8j1"; 
+    function login() {
+        const e = document.getElementById('email').value;
+        const p = document.getElementById('pass').value;
+        auth.signInWithEmailAndPassword(e, p).then((res) => {
+            // FIXED UID (Case sensitive)
+            if(res.user.uid === "iirH6H3tLOdJaTGPvCeigpRJQ8j1") {
+                document.getElementById('login-box').style.display = 'none';
+                document.getElementById('admin-content').style.display = 'block';
+                loadData();
+            } else {
+                alert("Unauthorized! UID: " + res.user.uid);
+                auth.signOut();
+            }
+        }).catch(err => alert("Error: " + err.message));
+    }
 
-    auth.onAuthStateChanged(user => {
-        if (user && user.uid === ADMIN_UID) {
-            initAdmin();
-        } else if (user) {
-            alert("Unauthorized Access! UID: " + user.uid);
-            // logout(); // Uncomment to force logout unauthorized users
-        } else {
-            window.location.href = "login.html"; 
-        }
-    });
-
-    function initAdmin() {
-        // Load Users
+    function loadData() {
         db.ref('users').on('value', snap => {
-            const list = document.getElementById('user-list');
-            list.innerHTML = "";
-            snap.forEach(child => {
-                const u = child.val();
-                list.innerHTML += `<tr>
-                    <td>${u.email || 'N/A'}</td>
-                    <td style="color:#10b981">₹${(u.balance || 0).toFixed(2)}</td>
-                    <td><button class="btn btn-edit" onclick="editBal('${child.key}','${u.email}',${u.balance})">Edit</button></td>
-                </tr>`;
+            let h = "<tr><th>Email</th><th>Bal</th><th>Action</th></tr>"; 
+            snap.forEach(c => {
+                let u = c.val(); h += `<tr><td>${u.email}</td><td style="color:#28a745">₹${(u.balance || 0).toFixed(2)}</td><td><button onclick="editBal('${c.key}')" style="background:#4b0082; color:white; border:none; border-radius:3px;">Edit</button></td></tr>`;
             });
+            document.getElementById('users-list').innerHTML = h;
         });
 
-        // Load Deposits
         db.ref('requests/deposits').on('value', snap => {
-            const list = document.getElementById('deposit-list');
-            list.innerHTML = "";
-            let count = 0;
-            snap.forEach(child => {
-                const r = child.val();
-                if(r.status === "pending") {
-                    count++;
-                    list.innerHTML += `<tr>
-                        <td>${r.email}</td>
-                        <td>UTR: <b>${r.utr}</b><br>₹${r.amount}</td>
-                        <td>
-                            <button class="btn btn-approve" onclick="approveDep('${child.key}','${r.uid}',${r.amount})">Approve</button>
-                            <button class="btn btn-reject" onclick="updateStatus('deposits','${child.key}','rejected')">Reject</button>
-                        </td>
-                    </tr>`;
+            let h = "<tr><th>Email</th><th>Amt</th><th>Action</th></tr>"; 
+            snap.forEach(c => {
+                let d = c.val(); if(d.status === 'pending') {
+                    h += `<tr><td>${d.email}</td><td>₹${d.amount}</td><td><button onclick="appDep('${c.key}','${d.uid}',${d.amount})" class="btn btn-app" style="font-size:10px;">Approve</button></td></tr>`;
                 }
             });
-            if(count === 0) list.innerHTML = '<tr><td colspan="3" class="no-data">No pending deposits</td></tr>';
+            document.getElementById('dep-list').innerHTML = h;
         });
 
-        // Load Withdrawals
         db.ref('requests/withdrawals').on('value', snap => {
-            const list = document.getElementById('withdrawal-list');
-            list.innerHTML = "";
-            let count = 0;
-            snap.forEach(child => {
-                const r = child.val();
-                if(r.status === "pending") {
-                    count++;
-                    list.innerHTML += `<tr>
-                        <td>${r.email}</td>
-                        <td><b>₹${r.amount}</b></td>
-                        <td>
-                            <button class="btn btn-paid" onclick="updateStatus('withdrawals','${child.key}','approved')">Paid</button>
-                            <button class="btn btn-reject" onclick="updateStatus('withdrawals','${child.key}','rejected')">Reject</button>
-                        </td>
-                    </tr>`;
+            let h = "<tr><th>Email</th><th>Amt</th><th>Action</th></tr>"; 
+            snap.forEach(c => {
+                let w = c.val(); if(w.status === 'pending') {
+                    h += `<tr><td>${w.email}</td><td>₹${w.amount}</td><td><button onclick="appWith('${c.key}')" class="btn btn-app" style="font-size:10px;">Paid</button></td></tr>`;
                 }
             });
-            if(count === 0) list.innerHTML = '<tr><td colspan="3" class="no-data">No pending withdrawals</td></tr>';
+            document.getElementById('with-list').innerHTML = h;
         });
     }
 
-    function editBal(uid, email, current) {
-        const val = prompt(`Edit Balance for ${email}`, current);
-        if (val !== null) db.ref('users/' + uid).update({ balance: parseFloat(val) });
-    }
-
-    function approveDep(id, uid, amt) {
-        db.ref('users/' + uid + '/balance').transaction(c => (c || 0) + amt);
-        db.ref('requests/deposits/' + id).update({ status: 'approved' });
-    }
-
-    function updateStatus(path, id, status) {
-        db.ref(`requests/${path}/${id}`).update({ status: status });
-    }
-
-    function logout() { auth.signOut(); }
+    function editBal(id) { let a = prompt("New Balance:"); if(a) db.ref('users/' + id).update({balance: parseFloat(a)}); }
+    function appDep(k, u, a) { if(confirm("Confirm?")) { db.ref('users/'+u+'/balance').transaction(c => (c||0)+a); db.ref('requests/deposits/'+k).update({status:'approved'}); } }
+    function appWith(k) { if(confirm("Confirm Paid?")) { db.ref('requests/withdrawals/'+k).update({status:'approved'}); } }
 </script>
 </body>
 </html>
