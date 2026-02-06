@@ -7,27 +7,31 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
-        body { background: #0a0e17; color: white; font-family: sans-serif; padding: 20px; }
-        .card { background: #161d2b; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #252f44; }
-        h2 { color: #ff0055; margin-bottom: 20px; border-bottom: 1px solid #252f44; padding-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #252f44; }
-        .btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; font-size: 12px; }
-        .btn-approve { background: #28a745; margin-right: 5px; }
-        .btn-reject { background: #d11348; }
+        :root { --bg: #0a0e17; --card: #161d2b; --text: #ffffff; --accent: #ff0055; --green: #28a745; --blue: #3b82f6; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; padding: 15px; margin: 0; }
+        .header { text-align: center; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
+        .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #252f44; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        h2 { font-size: 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #252f44; padding-bottom: 10px; margin-top: 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { font-size: 12px; color: #8892b0; text-align: left; padding: 8px; border-bottom: 2px solid #252f44; }
+        td { padding: 10px 8px; font-size: 13px; border-bottom: 1px solid #252f44; vertical-align: middle; }
+        .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; font-size: 11px; transition: 0.3s; }
         .btn-edit { background: #6366f1; }
-        .status-badge { padding: 2px 8px; border-radius: 4px; font-size: 10px; text-transform: uppercase; }
-        .pending { background: #f59e0b; }
-        .approved { background: #10b981; }
+        .btn-approve { background: var(--green); }
+        .btn-paid { background: var(--blue); }
+        .btn-reject { background: #d11348; }
+        .btn:hover { opacity: 0.8; transform: scale(1.05); }
+        b { color: #f59e0b; font-family: monospace; }
+        .no-data { text-align: center; padding: 20px; color: #4b5563; font-style: italic; }
     </style>
 </head>
 <body>
 
-    <h1>ADMIN PANEL</h1>
+    <h1 class="header">Admin Control Panel</h1>
 
     <div class="card">
         <h2>👥 ALL USERS</h2>
-        <table>
+        <table id="tbl-users">
             <thead>
                 <tr>
                     <th>Email</th>
@@ -35,13 +39,13 @@
                     <th>Action</th>
                 </tr>
             </thead>
-            <tbody id="user-list"></tbody>
+            <tbody id="user-list"><tr id="user-loader"><td colspan="3" class="no-data">Loading users...</td></tr></tbody>
         </table>
     </div>
 
     <div class="card">
         <h2>💰 DEPOSIT REQUESTS (NEW)</h2>
-        <table>
+        <table id="tbl-deposits">
             <thead>
                 <tr>
                     <th>User</th>
@@ -55,7 +59,7 @@
 
     <div class="card">
         <h2>🏦 WITHDRAWAL REQUESTS</h2>
-        <table>
+        <table id="tbl-withdrawals">
             <thead>
                 <tr>
                     <th>User</th>
@@ -68,7 +72,6 @@
     </div>
 
 <script>
-    // Apni Firebase Config yahan check karein
     const firebaseConfig = { 
         apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc", 
         databaseURL: "https://myaviatoregame-default-rtdb.firebaseio.com" 
@@ -76,86 +79,90 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 1. Load All Users & Edit Balance Logic
+    // --- 1. USERS LIST WITH EDIT BALANCE ---
     db.ref('users').on('value', snap => {
         const list = document.getElementById('user-list');
         list.innerHTML = "";
-        snap.forEach(userSnap => {
-            const user = userSnap.val();
-            const uid = userSnap.key;
+        if(!snap.exists()) { list.innerHTML = '<tr><td colspan="3" class="no-data">No users found</td></tr>'; return; }
+        
+        snap.forEach(child => {
+            const u = child.val();
+            const uid = child.key;
             list.innerHTML += `
                 <tr>
-                    <td>${user.email || 'N/A'}</td>
-                    <td>₹${(user.balance || 0).toFixed(2)}</td>
-                    <td><button class="btn btn-edit" onclick="editBalance('${uid}', ${user.balance})">Edit</button></td>
+                    <td>${u.email || 'N/A'}</td>
+                    <td style="color:#10b981; font-weight:bold;">₹${(u.balance || 0).toFixed(2)}</td>
+                    <td><button class="btn btn-edit" onclick="editBal('${uid}', '${u.email}', ${u.balance})">Edit</button></td>
                 </tr>
             `;
         });
     });
 
-    window.editBalance = (uid, oldBal) => {
-        const newBal = prompt("Enter New Balance for this user:", oldBal);
-        if (newBal !== null) {
-            db.ref('users/' + uid).update({ balance: parseFloat(newBal) })
-              .then(() => alert("Balance Updated!"));
+    window.editBal = (uid, email, current) => {
+        const val = prompt(`Edit Balance for ${email}\n\nCurrent: ₹${current}`, current);
+        if (val !== null && !isNaN(val)) {
+            db.ref('users/' + uid).update({ balance: parseFloat(val) })
+              .then(() => alert("Balance Updated Successfully!"));
         }
     };
 
-    // 2. Load Deposit Requests
+    // --- 2. DEPOSIT REQUESTS LOGIC ---
     db.ref('requests/deposits').on('value', snap => {
         const list = document.getElementById('deposit-list');
         list.innerHTML = "";
-        snap.forEach(reqSnap => {
-            const req = reqSnap.val();
-            if(req.status === "pending") {
+        let count = 0;
+        snap.forEach(child => {
+            const r = child.val();
+            if(r.status === "pending") {
+                count++;
                 list.innerHTML += `
                     <tr>
-                        <td>${req.email}</td>
-                        <td>UTR: <b>${req.utr}</b><br>₹${req.amount}</td>
+                        <td>${r.email}</td>
+                        <td>UTR: <b>${r.utr}</b><br>Amount: ₹${r.amount}</td>
                         <td>
-                            <button class="btn btn-approve" onclick="approveDep('${reqSnap.key}', '${req.uid}', ${req.amount})">Approve</button>
-                            <button class="btn btn-reject" onclick="rejectReq('deposits', '${reqSnap.key}')">Reject</button>
+                            <button class="btn btn-approve" onclick="actionDep('${child.key}', '${r.uid}', ${r.amount}, 'approved')">Approve</button>
+                            <button class="btn btn-reject" onclick="actionReq('deposits', '${child.key}', 'rejected')">Reject</button>
                         </td>
                     </tr>
                 `;
             }
         });
+        if(count === 0) list.innerHTML = '<tr><td colspan="3" class="no-data">No pending deposits</td></tr>';
     });
 
-    // 3. Load Withdrawal Requests (Fixed Path)
+    // --- 3. WITHDRAWAL REQUESTS LOGIC (FIXED) ---
     db.ref('requests/withdrawals').on('value', snap => {
         const list = document.getElementById('withdrawal-list');
         list.innerHTML = "";
-        snap.forEach(reqSnap => {
-            const req = reqSnap.val();
-            if(req.status === "pending") {
+        let count = 0;
+        snap.forEach(child => {
+            const r = child.val();
+            if(r.status === "pending") {
+                count++;
                 list.innerHTML += `
                     <tr>
-                        <td>${req.email}</td>
-                        <td>₹${req.amount}</td>
+                        <td>${r.email}</td>
+                        <td style="font-weight:bold;">₹${r.amount}</td>
                         <td>
-                            <button class="btn btn-approve" style="background:#3b82f6" onclick="completeWithdrawal('${reqSnap.key}')">Paid</button>
-                            <button class="btn btn-reject" onclick="rejectReq('withdrawals', '${reqSnap.key}')">Reject</button>
+                            <button class="btn btn-paid" onclick="actionReq('withdrawals', '${child.key}', 'approved')">Mark Paid</button>
+                            <button class="btn btn-reject" onclick="actionReq('withdrawals', '${child.key}', 'rejected')">Reject</button>
                         </td>
                     </tr>
                 `;
             }
         });
+        if(count === 0) list.innerHTML = '<tr><td colspan="3" class="no-data">No pending withdrawals</td></tr>';
     });
 
-    // Action Functions
-    window.approveDep = (id, uid, amt) => {
+    // --- ACTIONS ---
+    window.actionDep = (id, uid, amt, status) => {
         db.ref('users/' + uid + '/balance').transaction(curr => (curr || 0) + amt);
-        db.ref('requests/deposits/' + id).update({ status: "approved" });
+        db.ref('requests/deposits/' + id).update({ status: status });
     };
 
-    window.completeWithdrawal = (id) => {
-        db.ref('requests/withdrawals/' + id).update({ status: "approved" });
-        alert("Marked as Paid!");
-    };
-
-    window.rejectReq = (path, id) => {
-        db.ref('requests/' + path + '/' + id).update({ status: "rejected" });
+    window.actionReq = (path, id, status) => {
+        db.ref(`requests/${path}/${id}`).update({ status: status })
+          .then(() => alert("Request " + status));
     };
 
 </script>
