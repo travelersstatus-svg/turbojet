@@ -113,7 +113,7 @@
     <div class="menu-btn" onclick="toggleDrop('with-drop')">🏦 Withdrawal <span>▼</span></div>
     <div id="with-drop" class="dropdown-content">
         <input type="text" class="f-input" placeholder="Account Holder Name">
-        <input type="text" class="f-input" placeholder="Account Number">
+        <input type="text" id="with-acc-input" class="f-input" placeholder="Account Number">
         <input type="text" class="f-input" placeholder="IFSC Code">
         <input type="number" class="f-input" id="with-amt-input" placeholder="Amount">
         <button class="main-btn" style="background:var(--accent-red)" onclick="handleWithdrawal()">Withdraw Now</button>
@@ -238,23 +238,54 @@
         document.getElementById('multiplier-text').style.display = 'none';
         document.getElementById('crash-msg').style.display = 'none';
         document.getElementById('countdown-box').style.display = 'block';
+
+        // --- FAKE USERS LOGIC ---
         const list = document.getElementById('fake-list'); list.innerHTML = "";
-        for(let i=0; i<15; i++) { list.innerHTML += `<div class="live-row" id="fake-${i}"><span>User***${Math.floor(Math.random()*99)}</span><span>₹${Math.floor(Math.random()*500+10)}</span><span class="m-col">-</span><span class="w-col">-</span></div>`; }
+        for(let i=0; i<15; i++) {
+            list.innerHTML += `<div class="live-row" id="fake-${i}"><span>User***${Math.floor(Math.random()*99)}</span><span>₹${Math.floor(Math.random()*500+10)}</span><span class="m-col">-</span><span class="w-col">-</span></div>`;
+        }
+        
+        // Auto Play check
+        [1,2].forEach(p => {
+            if(document.getElementById('auto-p'+p).checked && !activeBets[p]) {
+                let a = parseInt(document.getElementById('amt-'+p).value);
+                if(a <= wallet) { wallet -= a; activeBets[p] = {amt:a, cashed:false}; db.ref('users/'+currentUser.uid).update({balance:wallet}); }
+            }
+        });
+
         updateUI();
         let t = 5;
         let timer = setInterval(() => { t--; document.getElementById('cd-num').innerText = t; if(t <= 0) { clearInterval(timer); document.getElementById('countdown-box').style.display = 'none'; launch(); } }, 1000);
     }
-
     function launch() {
-        isFlying = true; document.getElementById('multiplier-text').style.display = 'block';
-        let crashVal = (1 / (Math.random() * 0.9 + 0.01)); let crash = Math.max(1.00, crashVal).toFixed(2);
+        isFlying = true;
+        document.getElementById('multiplier-text').style.display = 'block';
+        let crashVal = (1 / (Math.random() * 0.9 + 0.01));
+        let crash = Math.max(1.00, crashVal).toFixed(2);
         let start = Date.now();
+
         function step() {
-            if(!isFlying) return; multiplier = Math.pow(1.06, (Date.now() - start) / 1000);
+            if(!isFlying) return;
+            multiplier = Math.pow(1.06, (Date.now() - start) / 1000);
+
+            // Fake Winners Update
+            if(Math.random() > 0.98) {
+                let idx = Math.floor(Math.random()*15);
+                let row = document.getElementById('fake-'+idx);
+                if(row && row.querySelector('.m-col').innerText === "-") {
+                    let b = parseInt(row.children[1].innerText.replace('₹',''));
+                    row.querySelector('.m-col').innerText = multiplier.toFixed(2)+"x";
+                    row.querySelector('.w-col').innerText = "₹"+(b*multiplier).toFixed(0);
+                    row.querySelector('.w-col').classList.add('win-txt');
+                }
+            }
+
             [1,2].forEach(p => { if(document.getElementById('auto-c'+p).checked && activeBets[p] && !activeBets[p].cashed) { if(multiplier >= parseFloat(document.getElementById('ac-val'+p).value)) cashOut(p); } });
+
             if(multiplier >= crash) {
                 isFlying = false; 
-                document.getElementById('multiplier-text').style.display = 'none'; document.getElementById('crash-msg').style.display = 'block';
+                document.getElementById('multiplier-text').style.display = 'none'; 
+                document.getElementById('crash-msg').style.display = 'block';
                 document.getElementById('crash-val').innerText = crash + "x";
                 addHistoryChip(crash); activeBets[1] = activeBets[2] = null; updateUI(); setTimeout(startLoop, 3000); return;
             }
@@ -290,29 +321,16 @@
         db.ref('users/' + currentUser.uid + '/bets').push({ amt: amt, mult: mult, win: win, time: Date.now() });
     }
 
-    // --- DEPOSIT & WITHDRAWAL FIXES FOR ADMIN PANEL ---
     function handleDeposit() {
         let amt = document.getElementById('dep-amt-input').value;
         let utr = document.getElementById('dep-utr-input').value;
         if(!amt || amt < 100) { alert("Min ₹100"); return; }
         if(!utr || utr.length < 12) { alert("Enter 12-digit UTR"); return; }
 
-        const depObj = {
-            uid: currentUser.uid,
-            email: currentUser.email,
-            amount: parseFloat(amt),
-            utr: utr,
-            status: "pending",
-            time: Date.now()
-        };
-
-        // Send to central admin path
+        const depObj = { uid: currentUser.uid, email: currentUser.email, amount: parseFloat(amt), utr: utr, status: "pending", time: Date.now() };
         db.ref('requests/deposits').push(depObj);
-        // Save in user history
         db.ref('users/' + currentUser.uid + '/transactions').push({ type: "Deposit", amt: amt, status: "pending", time: Date.now() });
-        
-        alert("Request Sent!");
-        document.getElementById('dep-utr-input').value = "";
+        alert("Deposit Request Sent!");
     }
 
     function handleWithdrawal() {
@@ -323,17 +341,12 @@
         wallet -= amt;
         db.ref('users/'+currentUser.uid).update({balance:wallet});
 
-        const withObj = {
-            uid: currentUser.uid,
-            email: currentUser.email,
-            amount: amt,
-            status: "pending",
-            time: Date.now()
-        };
-
+        const withObj = { uid: currentUser.uid, email: currentUser.email, amount: amt, status: "pending", time: Date.now() };
+        
+        // FIXED PATH FOR ADMIN WITHDRAWALS
         db.ref('requests/withdrawals').push(withObj);
         db.ref('users/' + currentUser.uid + '/transactions').push({ type: "Withdrawal", amt: amt, status: "pending", time: Date.now() });
-        alert("Withdrawal Sent!");
+        alert("Withdrawal Request Sent!");
     }
 
     function updateUI() {
@@ -365,3 +378,6 @@
 </script>
 </body>
 </html>
+
+    
+        
