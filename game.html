@@ -56,7 +56,6 @@
         canvas { width: 100%; height: 100%; }
         .history-item { border-bottom: 1px solid #252f44; padding: 5px 0; font-size: 11px; }
 
-        /* UPI Copy & App Styles */
         .upi-copy-box { background: #000; border: 1px dashed var(--win-green); padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .copy-btn { background: var(--win-green); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; }
         .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
@@ -200,7 +199,6 @@
         document.getElementById('deposit-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiLink)}`;
         document.getElementById('upi-id-display').innerText = currentUPI;
         
-        // App links
         document.getElementById('phonepe-link').href = `phonepe://pay?pa=${currentUPI}&am=${amt}&cu=INR`;
         document.getElementById('gpay-link').href = `tez://upi/pay?pa=${currentUPI}&am=${amt}&cu=INR`;
         document.getElementById('paytm-link').href = `paytmmp://cash_wallet?featuretype=cash_on_delivery&pa=${currentUPI}&am=${amt}&cu=INR`;
@@ -294,7 +292,11 @@
     function launch() {
         isFlying = true;
         document.getElementById('multiplier-text').style.display = 'block';
-        let crash = (1 + Math.pow(Math.random(), 3) * 10).toFixed(2);
+        
+        // --- FULLY RANDOM CRASH LOGIC ---
+        let crashVal = (1 / (Math.random() * 0.9 + 0.01));
+        let crash = Math.max(1.00, crashVal).toFixed(2);
+        
         let start = Date.now();
 
         function step() {
