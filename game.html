@@ -272,7 +272,7 @@
 
         function step() {
             if(!isFlying) return;
-            multiplier = Math.pow(1.07, (Date.now() - start) / 1000);
+            multiplier = Math.pow(1.10, (Date.now() - start) / 1000);
 
             if(Math.random() > 0.98) {
                 let idx = Math.floor(Math.random()*15);
@@ -380,4 +380,5 @@
 </html>
 
         
+
 
