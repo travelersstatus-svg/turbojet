@@ -47,14 +47,18 @@
 
         <div class="card">
             <h3>👥 ALL USERS</h3>
-            <div style="overflow-x:auto;"><table><tbody id="users-list"></tbody></table></div>
+            <div style="overflow-x:auto;">
+                <table>
+                    <tbody id="users-list"></tbody>
+                </table>
+            </div>
         </div>
         
         <button onclick="auth.signOut(); location.reload();" style="background:#444; color:white; border:none; padding:10px; width:100%; border-radius:5px; cursor:pointer;">Logout</button>
     </div>
 
 <script>
-    // Firebase Config (Same as before)
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc",
         authDomain: "myaviatoregame.firebaseapp.com",
@@ -69,7 +73,7 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
-    const ADMIN_UID = "iirH6H3tL0dJaTGPvCeigpRJQ8j1"; // Fixed UID
+    const ADMIN_UID = "iirH6H3tL0dJaTGPvCeigpRJQ8j1"; 
 
     function login() {
         const e = document.getElementById('email').value;
@@ -92,7 +96,7 @@
             let h = ""; 
             let items = [];
             snap.forEach(c => { items.push({key: c.key, ...c.val()}); });
-            items.reverse(); // Newest first
+            items.reverse(); 
 
             items.forEach(d => {
                 let sCol = d.status === 'pending' ? '#ffc107' : '#28a745';
@@ -107,12 +111,17 @@
             document.getElementById('dep-list').innerHTML = h || "<tr><td colspan='3'>No Data</td></tr>";
         });
 
-        // Users - REALTIME
+        // Users - REALTIME (Updated with Edit Button)
         db.ref('users').on('value', snap => {
-            let h = "<tr><th>Email</th><th>Bal</th></tr>"; 
+            let h = "<tr><th>Email</th><th>Bal</th><th>Action</th></tr>"; 
             snap.forEach(c => {
                 let u = c.val();
-                h += `<tr><td>${u.email}</td><td>₹${(u.balance || 0).toFixed(2)}</td></tr>`;
+                let userId = c.key;
+                h += `<tr>
+                    <td>${u.email}</td>
+                    <td>₹${(u.balance || 0).toFixed(2)}</td>
+                    <td><button onclick="editBalance('${userId}', ${u.balance || 0})" style="background:#007bff; color:white; border:none; padding:5px; border-radius:4px; font-size:10px; cursor:pointer;">Edit</button></td>
+                </tr>`;
             });
             document.getElementById('users-list').innerHTML = h;
         });
@@ -122,6 +131,20 @@
         if(confirm("Verify UTR and Approve?")) {
             db.ref('users/' + uid + '/balance').transaction(c => (c || 0) + amt);
             db.ref('requests/deposits/' + key).update({status: 'approved'});
+        }
+    }
+
+    // New Function to edit amount
+    function editBalance(uid, currentBal) {
+        let newBal = prompt("Naya balance enter karein:", currentBal);
+        if (newBal !== null && !isNaN(newBal)) {
+            db.ref('users/' + uid).update({
+                balance: parseFloat(newBal)
+            }).then(() => {
+                alert("Balance updated successfully!");
+            }).catch(err => {
+                alert("Error: " + err.message);
+            });
         }
     }
 </script>
