@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviator Pro - Fixed</title>
+    <title>Aviator Pro - Final Fix</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -12,35 +12,26 @@
         * { box-sizing: border-box; font-family: sans-serif; margin: 0; padding: 0; }
         body { background: var(--bg-dark); color: white; overflow-x: hidden; touch-action: none; user-select: none; }
 
-        .cashout-splash { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(40, 167, 69, 0.9); color: white; padding: 12px 25px; border-radius: 50px; font-weight: bold; font-size: 20px; z-index: 1000; animation: splashAnim 1.5s ease-out forwards; pointer-events: none; border: 2px solid #fff; }
-        @keyframes splashAnim { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } 20% { transform: translate(-50%, -70%) scale(1.1); opacity: 1; } 100% { transform: translate(-50%, -110%) scale(1); opacity: 0; } }
-
-        .insufficient-msg { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--accent-red); color: white; padding: 10px 20px; border-radius: 5px; z-index: 10000; display: none; font-weight: bold; border: 1px solid white; }
-        #side-menu { position: fixed; top: 0; right: -100%; width: 85%; height: 100%; background: #0f1521; z-index: 5000; transition: 0.4s; padding: 20px; overflow-y: auto; }
-        .menu-btn { width: 100%; padding: 15px; background: #1c2538; border: 1px solid #252f44; color: white; border-radius: 8px; margin-bottom: 10px; text-align: left; display: flex; justify-content: space-between; cursor: pointer; }
-        .dropdown-content { display: none; background: #05080f; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #252f44; }
-        .f-input { width: 100%; padding: 10px; margin: 8px 0; background: #000; color: white; border: 1px solid #333; border-radius: 5px; font-size: 13px; }
-
+        /* RELOAD BLOCK OVERLAY (Optional Visual) */
         .top-nav { background: #0f1521; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252f44; }
         .balance-box { background: #000; border: 2px solid var(--win-green); padding: 5px 15px; border-radius: 20px; color: var(--win-green); font-weight: bold; }
 
-        .history-section { position: relative; background: #080c14; padding: 10px; display: flex; align-items: center; }
-        .history-strip { display: flex; gap: 8px; overflow: hidden; width: 85%; }
-        #full-history { display: none; position: absolute; top: 45px; left: 0; width: 100%; background: #161d2b; z-index: 2000; padding: 15px; border-bottom: 2px solid var(--win-green); grid-template-columns: repeat(5, 1fr); gap: 8px; max-height: 250px; overflow-y: auto; }
-        .hist-chip { font-size: 10px; padding: 4px 8px; border-radius: 10px; background: #1c2538; color: #9d50ff; font-weight: bold; text-align: center; }
+        /* HISTORY SECTION */
+        .history-section { position: relative; background: #080c14; padding: 10px; display: flex; align-items: center; justify-content: space-between; }
+        .history-strip { display: flex; gap: 8px; overflow: hidden; height: 25px; align-items: center; }
+        #full-history { display: none; position: absolute; top: 45px; left: 0; width: 100%; background: #161d2b; z-index: 2000; padding: 15px; border-bottom: 2px solid var(--win-green); grid-template-columns: repeat(6, 1fr); gap: 8px; max-height: 250px; overflow-y: auto; }
+        .hist-chip { font-size: 10px; padding: 4px 8px; border-radius: 10px; background: #1c2538; color: #9d50ff; font-weight: bold; min-width: 45px; text-align: center; }
         .chip-green { color: var(--win-green) !important; border: 1px solid var(--win-green); }
 
+        /* GAME AREA */
         .display-area { position: relative; height: 180px; background: radial-gradient(circle at bottom left, #1a2a44 0%, #05080f 70%); margin: 10px; border-radius: 15px; border: 1px solid #252f44; overflow: hidden; }
         #multiplier-text { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 3.5rem; font-weight: 900; z-index: 10; display: none; }
         #crash-msg { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 11; display: none; }
         #countdown-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--win-green); }
 
+        /* BET CARDS */
         .bet-container { display: flex; gap: 8px; padding: 10px; }
         .bet-card { background: var(--panel-bg); padding: 10px; border-radius: 15px; border: 1px solid #252f44; width: 50%; }
-        .auto-row { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 8px; color: #ccc; align-items: center; }
-        .auto-cash-box { display: flex; align-items: center; background: #000; border: 1px solid var(--accent-blue); border-radius: 12px; padding: 1px 6px; }
-        .auto-cash-box input { width: 35px; background: none; border: none; color: #fff; font-size: 11px; outline: none; text-align: center; }
-
         .amt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 5px 0; }
         .amt-btn { background: #1c2538; border: 1px solid #252f44; color: white; font-size: 9px; padding: 6px 0; border-radius: 4px; cursor: pointer; }
         .manual-input { display: flex; justify-content: space-between; align-items: center; background: #000; border-radius: 20px; padding: 2px 8px; border: 1px solid #444; margin-bottom: 5px; }
@@ -48,160 +39,137 @@
 
         .main-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; font-weight: bold; color: white; background: var(--win-green); cursor: pointer; font-size: 11px; }
         .btn-cashout { background: #d97706 !important; }
-        .live-section { margin: 10px; background: var(--panel-bg); border-radius: 10px; border: 1px solid #252f44; height: 180px; overflow-y: auto; }
-        .live-header { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; padding: 8px; font-size: 9px; font-weight: bold; background: #0f1521; position: sticky; top:0; }
-        .live-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; padding: 6px 8px; font-size: 9px; border-bottom: 1px solid #252f44; }
-        .win-txt { color: var(--win-green); font-weight: bold; }
-        canvas { width: 100%; height: 100%; }
-        .history-item { border-bottom: 1px solid #252f44; padding: 5px 0; font-size: 11px; color: #ccc; }
 
-        .upi-copy-box { background: #000; border: 1px dashed var(--win-green); padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .copy-btn { background: var(--win-green); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; }
-        .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
-        .app-link { text-decoration: none; text-align: center; color: white; font-size: 10px; }
-        .app-icon { width: 40px; height: 40px; border-radius: 8px; margin-bottom: 5px; }
+        /* MENU & SIDEBAR */
+        #side-menu { position: fixed; top: 0; right: -100%; width: 85%; height: 100%; background: #0f1521; z-index: 5000; transition: 0.4s; padding: 20px; overflow-y: auto; }
+        .menu-btn { width: 100%; padding: 15px; background: #1c2538; border: 1px solid #252f44; color: white; border-radius: 8px; margin-bottom: 10px; text-align: left; display: flex; justify-content: space-between; }
+        .dropdown-content { display: none; background: #05080f; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #252f44; }
+        .f-input { width: 100%; padding: 10px; margin: 8px 0; background: #000; color: white; border: 1px solid #333; border-radius: 5px; font-size: 13px; }
+
+        .live-section { margin: 10px; background: var(--panel-bg); border-radius: 10px; height: 180px; overflow-y: auto; font-size: 9px; }
+        .live-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; padding: 6px 8px; border-bottom: 1px solid #252f44; }
+        .win-txt { color: var(--win-green); font-weight: bold; }
+        .cashout-splash { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); background: var(--win-green); color: white; padding: 8px 20px; border-radius: 20px; z-index: 100; animation: splash 1s ease-out forwards; }
+        @keyframes splash { 0% { opacity:0; transform: translate(-50%, -20%); } 100% { opacity:1; transform: translate(-50%, -60%); } }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-<audio id="coin-sound" src="https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3" preload="auto"></audio>
-<div id="insufficient-bal" class="insufficient-msg">Insufficient Balance!</div>
+<div id="insufficient-bal" style="position:fixed; top:20px; left:50%; transform:translateX(-50%); background:red; color:white; padding:10px; border-radius:5px; z-index:9999; display:none;">Insufficient Balance!</div>
 
 <div id="side-menu">
-    <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>HOME MENU</b> <span onclick="toggleMenu()" style="cursor:pointer">✕</span></div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:20px;"><b>GAME SETTINGS</b> <span onclick="toggleMenu()" style="cursor:pointer">✕</span></div>
     
-    <a href="https://t.me/turbojetAviator_" target="_blank" style="text-decoration: none;">
-        <div class="menu-btn" style="background: #0088cc; border: none; justify-content: center; font-weight: bold; color: white;">
-            📱 Join Telegram (Support)
-        </div>
-    </a>
-
-    <div class="menu-btn" onclick="toggleDrop('ref-drop')">👥 Referral & Earn <span>▼</span></div>
+    <div class="menu-btn" onclick="toggleDrop('ref-drop')">👥 Referral ID: <span id="ref-id-display">---</span></div>
     <div id="ref-drop" class="dropdown-content">
-        <p style="font-size:12px;">Referral ID: <b id="ref-id-display">---</b></p>
-        <button class="main-btn" style="margin-top:10px;" onclick="copyRef()">Copy Referral Link</button>
+        <button class="main-btn" onclick="copyRef()">Copy Referral Link</button>
     </div>
 
-    <div class="menu-btn" onclick="toggleDrop('dep-drop')">💰 Deposit (20% Bonus) <span>▼</span></div>
+    <div class="menu-btn" onclick="toggleDrop('dep-drop')">💰 Deposit Cash <span>▼</span></div>
     <div id="dep-drop" class="dropdown-content">
-        <center><img id="deposit-qr" src="" style="width:160px; height:160px; border-radius:10px; border:2px solid white; margin-bottom:10px; background: white;"></center>
-        <div class="upi-copy-box">
-            <span id="upi-id-display" style="font-size: 12px; font-weight: bold;">---</span>
-            <button class="copy-btn" onclick="copyUPI()">COPY ID</button>
-        </div>
-        <div class="app-grid">
-            <a href="#" id="phonepe-link" class="app-link"><img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/phonepe-logo-icon.png" class="app-icon"><br>PhonePe</a>
-            <a href="#" id="gpay-link" class="app-link"><img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/google-pay-icon.png" class="app-icon"><br>GPay</a>
-            <a href="#" id="paytm-link" class="app-link"><img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/paytm-icon.png" class="app-icon"><br>Paytm</a>
+        <center><img id="deposit-qr" src="" style="width:150px; background:white; padding:5px; margin-bottom:10px;"></center>
+        <div style="background:#000; padding:10px; border:1px dashed #28a745; margin-bottom:10px; display:flex; justify-content:space-between;">
+            <span id="upi-id-display" style="font-size:11px;">---</span>
+            <button onclick="copyUPI()" style="background:#28a745; color:white; border:none; padding:2px 5px; font-size:10px;">COPY</button>
         </div>
         <input type="number" id="dep-amt-input" class="f-input" placeholder="Amount" oninput="refreshUPI()">
-        <input type="text" id="dep-utr-input" class="f-input" placeholder="Enter UTR (12 Digit Transaction ID)">
-        <button class="main-btn" onclick="handleDeposit()">Deposit Now</button>
+        <input type="text" id="dep-utr-input" class="f-input" placeholder="UTR/Transaction ID">
+        <button class="main-btn" onclick="handleDeposit()">Submit Deposit</button>
     </div>
 
     <div class="menu-btn" onclick="toggleDrop('with-drop')">🏦 Withdrawal <span>▼</span></div>
     <div id="with-drop" class="dropdown-content">
-        <input type="text" class="f-input" placeholder="Account Holder Name">
-        <input type="text" class="f-input" placeholder="Account Number">
-        <input type="text" class="f-input" placeholder="IFSC Code">
-        <input type="number" class="f-input" id="with-amt-input" placeholder="Amount">
-        <button class="main-btn" style="background:var(--accent-red)" onclick="handleWithdrawal()">Withdraw Now</button>
+        <input type="text" class="f-input" placeholder="UPI ID / Bank Details">
+        <input type="number" id="with-amt-input" class="f-input" placeholder="Amount">
+        <button class="main-btn" style="background:var(--accent-red)" onclick="handleWithdrawal()">Withdraw</button>
     </div>
 
     <div class="menu-btn" onclick="toggleDrop('bet-history')">📜 Bet History <span>▼</span></div>
-    <div id="bet-history" class="dropdown-content">No History Available</div>
+    <div id="bet-history" class="dropdown-content">No data</div>
 
-    <div class="menu-btn" onclick="toggleDrop('trans-history')">💸 Transaction History <span>▼</span></div>
-    <div id="trans-history" class="dropdown-content">No Transactions Available</div>
+    <div class="menu-btn" onclick="toggleDrop('trans-history')">💸 Transactions <span>▼</span></div>
+    <div id="trans-history" class="dropdown-content">No data</div>
 
-    <div class="menu-btn" style="margin-top:20px; background:var(--accent-red)" onclick="logout()">🚪 Logout</div>
+    <button class="main-btn" style="background:red; margin-top:20px;" onclick="logout()">LOGOUT</button>
 </div>
 
 <div class="top-nav">
-    <div style="color:#ff0055; font-weight:900; font-size:24px;">AVIATOR</div>
+    <div style="color:#ff0055; font-weight:900; font-size:22px;">AVIATOR</div>
     <div class="balance-box">₹<span id="bal-text">0.00</span></div>
     <div onclick="toggleMenu()" style="cursor:pointer; font-size:24px;">☰</div>
 </div>
 
 <div class="history-section">
-    <div class="history-strip" id="hist-row"></div>
-    <div onclick="toggleFullHistory()" style="cursor:pointer; font-size:12px; margin-left:10px; color: #fff;">▼</div>
-    <div id="full-history"></div>
+    <div class="history-strip" id="hist-row">
+        </div>
+    <div onclick="toggleFullHistory()" style="cursor:pointer; font-size:12px; color:#aaa;">History ▼</div>
+    <div id="full-history">
+        </div>
 </div>
 
 <div class="display-area" id="game-container">
     <canvas id="gameCanvas"></canvas>
     <div id="multiplier-text">1.00x</div>
-    <div id="crash-msg"><span style="color:#ff0055; font-weight:bold; font-size:1.2rem;">FLEW AWAY!</span><br><span id="crash-val" style="font-size:2.5rem; font-weight:900;">1.00x</span></div>
+    <div id="crash-msg">
+        <span style="color:#ff0055; font-weight:bold; font-size:1.2rem;">FLEW AWAY!</span><br>
+        <span id="crash-val" style="font-size:2.5rem; font-weight:900;">1.00x</span>
+    </div>
     <div id="countdown-box"><div id="cd-num" style="font-size:30px; font-weight:bold;">5</div></div>
 </div>
 
 <div class="bet-container">
     <div class="bet-card">
-        <div class="auto-row"><label><input type="checkbox" id="auto-p1"> Auto Play</label><div class="auto-cash-box"><input type="checkbox" id="auto-c1"> <input type="number" id="ac-val1" value="2.0"></div></div>
         <div class="manual-input"><button onclick="adj(1,-10)">-</button><input type="number" id="amt-1" value="100"><button onclick="adj(1,10)">+</button></div>
         <div class="amt-grid">
-            <button class="amt-btn" onclick="setAmt(1,10)">10</button><button class="amt-btn" onclick="setAmt(1,100)">100</button><button class="amt-btn" onclick="setAmt(1,500)">500</button>
+            <button class="amt-btn" onclick="setAmt(1,10)">10</button><button class="amt-btn" onclick="setAmt(1,50)">50</button><button class="amt-btn" onclick="setAmt(1,100)">100</button>
+            <button class="amt-btn" onclick="setAmt(1,200)">200</button><button class="amt-btn" onclick="setAmt(1,500)">500</button><button class="amt-btn" onclick="setAmt(1,1000)">1000</button>
         </div>
-        <button id="btn-1" class="main-btn" onclick="handleBet(1)">BET</button>
+        <div class="auto-row" style="margin-top:5px; font-size:10px;"><input type="checkbox" id="auto-c1"> Auto Cash <input type="number" id="ac-val1" value="2.0" style="width:30px; background:none; border:1px solid #444; color:white;"></div>
+        <button id="btn-1" class="main-btn" onclick="handleBet(1)" style="margin-top:5px;">BET</button>
     </div>
     <div class="bet-card">
-        <div class="auto-row"><label><input type="checkbox" id="auto-p2"> Auto Play</label><div class="auto-cash-box"><input type="checkbox" id="auto-c2"> <input type="number" id="ac-val2" value="2.0"></div></div>
         <div class="manual-input"><button onclick="adj(2,-10)">-</button><input type="number" id="amt-2" value="100"><button onclick="adj(2,10)">+</button></div>
         <div class="amt-grid">
-            <button class="amt-btn" onclick="setAmt(2,10)">10</button><button class="amt-btn" onclick="setAmt(2,100)">100</button><button class="amt-btn" onclick="setAmt(2,500)">500</button>
+            <button class="amt-btn" onclick="setAmt(2,10)">10</button><button class="amt-btn" onclick="setAmt(2,50)">50</button><button class="amt-btn" onclick="setAmt(2,100)">100</button>
+            <button class="amt-btn" onclick="setAmt(2,200)">200</button><button class="amt-btn" onclick="setAmt(2,500)">500</button><button class="amt-btn" onclick="setAmt(2,1000)">1000</button>
         </div>
-        <button id="btn-2" class="main-btn" onclick="handleBet(2)">BET</button>
+        <div class="auto-row" style="margin-top:5px; font-size:10px;"><input type="checkbox" id="auto-c2"> Auto Cash <input type="number" id="ac-val2" value="2.0" style="width:30px; background:none; border:1px solid #444; color:white;"></div>
+        <button id="btn-2" class="main-btn" onclick="handleBet(2)" style="margin-top:5px;">BET</button>
     </div>
 </div>
 
 <div class="live-section">
-    <div class="live-header"><span>User</span><span>Bet</span><span>Mult</span><span>Win</span></div>
+    <div class="live-row" style="font-weight:bold; background:#0f1521;"><span>User</span><span>Amt</span><span>Mult</span><span>Win</span></div>
     <div id="fake-list"></div>
 </div>
 
 <script>
+    // --- PAGE RELOAD BLOCK ---
+    window.onbeforeunload = function() { return "Game is in progress. Are you sure you want to leave?"; };
+
     const firebaseConfig = { apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc", authDomain: "myaviatoregame.firebaseapp.com", databaseURL: "https://myaviatoregame-default-rtdb.firebaseio.com", projectId: "myaviatoregame", storageBucket: "myaviatoregame.firebasestorage.app", messagingSenderId: "286687400349", appId: "1:286687400349:web:e01e2cff439a3267de1f74" };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth(), db = firebase.database();
 
-    const upiList = ["7067109812@ybl", "7067109812@ibl"];
-    let currentUPI = upiList[0];
     let wallet = 0, multiplier = 1.0, isFlying = false, currentUser = null;
     let activeBets = { 1: null, 2: null };
+    let recentResults = []; 
+    const upiID = "7067109812@ybl"; 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const planeImg = new Image(); planeImg.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNMzIgMjU2TDE2MCAxOTJMMjI0IDMyLDI4OCAxOTJMNTAwIDI1NkwyODggMzI0TDIyNCA0ODBMMTYwIDMyNEwzMiAyNTZ6IiBmaWxsPSIjZmYwMDQ0Ii8+PC9zdmc+";
 
     auth.onAuthStateChanged(user => {
         if (user) { 
-            currentUser = user; 
+            currentUser = user;
             document.getElementById('ref-id-display').innerText = user.uid.substring(0,8).toUpperCase();
-            db.ref('users/' + user.uid + '/balance').on('value', snap => { 
-                wallet = snap.val() || 0; 
+            db.ref('users/' + user.uid + '/balance').on('value', snap => {
+                wallet = snap.val() || 0;
                 document.getElementById('bal-text').innerText = wallet.toFixed(2);
             });
-            loadHistory(user.uid);
             startLoop();
         } else { window.location.href = "index.html"; }
     });
-
-    function loadHistory(uid) {
-        db.ref('users/' + uid + '/bets').limitToLast(10).on('value', snap => {
-            const bh = document.getElementById('bet-history'); bh.innerHTML = "";
-            snap.forEach(c => { let d = c.val(); bh.innerHTML = `<div class="history-item">₹${d.amt} @ ${d.mult}x -> ₹${d.win}</div>` + bh.innerHTML; });
-        });
-        db.ref('users/' + uid + '/transactions').limitToLast(10).on('value', snap => {
-            const th = document.getElementById('trans-history'); th.innerHTML = "";
-            snap.forEach(c => { let d = c.val(); th.innerHTML = `<div class="history-item">${d.type}: ₹${d.amt} (${d.status})</div>` + th.innerHTML; });
-        });
-    }
-
-    function addHistoryChip(v) {
-        let chip = `<div class="hist-chip ${v >= 2 ? 'chip-green' : ''}">${v}x</div>`;
-        document.getElementById('hist-row').insertAdjacentHTML('afterbegin', chip);
-        document.getElementById('full-history').insertAdjacentHTML('afterbegin', chip);
-    }
 
     function startLoop() {
         isFlying = false; multiplier = 1.0;
@@ -210,17 +178,16 @@
         document.getElementById('crash-msg').style.display = 'none';
         document.getElementById('countdown-box').style.display = 'block';
         
-        // Fake Users with visible amounts
         const list = document.getElementById('fake-list'); list.innerHTML = "";
-        for(let i=0; i<12; i++) {
-            list.innerHTML += `<div class="live-row" id="fake-${i}"><span>User***${Math.floor(Math.random()*99)}</span><span>₹${Math.floor(Math.random()*1000+10)}</span><span class="m-col">-</span><span class="w-col">-</span></div>`;
+        for(let i=0; i<10; i++) {
+            list.innerHTML += `<div class="live-row" id="fake-${i}"><span>User***${Math.floor(Math.random()*99)}</span><span>₹${Math.floor(Math.random()*500+10)}</span><span class="m-col">-</span><span class="w-col">-</span></div>`;
         }
         
         updateUI();
         let t = 5;
         let timer = setInterval(() => { 
             t--; document.getElementById('cd-num').innerText = t; 
-            if(t <= 0) { clearInterval(timer); document.getElementById('countdown-box').style.display = 'none'; launch(); } 
+            if(t <= 0) { clearInterval(timer); document.getElementById('countdown-box').style.display = 'none'; launch(); }
         }, 1000);
     }
 
@@ -228,137 +195,112 @@
         isFlying = true;
         document.getElementById('multiplier-text').style.display = 'block';
         
-        // CRASH LOGIC AS PER YOUR PERCENTAGES
         let prob = Math.random() * 100;
         let crash;
-        if (prob < 15) crash = 1.00 + (Math.random() * 0.05);
-        else if (prob < 65) crash = 1.05 + (Math.random() * 0.94);
-        else if (prob < 85) crash = 2.00 + (Math.random() * 2.00);
-        else if (prob < 95) crash = 4.00 + (Math.random() * 6.00);
-        else crash = 10.00 + (Math.random() * 50.00);
+        if (prob < 15) crash = 1.00 + (Math.random() * 0.05); // Instant
+        else if (prob < 65) crash = 1.05 + (Math.random() * 0.94); // Fast
+        else if (prob < 85) crash = 2.00 + (Math.random() * 2.00); // 2x-4x
+        else if (prob < 95) crash = 4.00 + (Math.random() * 6.00); // 4x-10x
+        else crash = 10.00 + (Math.random() * 50.00); // Long
         
-        let targetCrash = parseFloat(crash.toFixed(2));
-        let start = Date.now();
+        let target = parseFloat(crash.toFixed(2));
+        let startTime = Date.now();
 
         function step() {
             if(!isFlying) return;
-            let elapsed = (Date.now() - start) / 1000;
-            multiplier = 1.00 + (elapsed * 0.15); // STABLE LINEAR SPEED
+            multiplier = 1.00 + ((Date.now() - startTime) / 1000 * 0.15); // FIXED LINEAR SPEED
 
-            // Fake Winners Update
-            if(Math.random() > 0.98) {
-                let idx = Math.floor(Math.random()*12);
-                let row = document.getElementById('fake-'+idx);
-                if(row && row.querySelector('.m-col').innerText === "-") {
-                    let b = parseInt(row.children[1].innerText.replace('₹',''));
-                    row.querySelector('.m-col').innerText = multiplier.toFixed(2)+"x";
-                    row.querySelector('.w-col').innerText = "₹"+(b*multiplier).toFixed(0);
-                    row.querySelector('.w-col').classList.add('win-txt');
+            // Auto cashout check
+            [1,2].forEach(p => {
+                if(document.getElementById('auto-c'+p).checked && activeBets[p] && !activeBets[p].cashed) {
+                    if(multiplier >= parseFloat(document.getElementById('ac-val'+p).value)) cashOut(p);
                 }
-            }
-
-            // Auto Cashout
-            [1,2].forEach(p => { 
-                if(document.getElementById('auto-c'+p).checked && activeBets[p] && !activeBets[p].cashed) { 
-                    if(multiplier >= parseFloat(document.getElementById('ac-val'+p).value)) cashOut(p); 
-                } 
             });
 
-            if(multiplier >= targetCrash) {
+            if(multiplier >= target) {
                 isFlying = false;
                 document.getElementById('multiplier-text').style.display = 'none';
                 document.getElementById('crash-msg').style.display = 'block';
-                document.getElementById('crash-val').innerText = targetCrash.toFixed(2) + "x";
-                addHistoryChip(targetCrash.toFixed(2));
+                document.getElementById('crash-val').innerText = target.toFixed(2) + "x";
+                updateHistory(target.toFixed(2));
                 activeBets[1] = activeBets[2] = null;
                 updateUI();
                 setTimeout(startLoop, 3000);
                 return;
             }
-
             document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
             draw(); updateUI(); requestAnimationFrame(step);
         }
         requestAnimationFrame(step);
     }
 
-function refreshUPI() {
-        let amt = document.getElementById('dep-amt-input').value || "100";
-        currentUPI = upiList[Math.floor(Math.random() * upiList.length)];
-        document.getElementById('upi-id-display').innerText = currentUPI;
-        let upiLink = `upi://pay?pa=${currentUPI}&am=${amt}&cu=INR`;
-        document.getElementById('deposit-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiLink)}`;
-        document.getElementById('phonepe-link').href = upiLink;
-        document.getElementById('gpay-link').href = upiLink;
-        document.getElementById('paytm-link').href = upiLink;
+    function updateHistory(val) {
+        recentResults.unshift(val);
+        if(recentResults.length > 30) recentResults.pop();
+        
+        const strip = document.getElementById('hist-row');
+        const full = document.getElementById('full-history');
+        strip.innerHTML = ""; full.innerHTML = "";
+
+        recentResults.forEach((res, index) => {
+            let chip = `<div class="hist-chip ${res >= 2 ? 'chip-green' : ''}">${res}x</div>`;
+            if(index < 6) strip.innerHTML += chip; // Show only 6 in row
+            full.innerHTML += chip; // Show all 30 in dropdown
+        });
     }
 
-    function toggleMenu() { let m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
-    function toggleDrop(id) { let e = document.getElementById(id); e.style.display = e.style.display === 'block' ? 'none' : 'block'; if(id==='dep-drop' && e.style.display==='block') refreshUPI(); }
-    function toggleFullHistory() { let e = document.getElementById('full-history'); e.style.display = e.style.display === 'grid' ? 'none' : 'grid'; }
-    
-    function copyRef() { navigator.clipboard.writeText("https://yourdomain.com/register?ref=" + currentUser.uid); alert("Link Copied!"); }
-    function copyUPI() { navigator.clipboard.writeText(currentUPI); alert("UPI Copied!"); }
+    function draw() {
+        let p = Math.min((multiplier - 1) / 10, 0.9);
+        let x = p * canvas.width * 0.9 + 20;
+        let y = (canvas.height - 40) - (Math.pow(p, 0.6) * canvas.height * 0.7);
+        ctx.clearRect(0,0,canvas.width,canvas.height); ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
+        ctx.drawImage(planeImg, x-25, y-25, 50, 50);
+    }
 
     function handleBet(p) {
         let a = parseInt(document.getElementById('amt-'+p).value);
         if(!isFlying) {
-            if(!activeBets[p]) { if(a > wallet) { showIns(); return; } wallet -= a; activeBets[p] = {amt:a, cashed:false}; }
-            else { wallet += activeBets[p].amt; activeBets[p] = null; }
+            if(!activeBets[p]) {
+                if(a > wallet) { document.getElementById('insufficient-bal').style.display='block'; setTimeout(()=>document.getElementById('insufficient-bal').style.display='none',2000); return; }
+                wallet -= a; activeBets[p] = {amt:a, cashed:false};
+            } else { wallet += activeBets[p].amt; activeBets[p] = null; }
         } else { if(activeBets[p] && !activeBets[p].cashed) cashOut(p); }
         db.ref('users/'+currentUser.uid).update({balance:wallet}); updateUI();
     }
 
     function cashOut(p) {
         if(activeBets[p] && !activeBets[p].cashed) {
-            let winAmt = activeBets[p].amt * multiplier; wallet += winAmt; activeBets[p].cashed = true;
+            let win = activeBets[p].amt * multiplier; wallet += win; activeBets[p].cashed = true;
             db.ref('users/'+currentUser.uid).update({balance:wallet});
-            db.ref('users/' + currentUser.uid + '/bets').push({ amt: activeBets[p].amt, mult: multiplier.toFixed(2), win: winAmt.toFixed(2) });
-            document.getElementById('coin-sound').play().catch(()=>{});
-            const splash = document.createElement('div'); splash.className = 'cashout-splash'; splash.innerText = `+₹${winAmt.toFixed(2)}`;
-            document.getElementById('game-container').appendChild(splash); setTimeout(() => splash.remove(), 1500);
+            db.ref('users/'+currentUser.uid+'/bets').push({amt:activeBets[p].amt, mult:multiplier.toFixed(2), win:win.toFixed(0)});
+            let s = document.createElement('div'); s.className='cashout-splash'; s.innerText=`₹${win.toFixed(2)}`;
+            document.getElementById('game-container').appendChild(s); setTimeout(()=>s.remove(),1000);
             updateUI();
         }
-    }
-
-    function handleDeposit() {
-        let amt = document.getElementById('dep-amt-input').value;
-        let utr = document.getElementById('dep-utr-input').value;
-        if(utr.length < 12) { alert("Invalid UTR"); return; }
-        db.ref('requests/deposits').push({ uid: currentUser.uid, amt: amt, utr: utr, status: "pending" });
-        db.ref('users/' + currentUser.uid + '/transactions').push({ type: "Deposit", amt: amt, status: "pending" });
-        alert("Submitted!");
-    }
-
-    function handleWithdrawal() {
-        let amt = parseFloat(document.getElementById('with-amt-input').value);
-        if(amt > wallet) { showIns(); return; }
-        wallet -= amt; db.ref('users/'+currentUser.uid).update({balance:wallet});
-        db.ref('requests/withdrawals').push({ uid: currentUser.uid, amt: amt, status: "pending" });
-        db.ref('users/' + currentUser.uid + '/transactions').push({ type: "Withdrawal", amt: amt, status: "pending" });
-        alert("Submitted!");
-    }
-
-    function draw() {
-        let prog = Math.min((multiplier - 1) / 10, 0.9);
-        let x = prog * canvas.width * 0.9 + 20;
-        let y = (canvas.height - 40) - (Math.pow(prog, 0.6) * canvas.height * 0.7);
-        ctx.clearRect(0,0,canvas.width,canvas.height); ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 4; ctx.beginPath();
-        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke(); ctx.drawImage(planeImg, x-25, y-25, 50, 50);
     }
 
     function updateUI() {
         [1,2].forEach(p => {
             let b = document.getElementById('btn-'+p);
-            if(isFlying && activeBets[p] && !activeBets[p].cashed) { b.innerText = `CASH OUT ₹${(activeBets[p].amt * multiplier).toFixed(2)}`; b.className = "main-btn btn-cashout"; }
-            else { b.innerText = activeBets[p] ? "CANCEL" : "BET"; b.className = "main-btn"; }
+            if(isFlying && activeBets[p] && !activeBets[p].cashed) { b.innerText = `CASH OUT ₹${(activeBets[p].amt * multiplier).toFixed(2)}`; b.style.background="#d97706"; }
+            else { b.innerText = activeBets[p] ? "CANCEL" : "BET"; b.style.background=activeBets[p] ? "#444" : "#28a745"; }
         });
     }
 
+    // Helpers
     function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
     function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value)+v); }
-    function showIns() { let m = document.getElementById('insufficient-bal'); m.style.display='block'; setTimeout(()=>m.style.display='none', 2000); }
-    function logout() { auth.signOut().then(() => { window.location.href = "index.html"; }); }
+    function toggleMenu() { let s = document.getElementById('side-menu'); s.style.right = s.style.right === '0px' ? '-100%' : '0px'; }
+    function toggleDrop(id) { let e = document.getElementById(id); e.style.display = e.style.display === 'block' ? 'none' : 'block'; if(id==='dep-drop') refreshUPI(); }
+    function toggleFullHistory() { let e = document.getElementById('full-history'); e.style.display = e.style.display === 'grid' ? 'none' : 'grid'; }
+    function refreshUPI() { 
+        let a = document.getElementById('dep-amt-input').value || 100;
+        document.getElementById('upi-id-display').innerText = upiID;
+        document.getElementById('deposit-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=${upiID}%26am=${a}%26cu=INR`;
+    }
+    function copyUPI() { navigator.clipboard.writeText(upiID); alert("UPI Copied"); }
+    function logout() { auth.signOut().then(()=>location.reload()); }
 </script>
 </body>
 </html>
