@@ -187,8 +187,9 @@
     const planeImg = new Image(); planeImg.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNMzIgMjU2TDE2MCAxOTJMMjI0IDMyLDI4OCAxOTJMNTAwIDI1NkwyODggMzI0TDIyNCA0ODBMMTYwIDMyNEwzMiAyNTZ6IiBmaWxsPSIjZmYwMDQ0Ii8+PC9zdmc+";
 
     function refreshUPI() {
+        const amtInput = document.getElementById('dep-amt-input');
+        const amt = (amtInput && amtInput.value) || "100";
         currentUPI = upiList[Math.floor(Math.random() * upiList.length)];
-        const amt = document.getElementById('dep-amt-input').value || "100";
         const upiLink = `upi://pay?pa=${currentUPI}&am=${amt}&cu=INR`;
         document.getElementById('deposit-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiLink)}`;
         document.getElementById('upi-id-display').innerText = currentUPI;
@@ -249,23 +250,38 @@
         isFlying = true;
         document.getElementById('multiplier-text').style.display = 'block';
         
-        // --- CUSTOM PROBABILITY LOGIC ---
         let chance = Math.random() * 100;
         let crash;
-        if (chance <= 60) { crash = (Math.random() * 0.10 + 1.00).toFixed(2); } // 60% Instant (1.00-1.10)
-        else if (chance <= 80) { crash = (Math.random() * 2.00 + 1.00).toFixed(2); } // 20% (1.00-3.00)
-        else if (chance <= 95) { crash = (Math.random() * 9.00 + 1.00).toFixed(2); } // 15% (1.00-10.00)
-        else { crash = (Math.random() * 90.00 + 10.00).toFixed(2); } // 5% Lambi (10.00-100.00)
+        if (chance <= 60) { crash = (Math.random() * 0.10 + 1.00).toFixed(2); } 
+        else if (chance <= 80) { crash = (Math.random() * 2.00 + 1.00).toFixed(2); } 
+        else if (chance <= 95) { crash = (Math.random() * 9.00 + 1.00).toFixed(2); } 
+        else { crash = (Math.random() * 90.00 + 10.00).toFixed(2); } 
         
         let start = Date.now();
         const speedFactor = 0.12; 
 
-    function step() {
+        function step() {
             if(!isFlying) return;
             let elapsedSeconds = (Date.now() - start) / 1000;
             multiplier = 1.00 + (elapsedSeconds * speedFactor);
             
             [1,2].forEach(p => { if(document.getElementById('auto-c'+p).checked && activeBets[p] && !activeBets[p].cashed) { if(multiplier >= parseFloat(document.getElementById('ac-val'+p).value)) cashOut(p); } });
+
+            // --- FAKE USER UPDATE LOGIC (FIXED) ---
+            for(let i=0; i<15; i++) {
+                let row = document.getElementById(`fake-${i}`);
+                if(row) {
+                    let mCol = row.querySelector('.m-col');
+                    let wCol = row.querySelector('.w-col');
+                    if(mCol.innerText === "-" && Math.random() > 0.985) {
+                        let betAmt = parseFloat(row.children[1].innerText.replace('₹', ''));
+                        mCol.innerText = multiplier.toFixed(2) + "x";
+                        mCol.classList.add('win-txt');
+                        wCol.innerText = "₹" + (betAmt * multiplier).toFixed(2);
+                        wCol.classList.add('win-txt');
+                    }
+                }
+            }
 
             if(multiplier >= crash) {
                 isFlying = false;
