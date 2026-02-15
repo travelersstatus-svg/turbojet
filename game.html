@@ -294,15 +294,19 @@
         isFlying = true;
         document.getElementById('multiplier-text').style.display = 'block';
         
-        // --- FULLY RANDOM CRASH LOGIC ---
         let crashVal = (1 / (Math.random() * 0.9 + 0.01));
         let crash = Math.max(1.00, crashVal).toFixed(2);
         
         let start = Date.now();
+        // --- FIXED SPEED CALCULATION ---
+        const speedFactor = 0.12; // Har second multiplier 0.12x badhega
 
         function step() {
             if(!isFlying) return;
-            multiplier = Math.pow(1.06, (Date.now() - start) / 1000);
+            
+            // Speed logic fixed to Linear (Constant Speed)
+            let elapsedSeconds = (Date.now() - start) / 1000;
+            multiplier = 1.00 + (elapsedSeconds * speedFactor);
 
             if(Math.random() > 0.98) {
                 let idx = Math.floor(Math.random()*15);
@@ -440,4 +444,3 @@
 </script>
 </body>
 </html>
-            
