@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviator Pro - Fixed</title>
+    <title>Aviator Pro - Fixed Speed</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -55,6 +55,12 @@
         .win-txt { color: var(--win-green); font-weight: bold; }
         canvas { width: 100%; height: 100%; }
         .history-item { border-bottom: 1px solid #252f44; padding: 5px 0; font-size: 11px; }
+
+        .upi-copy-box { background: #000; border: 1px dashed var(--win-green); padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .copy-btn { background: var(--win-green); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .app-link { text-decoration: none; text-align: center; color: white; font-size: 10px; }
+        .app-icon { width: 40px; height: 40px; border-radius: 8px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -233,6 +239,7 @@
         document.getElementById('multiplier-text').style.display = 'none';
         document.getElementById('crash-msg').style.display = 'none';
         document.getElementById('countdown-box').style.display = 'block';
+        document.getElementById('cd-num').innerText = "5";
 
         const list = document.getElementById('fake-list'); list.innerHTML = "";
         for(let i=0; i<15; i++) {
@@ -255,21 +262,27 @@
         isFlying = true;
         document.getElementById('multiplier-text').style.display = 'block';
         
-        // FIXED RANDOM CRASH LOGIC
+        // --- RANDOM CRASH LOGIC ---
         let r = Math.random();
-        let crashVal = r < 0.1 ? 1.00 + (Math.random() * 0.1) : (r < 0.8 ? 1.1 + Math.random() * 2.5 : 3.0 + Math.random() * 15.0);
+        let crashVal;
+        if (r < 0.1) crashVal = 1.00 + (Math.random() * 0.1); 
+        else if (r < 0.85) crashVal = 1.1 + (Math.random() * 4.0); 
+        else crashVal = 5.0 + (Math.random() * 45.0); 
+        
         let crash = parseFloat(crashVal.toFixed(2));
         let start = Date.now();
 
         function step() {
             if(!isFlying) return;
             
-            // FIXED SPEED: Multiplier speed fix
             let elapsed = (Date.now() - start) / 1000;
-            // Constant speed + slight acceleration for better feel
-            multiplier = 1.0 + (elapsed * 0.12) + (Math.pow(elapsed, 1.4) * 0.01);
+            
+            // --- FIXED LINEAR SPEED (Always Normal) ---
+            // Yahan 0.16 speed hai, isse multiplier har bar ek hi raftar se badhega
+            multiplier = 1.00 + (elapsed * 0.16); 
 
-           if(Math.random() > 0.985) {
+            // Fake User Updates
+            if(Math.random() > 0.98) {
                 let idx = Math.floor(Math.random()*15);
                 let row = document.getElementById('fake-'+idx);
                 if(row && row.querySelector('.m-col').innerText === "-") {
@@ -280,12 +293,14 @@
                 }
             }
 
+            // Auto Cashout
             [1,2].forEach(p => { 
                 if(document.getElementById('auto-c'+p).checked && activeBets[p] && !activeBets[p].cashed) { 
                     if(multiplier >= parseFloat(document.getElementById('ac-val'+p).value)) cashOut(p); 
                 } 
             });
 
+            // Crash check
             if(multiplier >= crash) {
                 isFlying = false; 
                 document.getElementById('multiplier-text').style.display = 'none'; 
@@ -297,8 +312,11 @@
                 setTimeout(startLoop, 3000); 
                 return;
             }
+
             document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
-            draw(); updateUI(); requestAnimationFrame(step);
+            draw(); 
+            updateUI(); 
+            requestAnimationFrame(step);
         }
         requestAnimationFrame(step);
     }
@@ -366,8 +384,8 @@
     }
 
     function draw() {
-        // Optimized Drawing logic
-        let progress = Math.min((multiplier - 1) / 15, 0.9);
+        // Multiplier progress for canvas path
+        let progress = Math.min((multiplier - 1) / 10, 0.9); 
         let x = progress * canvas.width * 0.9 + 20;
         let y = (canvas.height - 40) - (Math.pow(progress, 0.6) * canvas.height * 0.7);
         
@@ -393,4 +411,5 @@
     }
 </script>
 </body>
-</html> 
+</html>
+        
