@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviator Pro</title>
+    <title>Aviator Pro - Fixed</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -55,12 +55,6 @@
         .win-txt { color: var(--win-green); font-weight: bold; }
         canvas { width: 100%; height: 100%; }
         .history-item { border-bottom: 1px solid #252f44; padding: 5px 0; font-size: 11px; }
-
-        .upi-copy-box { background: #000; border: 1px dashed var(--win-green); padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .copy-btn { background: var(--win-green); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; }
-        .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
-        .app-link { text-decoration: none; text-align: center; color: white; font-size: 10px; }
-        .app-icon { width: 40px; height: 40px; border-radius: 8px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -234,6 +228,7 @@
 
     function startLoop() {
         isFlying = false; multiplier = 1.0;
+        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
         ctx.clearRect(0,0,canvas.width,canvas.height);
         document.getElementById('multiplier-text').style.display = 'none';
         document.getElementById('crash-msg').style.display = 'none';
@@ -260,21 +255,21 @@
         isFlying = true;
         document.getElementById('multiplier-text').style.display = 'block';
         
-        // --- FIXED 100% RANDOM CRASH LOGIC ---
+        // FIXED RANDOM CRASH LOGIC
         let r = Math.random();
-        let crashVal;
-        if (r < 0.08) crashVal = 1.00 + (Math.random() * 0.10); // 8% instant crash
-        else if (r < 0.88) crashVal = 1.11 + (Math.random() * 3.89); // 80% normal
-        else crashVal = 5.00 + (Math.random() * 95.00); // 12% big wins
-        
-        let crash = crashVal.toFixed(2);
+        let crashVal = r < 0.1 ? 1.00 + (Math.random() * 0.1) : (r < 0.8 ? 1.1 + Math.random() * 2.5 : 3.0 + Math.random() * 15.0);
+        let crash = parseFloat(crashVal.toFixed(2));
         let start = Date.now();
 
         function step() {
             if(!isFlying) return;
-            multiplier = Math.pow(1.10, (Date.now() - start) / 1000);
+            
+            // FIXED SPEED: Multiplier speed fix
+            let elapsed = (Date.now() - start) / 1000;
+            // Constant speed + slight acceleration for better feel
+            multiplier = 1.0 + (elapsed * 0.12) + (Math.pow(elapsed, 1.4) * 0.01);
 
-            if(Math.random() > 0.98) {
+           if(Math.random() > 0.985) {
                 let idx = Math.floor(Math.random()*15);
                 let row = document.getElementById('fake-'+idx);
                 if(row && row.querySelector('.m-col').innerText === "-") {
@@ -285,19 +280,27 @@
                 }
             }
 
-            [1,2].forEach(p => { if(document.getElementById('auto-c'+p).checked && activeBets[p] && !activeBets[p].cashed) { if(multiplier >= parseFloat(document.getElementById('ac-val'+p).value)) cashOut(p); } });
+            [1,2].forEach(p => { 
+                if(document.getElementById('auto-c'+p).checked && activeBets[p] && !activeBets[p].cashed) { 
+                    if(multiplier >= parseFloat(document.getElementById('ac-val'+p).value)) cashOut(p); 
+                } 
+            });
 
             if(multiplier >= crash) {
                 isFlying = false; 
                 document.getElementById('multiplier-text').style.display = 'none'; 
                 document.getElementById('crash-msg').style.display = 'block';
-                document.getElementById('crash-val').innerText = crash + "x";
-                addHistoryChip(crash); activeBets[1] = activeBets[2] = null; updateUI(); setTimeout(startLoop, 3000); return;
+                document.getElementById('crash-val').innerText = crash.toFixed(2) + "x";
+                addHistoryChip(crash.toFixed(2)); 
+                activeBets[1] = activeBets[2] = null; 
+                updateUI(); 
+                setTimeout(startLoop, 3000); 
+                return;
             }
             document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
             draw(); updateUI(); requestAnimationFrame(step);
         }
-        step();
+        requestAnimationFrame(step);
     }
 
     function handleBet(p) {
@@ -352,17 +355,30 @@
     function updateUI() {
         [1,2].forEach(p => {
             let btn = document.getElementById('btn-'+p);
-            if(isFlying && activeBets[p] && !activeBets[p].cashed) { btn.innerText = `CASH OUT ₹${(activeBets[p].amt * multiplier).toFixed(2)}`; btn.className = "main-btn btn-cashout"; }
-            else { btn.innerText = activeBets[p] ? "CANCEL" : "BET"; btn.className = "main-btn"; }
+            if(isFlying && activeBets[p] && !activeBets[p].cashed) { 
+                btn.innerText = `CASH OUT ₹${(activeBets[p].amt * multiplier).toFixed(2)}`; 
+                btn.className = "main-btn btn-cashout"; 
+            } else { 
+                btn.innerText = activeBets[p] ? "CANCEL" : "BET"; 
+                btn.className = "main-btn"; 
+            }
         });
     }
 
     function draw() {
-        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-        let p = Math.min((multiplier - 1) / 10, 0.9);
-        let x = p * canvas.width * 0.9 + 20, y = (canvas.height-40) - (Math.pow(p,0.6)*canvas.height*0.7);
-        ctx.clearRect(0,0,canvas.width,canvas.height); ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 4; ctx.beginPath();
-        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke(); ctx.drawImage(planeImg, x-25, y-25, 50, 50);
+        // Optimized Drawing logic
+        let progress = Math.min((multiplier - 1) / 15, 0.9);
+        let x = progress * canvas.width * 0.9 + 20;
+        let y = (canvas.height - 40) - (Math.pow(progress, 0.6) * canvas.height * 0.7);
+        
+        ctx.clearRect(0,0,canvas.width,canvas.height); 
+        ctx.strokeStyle = "#ff0055"; 
+        ctx.lineWidth = 4; 
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height); 
+        ctx.quadraticCurveTo(x/2, canvas.height, x, y); 
+        ctx.stroke(); 
+        ctx.drawImage(planeImg, x-25, y-25, 50, 50);
     }
 
     function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
@@ -377,8 +393,4 @@
     }
 </script>
 </body>
-</html>
-
-        
-
-
+</html> 
