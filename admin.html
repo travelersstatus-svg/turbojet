@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Realtime Fix</title>
+    <title>Admin Panel - Final Fixed</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -12,68 +12,63 @@
         .card { background: #161d2b; border: 1px solid #252f44; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
         h3 { color: #ff0055; margin-top: 0; border-bottom: 1px solid #252f44; padding-bottom: 8px; font-size: 14px; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #252f44; font-size: 11px; }
-        .btn { padding: 6px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 48%; font-size: 10px; margin: 2px 1%; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-danger { background: #dc3545; color: white; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #252f44; font-size: 12px; }
+        .btn { padding: 8px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 45%; font-size: 11px; }
+        .btn-ok { background: #28a745; color: white; margin-right: 5px; }
+        .btn-no { background: #dc3545; color: white; }
         #login-box { text-align: center; margin: 50px auto; background: #161d2b; padding: 25px; border-radius: 12px; max-width: 300px; border: 1px solid #252f44; }
         input { padding: 12px; width: 90%; margin-bottom: 15px; border-radius: 5px; border: 1px solid #252f44; background: #05080f; color: white; }
         #admin-content { display: none; }
-        .utr-box { color: #ffc107; font-weight: bold; font-family: monospace; font-size: 13px; background: #000; padding: 2px 5px; border-radius: 4px; }
-        .status-badge { padding: 2px 5px; border-radius: 4px; font-size: 10px; text-transform: uppercase; }
+        .utr-box { color: #ffc107; font-weight: bold; background: #000; padding: 2px 5px; border-radius: 4px; }
+        .status-p { color: #ffc107; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="login-box">
-        <h2 style="color:#ff0055">Admin Login</h2>
-        <input type="email" id="email" placeholder="Email" value="travelersstatus@gmail.com">
+        <h2 style="color:#ff0055">Admin Panel</h2>
+        <input type="email" id="email" placeholder="Admin Email" value="travelersstatus@gmail.com">
         <input type="password" id="pass" placeholder="Password">
-        <button class="btn btn-success" style="width:100%" onclick="login()">Login</button>
+        <button class="btn btn-ok" style="width:100%" onclick="login()">Login</button>
     </div>
 
     <div id="admin-content">
-        <h2 style="text-align:center; font-size: 18px; color:#ff0055;">ADMIN CONTROL PANEL</h2>
+        <h2 style="text-align:center; color:#ff0055; font-size: 20px;">DASHBOARD</h2>
         
         <div class="card">
-            <h3>💰 DEPOSITS (RECHARGE)</h3>
+            <h3>💰 NEW DEPOSITS</h3>
             <div style="overflow-x:auto;">
                 <table>
-                    <thead>
-                        <tr><th>User/Status</th><th>UTR/Amount</th><th>Action</th></tr>
-                    </thead>
+                    <thead><tr><th>User</th><th>Details</th><th>Action</th></tr></thead>
                     <tbody id="dep-list"></tbody>
                 </table>
             </div>
         </div>
 
         <div class="card">
-            <h3>💸 WITHDRAWALS</h3>
+            <h3>💸 NEW WITHDRAWALS</h3>
             <div style="overflow-x:auto;">
                 <table>
-                    <thead>
-                        <tr><th>User/Status</th><th>Amount</th><th>Action</th></tr>
-                    </thead>
+                    <thead><tr><th>User</th><th>Amount</th><th>Action</th></tr></thead>
                     <tbody id="with-list"></tbody>
                 </table>
             </div>
         </div>
 
         <div class="card">
-            <h3>👥 USERS LIST</h3>
+            <h3>👥 ALL USERS</h3>
             <div style="overflow-x:auto;">
-                <table id="users-table">
+                <table id="users-list-table">
                     <thead><tr><th>Email</th><th>Balance</th><th>Action</th></tr></thead>
                     <tbody id="users-list"></tbody>
                 </table>
             </div>
         </div>
         
-        <button onclick="auth.signOut(); location.reload();" style="background:#444; color:white; border:none; padding:10px; width:100%; border-radius:5px; cursor:pointer;">Logout</button>
+        <button onclick="auth.signOut(); location.reload();" style="background:#444; color:white; border:none; padding:12px; width:100%; border-radius:8px; cursor:pointer; font-weight:bold;">LOGOUT</button>
     </div>
 
 <script>
-    // Firebase Config (Aapka original config)
     const firebaseConfig = {
         apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc",
         authDomain: "myaviatoregame.firebaseapp.com",
@@ -87,7 +82,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
-
     const ADMIN_UID = "iirH6H3tL0dJaTGPvCeigpRJQ8j1"; 
 
     function login() {
@@ -99,92 +93,88 @@
                 document.getElementById('admin-content').style.display = 'block';
                 loadData();
             } else {
-                alert("Unauthorized!"); auth.signOut();
+                alert("Unauthorized Access!");
+                auth.signOut();
             }
-        }).catch(err => alert(err.message));
+        }).catch(err => alert("Login Failed: " + err.message));
     }
 
     function loadData() {
         // --- DEPOSITS REALTIME ---
         db.ref('requests/deposits').on('value', snap => {
             let h = "";
-            snap.forEach(c => {
-                let d = c.val();
+            snap.forEach(child => {
+                let d = child.val();
                 if(d.status === 'pending') {
                     h += `<tr>
-                        <td>${d.email}<br><span class="status-badge" style="background:#664d03">Pending</span></td>
-                        <td><span class="utr-box">${d.utr}</span><br>₹${d.amount}</td>
+                        <td>${d.email}</td>
+                        <td>₹${d.amount}<br><small class="utr-box">${d.utr || 'No UTR'}</small></td>
                         <td>
-                            <button onclick="handleRequest('deposits','${c.key}','approved','${d.uid}',${d.amount})" class="btn btn-success">Accept</button>
-                            <button onclick="handleRequest('deposits','${c.key}','rejected','${d.uid}',0)" class="btn btn-danger">Reject</button>
+                            <button onclick="action('deposits','${child.key}','approved','${d.uid}',${d.amount})" class="btn btn-ok">Approve</button>
+                            <button onclick="action('deposits','${child.key}','rejected','${d.uid}',0)" class="btn btn-no">Reject</button>
                         </td>
                     </tr>`;
                 }
             });
-            document.getElementById('dep-list').innerHTML = h || "<tr><td colspan='3'>No Pending Deposits</td></tr>";
+            document.getElementById('dep-list').innerHTML = h || "<tr><td colspan='3'>No New Requests</td></tr>";
         });
 
         // --- WITHDRAWALS REALTIME ---
         db.ref('requests/withdrawals').on('value', snap => {
             let h = "";
-            snap.forEach(c => {
-                let w = c.val();
+            snap.forEach(child => {
+                let w = child.val();
                 if(w.status === 'pending') {
                     h += `<tr>
-                        <td>${w.email}<br><span class="status-badge" style="background:#664d03">Pending</span></td>
+                        <td>${w.email}</td>
                         <td>₹${w.amount}</td>
                         <td>
-                            <button onclick="handleRequest('withdrawals','${c.key}','success','${w.uid}',0)" class="btn btn-success">Approve</button>
-                            <button onclick="handleRequest('withdrawals','${c.key}','rejected','${w.uid}',${w.amount})" class="btn btn-danger">Reject</button>
+                            <button onclick="action('withdrawals','${child.key}','success','${w.uid}',0)" class="btn btn-ok">Complete</button>
+                            <button onclick="action('withdrawals','${child.key}','rejected','${w.uid}',${w.amount})" class="btn btn-no">Reject</button>
                         </td>
                     </tr>`;
                 }
             });
-            document.getElementById('with-list').innerHTML = h || "<tr><td colspan='3'>No Pending Withdrawals</td></tr>";
+            document.getElementById('with-list').innerHTML = h || "<tr><td colspan='3'>No New Requests</td></tr>";
         });
 
-        // --- USERS LIST ---
+        // --- ALL USERS REALTIME ---
         db.ref('users').on('value', snap => {
             let h = "";
-            snap.forEach(c => {
-                let u = c.val();
+            snap.forEach(child => {
+                let u = child.val();
                 h += `<tr>
                     <td>${u.email}</td>
                     <td>₹${(u.balance || 0).toFixed(2)}</td>
-                    <td><button onclick="editBalance('${c.key}', ${u.balance || 0})" class="btn btn-success" style="width:auto">Edit</button></td>
+                    <td><button onclick="editBal('${child.key}',${u.balance || 0})" class="btn btn-ok" style="width:auto">Edit</button></td>
                 </tr>`;
             });
             document.getElementById('users-list').innerHTML = h;
         });
     }
 
-    // Common Function to handle both Deposit & Withdrawal
-    function handleRequest(type, key, status, uid, amt) {
-        const actionText = status === 'rejected' ? 'Reject' : 'Approve';
-        if(!confirm(`Are you sure you want to ${actionText} this request?`)) return;
-
-        let updates = {};
-        updates[`requests/${type}/${key}/status`] = status;
-
-        // Agar Deposit Approve ho raha hai -> Balance Add karo
-        if(type === 'deposits' && status === 'approved') {
-            db.ref('users/' + uid + '/balance').transaction(c => (c || 0) + amt);
+    function action(type, key, status, uid, amt) {
+        if(confirm("Are you sure?")) {
+            // Update Status in Requests
+            db.ref(`requests/${type}/${key}`).update({ status: status })
+            .then(() => {
+                // If Deposit Approved: Add Money
+                if(type === 'deposits' && status === 'approved') {
+                    db.ref(`users/${uid}/balance`).transaction(c => (c || 0) + amt);
+                }
+                // If Withdrawal Rejected: Refund Money
+                if(type === 'withdrawals' && status === 'rejected') {
+                    db.ref(`users/${uid}/balance`).transaction(c => (c || 0) + amt);
+                }
+                alert("Updated Successfully!");
+            }).catch(e => alert(e.message));
         }
-        
-        // Agar Withdrawal Reject ho raha hai -> Balance wapas return karo
-        if(type === 'withdrawals' && status === 'rejected') {
-            db.ref('users/' + uid + '/balance').transaction(c => (c || 0) + amt);
-        }
-
-        db.ref().update(updates).then(() => {
-            alert("Request Updated Successfully!");
-        }).catch(e => alert(e.message));
     }
 
-    function editBalance(uid, currentBal) {
-        let newBal = prompt("Enter new balance:", currentBal);
-        if (newBal !== null && !isNaN(newBal)) {
-            db.ref('users/' + uid).update({ balance: parseFloat(newBal) });
+    function editBal(uid, current) {
+        let n = prompt("Naya balance likhein:", current);
+        if(n !== null && !isNaN(n)) {
+            db.ref(`users/${uid}`).update({ balance: parseFloat(n) });
         }
     }
 </script>
