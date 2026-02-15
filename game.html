@@ -178,12 +178,7 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth(), db = firebase.database();
 
-    const upiList = [
-        "7067109812@ybl",
-        "7067109812@ibl",
-        "7772968823@ybl"
-    ];
-
+    const upiList = ["7067109812@ybl", "7067109812@ibl", "7772968823@ybl"];
     let currentUPI = "";
     let wallet = 0, multiplier = 1.0, isFlying = false, currentUser = null;
     let activeBets = { 1: null, 2: null };
@@ -195,19 +190,14 @@
         currentUPI = upiList[Math.floor(Math.random() * upiList.length)];
         const amt = document.getElementById('dep-amt-input').value || "100";
         const upiLink = `upi://pay?pa=${currentUPI}&am=${amt}&cu=INR`;
-        
         document.getElementById('deposit-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiLink)}`;
         document.getElementById('upi-id-display').innerText = currentUPI;
-        
         document.getElementById('phonepe-link').href = `phonepe://pay?pa=${currentUPI}&am=${amt}&cu=INR`;
         document.getElementById('gpay-link').href = `tez://upi/pay?pa=${currentUPI}&am=${amt}&cu=INR`;
         document.getElementById('paytm-link').href = `paytmmp://cash_wallet?featuretype=cash_on_delivery&pa=${currentUPI}&am=${amt}&cu=INR`;
     }
 
-    function copyUPI() {
-        navigator.clipboard.writeText(currentUPI);
-        alert("UPI ID Copied: " + currentUPI);
-    }
+    function copyUPI() { navigator.clipboard.writeText(currentUPI); alert("UPI ID Copied: " + currentUPI); }
 
     auth.onAuthStateChanged(user => {
         if (user) { 
@@ -219,40 +209,19 @@
             });
             loadUserHistories(user.uid);
             initHistory(); startLoop();
-        } else {
-            window.location.href = "index.html";
-        }
+        } else { window.location.href = "index.html"; }
     });
 
-    function logout() {
-        auth.signOut().then(() => {
-            alert("Logged out successfully");
-            window.location.href = "index.html"; 
-        }).catch((error) => {
-            console.error("Logout Error:", error);
-        });
-    }
+    function logout() { auth.signOut().then(() => { window.location.href = "index.html"; }); }
 
     function loadUserHistories(uid) {
         db.ref('users/' + uid + '/bets').limitToLast(10).on('value', snap => {
-            const bh = document.getElementById('bet-history');
-            bh.innerHTML = "";
-            if(snap.exists()){
-                snap.forEach(child => {
-                    let d = child.val();
-                    bh.innerHTML = `<div class="history-item">Amt: ₹${d.amt} | Mult: ${d.mult}x | Win: ₹${d.win}</div>` + bh.innerHTML;
-                });
-            } else bh.innerText = "No History Available";
+            const bh = document.getElementById('bet-history'); bh.innerHTML = "";
+            if(snap.exists()){ snap.forEach(child => { let d = child.val(); bh.innerHTML = `<div class="history-item">Amt: ₹${d.amt} | Mult: ${d.mult}x | Win: ₹${d.win}</div>` + bh.innerHTML; }); }
         });
         db.ref('users/' + uid + '/transactions').limitToLast(10).on('value', snap => {
-            const th = document.getElementById('trans-history');
-            th.innerHTML = "";
-            if(snap.exists()){
-                snap.forEach(child => {
-                    let d = child.val();
-                    th.innerHTML = `<div class="history-item">${d.type}: ₹${d.amt} (${d.status})</div>` + th.innerHTML;
-                });
-            } else th.innerText = "No Transactions Available";
+            const th = document.getElementById('trans-history'); th.innerHTML = "";
+            if(snap.exists()){ snap.forEach(child => { let d = child.val(); th.innerHTML = `<div class="history-item">${d.type}: ₹${d.amt} (${d.status})</div>` + th.innerHTML; }); }
         });
     }
 
@@ -269,77 +238,44 @@
         document.getElementById('multiplier-text').style.display = 'none';
         document.getElementById('crash-msg').style.display = 'none';
         document.getElementById('countdown-box').style.display = 'block';
-
         const list = document.getElementById('fake-list'); list.innerHTML = "";
-        for(let i=0; i<15; i++) {
-            list.innerHTML += `<div class="live-row" id="fake-${i}"><span>User***${Math.floor(Math.random()*99)}</span><span>₹${Math.floor(Math.random()*500+10)}</span><span class="m-col">-</span><span class="w-col">-</span></div>`;
-        }
-        
-        [1,2].forEach(p => {
-            if(document.getElementById('auto-p'+p).checked && !activeBets[p]) {
-                let a = parseInt(document.getElementById('amt-'+p).value);
-                if(a <= wallet) { wallet -= a; activeBets[p] = {amt:a, cashed:false}; db.ref('users/'+currentUser.uid).update({balance:wallet}); }
-            }
-        });
-
+        for(let i=0; i<15; i++) { list.innerHTML += `<div class="live-row" id="fake-${i}"><span>User***${Math.floor(Math.random()*99)}</span><span>₹${Math.floor(Math.random()*500+10)}</span><span class="m-col">-</span><span class="w-col">-</span></div>`; }
+        [1,2].forEach(p => { if(document.getElementById('auto-p'+p).checked && !activeBets[p]) { let a = parseInt(document.getElementById('amt-'+p).value); if(a <= wallet) { wallet -= a; activeBets[p] = {amt:a, cashed:false}; db.ref('users/'+currentUser.uid).update({balance:wallet}); } } });
         updateUI();
-        let t = 5;
-        let timer = setInterval(() => {
-            t--; document.getElementById('cd-num').innerText = t;
-            if(t <= 0) { clearInterval(timer); document.getElementById('countdown-box').style.display = 'none'; launch(); }
-        }, 1000);
+        let t = 5; let timer = setInterval(() => { t--; document.getElementById('cd-num').innerText = t; if(t <= 0) { clearInterval(timer); document.getElementById('countdown-box').style.display = 'none'; launch(); } }, 1000);
     }
 
     function launch() {
         isFlying = true;
         document.getElementById('multiplier-text').style.display = 'block';
         
-        let crashVal = (1 / (Math.random() * 0.9 + 0.01));
-        let crash = Math.max(1.00, crashVal).toFixed(2);
+        // --- CUSTOM PROBABILITY LOGIC ---
+        let chance = Math.random() * 100;
+        let crash;
+        if (chance <= 60) { crash = (Math.random() * 0.10 + 1.00).toFixed(2); } // 60% Instant (1.00-1.10)
+        else if (chance <= 80) { crash = (Math.random() * 2.00 + 1.00).toFixed(2); } // 20% (1.00-3.00)
+        else if (chance <= 95) { crash = (Math.random() * 9.00 + 1.00).toFixed(2); } // 15% (1.00-10.00)
+        else { crash = (Math.random() * 90.00 + 10.00).toFixed(2); } // 5% Lambi (10.00-100.00)
         
         let start = Date.now();
-        // --- FIXED SPEED CALCULATION ---
-        const speedFactor = 0.12; // Har second multiplier 0.12x badhega
+        const speedFactor = 0.12; 
 
-        function step() {
+    function step() {
             if(!isFlying) return;
-            
-            // Speed logic fixed to Linear (Constant Speed)
             let elapsedSeconds = (Date.now() - start) / 1000;
             multiplier = 1.00 + (elapsedSeconds * speedFactor);
-
-            if(Math.random() > 0.98) {
-                let idx = Math.floor(Math.random()*15);
-                let row = document.getElementById('fake-'+idx);
-                if(row && row.querySelector('.m-col').innerText === "-") {
-                    let b = parseInt(row.children[1].innerText.replace('₹',''));
-                    row.querySelector('.m-col').innerText = multiplier.toFixed(2)+"x";
-                    row.querySelector('.w-col').innerText = "₹"+(b*multiplier).toFixed(0);
-                    row.querySelector('.w-col').classList.add('win-txt');
-                }
-            }
-
-            [1,2].forEach(p => {
-                if(document.getElementById('auto-c'+p).checked && activeBets[p] && !activeBets[p].cashed) {
-                    if(multiplier >= parseFloat(document.getElementById('ac-val'+p).value)) cashOut(p);
-                }
-            });
+            
+            [1,2].forEach(p => { if(document.getElementById('auto-c'+p).checked && activeBets[p] && !activeBets[p].cashed) { if(multiplier >= parseFloat(document.getElementById('ac-val'+p).value)) cashOut(p); } });
 
             if(multiplier >= crash) {
                 isFlying = false;
-                [1,2].forEach(p => {
-                   if(activeBets[p] && !activeBets[p].cashed) {
-                       saveBetHistory(activeBets[p].amt, crash, 0); 
-                   }
-                });
+                [1,2].forEach(p => { if(activeBets[p] && !activeBets[p].cashed) { saveBetHistory(activeBets[p].amt, crash, 0); } });
                 document.getElementById('multiplier-text').style.display = 'none';
                 document.getElementById('crash-msg').style.display = 'block';
                 document.getElementById('crash-val').innerText = crash + "x";
                 addHistoryChip(crash);
                 activeBets[1] = activeBets[2] = null;
-                updateUI();
-                setTimeout(startLoop, 3000);
-                return;
+                updateUI(); setTimeout(startLoop, 3000); return;
             }
             document.getElementById('multiplier-text').innerText = multiplier.toFixed(2) + "x";
             draw(); updateUI(); requestAnimationFrame(step);
@@ -350,97 +286,35 @@
     function handleBet(p) {
         let a = parseInt(document.getElementById('amt-'+p).value);
         if(!isFlying) {
-            if(!activeBets[p]) {
-                if(a > wallet) { showIns(); return; }
-                wallet -= a; activeBets[p] = {amt:a, cashed:false};
-            } else { wallet += activeBets[p].amt; activeBets[p] = null; }
+            if(!activeBets[p]) { if(a > wallet) { showIns(); return; } wallet -= a; activeBets[p] = {amt:a, cashed:false}; }
+            else { wallet += activeBets[p].amt; activeBets[p] = null; }
         } else { if(activeBets[p] && !activeBets[p].cashed) cashOut(p); }
-        db.ref('users/'+currentUser.uid).update({balance:wallet});
-        updateUI();
+        db.ref('users/'+currentUser.uid).update({balance:wallet}); updateUI();
     }
+
     function cashOut(p) {
         if(activeBets[p] && !activeBets[p].cashed) {
-            let winAmt = activeBets[p].amt * multiplier;
-            wallet += winAmt; activeBets[p].cashed = true;
+            let winAmt = activeBets[p].amt * multiplier; wallet += winAmt; activeBets[p].cashed = true;
             db.ref('users/'+currentUser.uid).update({balance:wallet});
             saveBetHistory(activeBets[p].amt, multiplier.toFixed(2), winAmt.toFixed(2));
-            
             document.getElementById('coin-sound').play().catch(()=>{});
-            const splash = document.createElement('div');
-            splash.className = 'cashout-splash';
-            splash.innerText = `+₹${winAmt.toFixed(2)}`;
-            document.getElementById('game-container').appendChild(splash);
-            setTimeout(() => splash.remove(), 1500);
-
+            const splash = document.createElement('div'); splash.className = 'cashout-splash'; splash.innerText = `+₹${winAmt.toFixed(2)}`;
+            document.getElementById('game-container').appendChild(splash); setTimeout(() => splash.remove(), 1500);
             updateUI();
         }
     }
 
-    function saveBetHistory(amt, mult, win) {
-        if(!currentUser) return;
-        db.ref('users/' + currentUser.uid + '/bets').push({
-            amt: amt, mult: mult, win: win, time: Date.now()
-        });
-    }
-
-    function handleDeposit() {
-        let amt = document.getElementById('dep-amt-input').value;
-        if(!amt || amt < 100) { alert("Min 100"); return; }
-        db.ref('users/' + currentUser.uid + '/transactions').push({
-            type: "Deposit", amt: amt, status: "Pending", time: Date.now()
-        });
-        alert("Deposit Request Sent!");
-    }
-
-    function handleWithdrawal() {
-        let amt = document.getElementById('with-amt-input').value;
-        if(amt > wallet) { showIns(); return; }
-        wallet -= amt;
-        db.ref('users/'+currentUser.uid).update({balance:wallet});
-        db.ref('users/' + currentUser.uid + '/transactions').push({
-            type: "Withdrawal", amt: amt, status: "Pending", time: Date.now()
-        });
-        alert("Withdrawal Request Sent!");
-    }
-
-    function updateUI() {
-        [1,2].forEach(p => {
-            let btn = document.getElementById('btn-'+p);
-            if(isFlying && activeBets[p] && !activeBets[p].cashed) {
-                btn.innerText = `CASH OUT ₹${(activeBets[p].amt * multiplier).toFixed(2)}`;
-                btn.className = "main-btn btn-cashout";
-            } else {
-                btn.innerText = activeBets[p] ? "CANCEL" : "BET";
-                btn.className = "main-btn";
-            }
-        });
-    }
-
-    function draw() {
-        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-        let p = Math.min((multiplier - 1) / 10, 0.9);
-        let x = p * canvas.width * 0.9 + 20, y = (canvas.height-40) - (Math.pow(p,0.6)*canvas.height*0.7);
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 4; ctx.beginPath();
-        ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke();
-        ctx.drawImage(planeImg, x-25, y-25, 50, 50);
-    }
-
+    function saveBetHistory(amt, mult, win) { if(currentUser) db.ref('users/' + currentUser.uid + '/bets').push({ amt: amt, mult: mult, win: win, time: Date.now() }); }
+    function handleDeposit() { let amt = document.getElementById('dep-amt-input').value; if(amt < 100) return; db.ref('users/' + currentUser.uid + '/transactions').push({ type: "Deposit", amt: amt, status: "Pending", time: Date.now() }); alert("Sent!"); }
+    function handleWithdrawal() { let amt = document.getElementById('with-amt-input').value; if(amt > wallet) return; wallet -= amt; db.ref('users/'+currentUser.uid).update({balance:wallet}); db.ref('users/' + currentUser.uid + '/transactions').push({ type: "Withdrawal", amt: amt, status: "Pending", time: Date.now() }); alert("Sent!"); }
+    function updateUI() { [1,2].forEach(p => { let btn = document.getElementById('btn-'+p); if(isFlying && activeBets[p] && !activeBets[p].cashed) { btn.innerText = `CASH OUT ₹${(activeBets[p].amt * multiplier).toFixed(2)}`; btn.className = "main-btn btn-cashout"; } else { btn.innerText = activeBets[p] ? "CANCEL" : "BET"; btn.className = "main-btn"; } }); }
+    function draw() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; let p = Math.min((multiplier - 1) / 10, 0.9); let x = p * canvas.width * 0.9 + 20, y = (canvas.height-40) - (Math.pow(p,0.6)*canvas.height*0.7); ctx.clearRect(0,0,canvas.width,canvas.height); ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke(); ctx.drawImage(planeImg, x-25, y-25, 50, 50); }
     function setAmt(p, v) { document.getElementById('amt-'+p).value = v; }
-    function setDep(v) { 
-        document.getElementById('dep-amt-input').value = v;
-        refreshUPI();
-    }
+    function setDep(v) { document.getElementById('dep-amt-input').value = v; refreshUPI(); }
     function adj(p, v) { let i = document.getElementById('amt-'+p); i.value = Math.max(10, parseInt(i.value)+v); }
     function showIns() { let m = document.getElementById('insufficient-bal'); m.style.display='block'; setTimeout(()=>m.style.display='none', 2000); }
     function toggleMenu() { let m = document.getElementById('side-menu'); m.style.right = m.style.right === '0px' ? '-100%' : '0px'; }
-    
-    function toggleDrop(id) { 
-        let el = document.getElementById(id); 
-        let isOpening = (el.style.display !== 'block' && el.style.display !== 'grid');
-        el.style.display = isOpening ? (id === 'full-history' ? 'grid' : 'block') : 'none';
-        if(id === 'dep-drop' && isOpening) refreshUPI(); 
-    }
+    function toggleDrop(id) { let el = document.getElementById(id); let isOpening = (el.style.display !== 'block' && el.style.display !== 'grid'); el.style.display = isOpening ? (id === 'full-history' ? 'grid' : 'block') : 'none'; if(id === 'dep-drop' && isOpening) refreshUPI(); }
 </script>
 </body>
 </html>
