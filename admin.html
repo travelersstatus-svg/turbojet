@@ -15,6 +15,7 @@
         th, td { padding: 8px; text-align: left; border-bottom: 1px solid #252f44; font-size: 11px; }
         .btn { padding: 8px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
         .btn-app { background: #28a745; color: white; }
+        .btn-withdraw { background: #dc3545; color: white; } /* Red for withdrawal */
         #login-box { text-align: center; margin: 50px auto; background: #161d2b; padding: 25px; border-radius: 12px; max-width: 300px; border: 1px solid #252f44; }
         input { padding: 12px; width: 90%; margin-bottom: 15px; border-radius: 5px; border: 1px solid #252f44; background: #05080f; color: white; }
         #admin-content { display: none; }
@@ -46,6 +47,18 @@
         </div>
 
         <div class="card">
+            <h3>💸 WITHDRAWALS (NEW REQUESTS)</h3>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr><th>User/Details</th><th>Amount</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="with-list"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
             <h3>👥 ALL USERS</h3>
             <div style="overflow-x:auto;">
                 <table>
@@ -58,7 +71,6 @@
     </div>
 
 <script>
-    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyCrk8ksYM1Kt6ehT0TkDr3vjybjHDCyDgc",
         authDomain: "myaviatoregame.firebaseapp.com",
@@ -97,7 +109,6 @@
             let items = [];
             snap.forEach(c => { items.push({key: c.key, ...c.val()}); });
             items.reverse(); 
-
             items.forEach(d => {
                 let sCol = d.status === 'pending' ? '#ffc107' : '#28a745';
                 h += `<tr>
@@ -111,7 +122,26 @@
             document.getElementById('dep-list').innerHTML = h || "<tr><td colspan='3'>No Data</td></tr>";
         });
 
-        // Users - REALTIME (Updated with Edit Button)
+        // Withdrawals - REALTIME (New Logic)
+        db.ref('requests/withdrawals').on('value', snap => {
+            let h = "";
+            let items = [];
+            snap.forEach(c => { items.push({key: c.key, ...c.val()}); });
+            items.reverse();
+            items.forEach(w => {
+                let sCol = w.status === 'pending' ? '#ffc107' : '#28a745';
+                h += `<tr>
+                    <td>${w.email}<br><small style="color:${sCol}">${w.status}</small></td>
+                    <td>₹${w.amount}</td>
+                    <td>
+                        <button onclick="approveWithdrawal('${w.key}')" class="btn btn-withdraw" style="font-size:10px;">Complete</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('with-list').innerHTML = h || "<tr><td colspan='3'>No Requests</td></tr>";
+        });
+
+        // Users - REALTIME
         db.ref('users').on('value', snap => {
             let h = "<tr><th>Email</th><th>Bal</th><th>Action</th></tr>"; 
             snap.forEach(c => {
@@ -134,7 +164,15 @@
         }
     }
 
-    // New Function to edit amount
+    // New Function for Withdrawal Approval
+    function approveWithdrawal(key) {
+        if(confirm("Mark this withdrawal as Completed?")) {
+            db.ref('requests/withdrawals/' + key).update({status: 'completed'})
+            .then(() => alert("Withdrawal Updated!"))
+            .catch(err => alert(err.message));
+        }
+    }
+
     function editBalance(uid, currentBal) {
         let newBal = prompt("Naya balance enter karein:", currentBal);
         if (newBal !== null && !isNaN(newBal)) {
@@ -150,3 +188,4 @@
 </script>
 </body>
 </html>
+
