@@ -8,66 +8,53 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <style>
-        body { background: #05080f; color: white; font-family: 'Segoe UI', sans-serif; padding: 15px; margin: 0; }
-        .card { background: #161d2b; border: 1px solid #252f44; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        h3 { color: #ff0055; margin-top: 0; border-bottom: 1px solid #252f44; padding-bottom: 10px; font-size: 16px; display: flex; justify-content: space-between; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #252f44; font-size: 13px; }
-        th { color: #888; text-transform: uppercase; font-size: 11px; }
-        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; transition: 0.3s; }
-        .btn-ok { background: #28a745; color: white; margin-right: 5px; }
+        body { background: #05080f; color: white; font-family: sans-serif; padding: 15px; }
+        .card { background: #161d2b; border: 1px solid #252f44; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
+        h3 { color: #ff0055; border-bottom: 1px solid #252f44; padding-bottom: 10px; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #252f44; font-size: 12px; }
+        .btn { padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-ok { background: #28a745; color: white; }
         .btn-no { background: #dc3545; color: white; }
-        .btn-edit { background: #3b82f6; color: white; }
-        .btn:hover { opacity: 0.8; }
-        input { padding: 10px; border-radius: 5px; border: 1px solid #252f44; background: #05080f; color: white; width: 100%; box-sizing: border-box; }
-        #login-box { text-align: center; margin: 100px auto; max-width: 350px; }
-        .utr-box { color: #ffc107; font-weight: bold; font-family: monospace; display: block; margin-top: 4px; }
-        .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; background: #333; }
+        .utr-box { color: #ffc107; font-weight: bold; font-family: monospace; }
+        #login-box { text-align: center; margin-top: 50px; }
+        input { padding: 10px; margin: 5px; width: 80%; border-radius: 5px; border: 1px solid #333; background: #000; color: #fff; }
     </style>
 </head>
 <body>
 
-    <div id="login-box" class="card">
-        <h2 style="color:#ff0055">ADMIN ACCESS</h2>
-        <input type="email" id="email" placeholder="Email" value="travelersstatus@gmail.com" style="margin-bottom:10px;">
-        <input type="password" id="pass" placeholder="Password" style="margin-bottom:20px;">
-        <button class="btn btn-ok" style="width:100%; padding:12px;" onclick="login()">Login to Dashboard</button>
+    <div id="login-box">
+        <div class="card" style="max-width:300px; margin:auto;">
+            <h2>ADMIN LOGIN</h2>
+            <input type="email" id="email" placeholder="Email" value="travelersstatus@gmail.com">
+            <input type="password" id="pass" placeholder="Password">
+            <button class="btn btn-ok" style="width:100%; margin-top:10px;" onclick="login()">Login</button>
+        </div>
     </div>
 
     <div id="admin-content" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2 style="color:#ff0055">DASHBOARD</h2>
-            <button onclick="auth.signOut(); location.reload();" class="btn btn-no">LOGOUT</button>
-        </div>
-        
         <div class="card">
-            <h3>💰 PENDING DEPOSITS <span class="badge" id="dep-count">0</span></h3>
-            <div style="overflow-x:auto;">
-                <table>
-                    <thead><tr><th>User Email</th><th>Amount + UTR</th><th>Action</th></tr></thead>
-                    <tbody id="dep-list"></tbody>
-                </table>
-            </div>
+            <h3>💰 DEPOSIT REQUESTS</h3>
+            <table>
+                <thead><tr><th>Email</th><th>Amount</th><th>UTR</th><th>Action</th></tr></thead>
+                <tbody id="dep-list"></tbody>
+            </table>
         </div>
 
         <div class="card">
-            <h3>💸 PENDING WITHDRAWALS <span class="badge" id="with-count">0</span></h3>
-            <div style="overflow-x:auto;">
-                <table>
-                    <thead><tr><th>User Email</th><th>Bank Details</th><th>Action</th></tr></thead>
-                    <tbody id="with-list"></tbody>
-                </table>
-            </div>
+            <h3>💸 WITHDRAWAL REQUESTS</h3>
+            <table>
+                <thead><tr><th>Email</th><th>Amount</th><th>Details</th><th>Action</th></tr></thead>
+                <tbody id="with-list"></tbody>
+            </table>
         </div>
 
         <div class="card">
-            <h3>👥 MANAGE USERS</h3>
-            <div style="overflow-x:auto;">
-                <table>
-                    <thead><tr><th>Email</th><th>Balance</th><th>Edit</th></tr></thead>
-                    <tbody id="users-list"></tbody>
-                </table>
-            </div>
+            <h3>👥 ALL USERS</h3>
+            <table>
+                <thead><tr><th>Email</th><th>Balance</th><th>Action</th></tr></thead>
+                <tbody id="users-list"></tbody>
+            </table>
         </div>
     </div>
 
@@ -85,109 +72,96 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
-    const ADMIN_UID = "iirH6H3tL0dJaTGPvCeigpRJQ8j1"; 
+    const ADMIN_UID = "iirH6H3tL0dJaTGPvCeigpRJQ8j1";
 
     function login() {
-        const e = document.getElementById('email').value;
-        const p = document.getElementById('pass').value;
-        auth.signInWithEmailAndPassword(e, p).then((res) => {
+        auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value)
+        .then(res => {
             if(res.user.uid === ADMIN_UID) {
                 document.getElementById('login-box').style.display = 'none';
                 document.getElementById('admin-content').style.display = 'block';
                 loadData();
-            } else { alert("Access Denied!"); auth.signOut(); }
-        }).catch(err => alert(err.message));
+            } else { alert("Unauthorized!"); auth.signOut(); }
+        }).catch(e => alert(e.message));
     }
 
     function loadData() {
-        // Deposits
+        // Listen for Deposits
         db.ref('requests/deposits').on('value', snap => {
-            let h = "", count = 0;
+            let h = "";
             snap.forEach(child => {
                 let d = child.val();
-                if(d.status === 'Pending' || d.status === 'pending') {
-                    count++;
+                if(d.status === "Pending") {
                     h += `<tr>
-                        <td>${d.email || 'User'}</td>
-                        <td>₹${d.amt}<br><small class="utr-box">${d.utr || 'No UTR'}</small></td>
+                        <td>${d.email}</td>
+                        <td>₹${d.amt}</td>
+                        <td class="utr-box">${d.utr}</td>
                         <td>
-                            <button onclick="processTx('deposits','${child.key}','Approved','${d.uid}',${d.amt})" class="btn btn-ok">Approve</button>
-                            <button onclick="processTx('deposits','${child.key}','Rejected','${d.uid}',0)" class="btn btn-no">Reject</button>
+                            <button class="btn btn-ok" onclick="action('deposits','${child.key}','Approved','${d.uid}',${d.amt})">Approve</button>
+                            <button class="btn btn-no" onclick="action('deposits','${child.key}','Rejected','${d.uid}',0)">Reject</button>
                         </td>
                     </tr>`;
                 }
             });
-            document.getElementById('dep-list').innerHTML = h || "<tr><td colspan='3'>All caught up!</td></tr>";
-            document.getElementById('dep-count').innerText = count;
+            document.getElementById('dep-list').innerHTML = h || "<tr><td colspan='4'>No Pending Deposits</td></tr>";
         });
 
-        // Withdrawals
+        // Listen for Withdrawals
         db.ref('requests/withdrawals').on('value', snap => {
-            let h = "", count = 0;
+            let h = "";
             snap.forEach(child => {
                 let w = child.val();
-                if(w.status === 'Pending' || w.status === 'pending') {
-                    count++;
+                if(w.status === "Pending") {
                     h += `<tr>
-                        <td>${w.email || 'User'}</td>
-                        <td>₹${w.amt}<br><small style="font-size:10px; color:#aaa">${w.bankDetails || ''}</small></td>
+                        <td>${w.email}</td>
+                        <td>₹${w.amt}</td>
+                        <td>${w.bankDetails || 'Bank'}</td>
                         <td>
-                            <button onclick="processTx('withdrawals','${child.key}','Approved','${w.uid}',0)" class="btn btn-ok">Paid</button>
-                            <button onclick="processTx('withdrawals','${child.key}','Rejected','${w.uid}',${w.amt})" class="btn btn-no">Reject</button>
+                            <button class="btn btn-ok" onclick="action('withdrawals','${child.key}','Approved','${w.uid}',0)">Done</button>
+                            <button class="btn btn-no" onclick="action('withdrawals','${child.key}','Rejected','${w.uid}',${w.amt})">Reject</button>
                         </td>
                     </tr>`;
                 }
             });
-            document.getElementById('with-list').innerHTML = h || "<tr><td colspan='3'>No pending withdrawals</td></tr>";
-            document.getElementById('with-count').innerText = count;
+            document.getElementById('with-list').innerHTML = h || "<tr><td colspan='4'>No Pending Withdrawals</td></tr>";
         });
 
-        // Users
+        // Listen for Users
         db.ref('users').on('value', snap => {
             let h = "";
             snap.forEach(child => {
                 let u = child.val();
                 h += `<tr>
                     <td>${u.email}</td>
-                    <td style="color:#28a745; font-weight:bold;">₹${(u.balance || 0).toFixed(2)}</td>
-                    <td><button onclick="editBal('${child.key}',${u.balance || 0})" class="btn btn-edit">Edit</button></td>
+                    <td>₹${(u.balance || 0).toFixed(2)}</td>
+                    <td><button class="btn btn-ok" onclick="editBal('${child.key}', ${u.balance})">Edit</button></td>
                 </tr>`;
             });
             document.getElementById('users-list').innerHTML = h;
         });
     }
 
-    function processTx(type, key, status, uid, amt) {
-        if(confirm(`Mark as ${status}?`)) {
-            // Update the request status
-            db.ref(`requests/${type}/${key}`).update({ status: status });
+    function action(path, key, status, uid, amt) {
+        if(confirm("Confirm action?")) {
+            // Update request status
+            db.ref(`requests/${path}/${key}`).update({ status: status });
             
-            // Update User Transaction status for history
-            db.ref(`users/${uid}/transactions`).orderByChild('time').limitToLast(10).once('value', s => {
-               s.forEach(c => {
-                   if(c.val().amt == amt && c.val().status == "Pending") {
-                       db.ref(`users/${uid}/transactions/${c.key}`).update({ status: status });
-                   }
-               });
-            });
-
-            if(type === 'deposits' && status === 'Approved') {
+            // If deposit approved, add balance
+            if(path === 'deposits' && status === 'Approved') {
                 db.ref(`users/${uid}/balance`).transaction(c => (c || 0) + parseFloat(amt));
             }
-            if(type === 'withdrawals' && status === 'Rejected') {
+            // If withdrawal rejected, refund balance
+            if(path === 'withdrawals' && status === 'Rejected') {
                 db.ref(`users/${uid}/balance`).transaction(c => (c || 0) + parseFloat(amt));
             }
-            alert("Done!");
+            alert("Updated!");
         }
     }
 
-    function editBal(uid, current) {
-        let n = prompt("Enter New Balance:", current);
-        if(n !== null && !isNaN(n)) {
-            db.ref(`users/${uid}`).update({ balance: parseFloat(n) });
-        }
+    function editBal(uid, old) {
+        let n = prompt("New Balance:", old);
+        if(n) db.ref(`users/${uid}/balance`).set(parseFloat(n));
     }
 </script>
 </body>
 </html>
-
