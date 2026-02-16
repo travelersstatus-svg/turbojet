@@ -86,75 +86,71 @@
     }
 
     function loadData() {
-        // Listen for Deposits
         db.ref('requests/deposits').on('value', snap => {
             let h = "";
             snap.forEach(child => {
                 let d = child.val();
                 if(d.status === "Pending") {
-                    h += `<tr>
-                        <td>${d.email}</td>
-                        <td>₹${d.amt}</td>
-                        <td class="utr-box">${d.utr}</td>
+                    h += `<tr><td>${d.email}</td><td>₹${d.amt}</td><td class="utr-box">${d.utr}</td>
                         <td>
-                            <button class="btn btn-ok" onclick="action('deposits','${child.key}','Approved','${d.uid}',${d.amt})">Approve</button>
-                            <button class="btn btn-no" onclick="action('deposits','${child.key}','Rejected','${d.uid}',0)">Reject</button>
-                        </td>
-                    </tr>`;
+                            <button class="btn btn-ok" onclick="action('deposits','${child.key}','Approved','${d.uid}',${d.amt},'${d.utr}')">Approve</button>
+                            <button class="btn btn-no" onclick="action('deposits','${child.key}','Rejected','${d.uid}',0,'${d.utr}')">Reject</button>
+                        </td></tr>`;
                 }
             });
             document.getElementById('dep-list').innerHTML = h || "<tr><td colspan='4'>No Pending Deposits</td></tr>";
         });
 
-        // Listen for Withdrawals
         db.ref('requests/withdrawals').on('value', snap => {
             let h = "";
             snap.forEach(child => {
                 let w = child.val();
                 if(w.status === "Pending") {
-                    h += `<tr>
-                        <td>${w.email}</td>
-                        <td>₹${w.amt}</td>
-                        <td>${w.bankDetails || 'Bank'}</td>
+                    h += `<tr><td>${w.email}</td><td>₹${w.amt}</td><td>${w.bankDetails || 'Bank'}</td>
                         <td>
-                            <button class="btn btn-ok" onclick="action('withdrawals','${child.key}','Approved','${w.uid}',0)">Done</button>
-                            <button class="btn btn-no" onclick="action('withdrawals','${child.key}','Rejected','${w.uid}',${w.amt})">Reject</button>
-                        </td>
-                    </tr>`;
+                            <button class="btn btn-ok" onclick="action('withdrawals','${child.key}','Approved','${w.uid}',0,'${w.time}')">Done</button>
+                            <button class="btn btn-no" onclick="action('withdrawals','${child.key}','Rejected','${w.uid}',${w.amt},'${w.time}')">Reject</button>
+                        </td></tr>`;
                 }
             });
             document.getElementById('with-list').innerHTML = h || "<tr><td colspan='4'>No Pending Withdrawals</td></tr>";
         });
 
-        // Listen for Users
         db.ref('users').on('value', snap => {
             let h = "";
             snap.forEach(child => {
                 let u = child.val();
-                h += `<tr>
-                    <td>${u.email}</td>
-                    <td>₹${(u.balance || 0).toFixed(2)}</td>
-                    <td><button class="btn btn-ok" onclick="editBal('${child.key}', ${u.balance})">Edit</button></td>
-                </tr>`;
+                h += `<tr><td>${u.email}</td><td>₹${(u.balance || 0).toFixed(2)}</td>
+                    <td><button class="btn btn-ok" onclick="editBal('${child.key}', ${u.balance})">Edit</button></td></tr>`;
             });
             document.getElementById('users-list').innerHTML = h;
         });
     }
 
-    function action(path, key, status, uid, amt) {
-        if(confirm("Confirm action?")) {
-            // Update request status
+    function action(path, key, status, uid, amt, identifier) {
+        if(confirm(`Confirm ${status}?`)) {
+            // 1. Admin Request Update
             db.ref(`requests/${path}/${key}`).update({ status: status });
-            
-            // If deposit approved, add balance
+
+            // 2. User Ki Transaction History Update (Sync Logic)
+            db.ref(`users/${uid}/transactions`).once('value', snap => {
+                snap.forEach(child => {
+                    let tx = child.val();
+                    // Match by UTR (for deposit) or Time (for withdrawal)
+                    if(tx.utr === identifier || tx.time == identifier) {
+                        db.ref(`users/${uid}/transactions/${child.key}`).update({ status: status });
+                    }
+                });
+            });
+
+            // 3. Balance Update
             if(path === 'deposits' && status === 'Approved') {
                 db.ref(`users/${uid}/balance`).transaction(c => (c || 0) + parseFloat(amt));
             }
-            // If withdrawal rejected, refund balance
             if(path === 'withdrawals' && status === 'Rejected') {
                 db.ref(`users/${uid}/balance`).transaction(c => (c || 0) + parseFloat(amt));
             }
-            alert("Updated!");
+            alert("Action Processed Successfully!");
         }
     }
 
@@ -165,3 +161,4 @@
 </script>
 </body>
 </html>
+
