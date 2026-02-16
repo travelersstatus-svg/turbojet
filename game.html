@@ -223,8 +223,8 @@
         db.ref('users/' + uid + '/transactions').limitToLast(10).on('value', snap => {
             const th = document.getElementById('trans-history'); th.innerHTML = "";
             if(snap.exists()){ snap.forEach(child => { let d = child.val(); 
-                let color = d.status === 'Approved' ? '#28a745' : (d.status === 'Rejected' ? '#ff0055' : '#ffc107');
-                th.innerHTML = `<div class="history-item">${d.type}: ₹${d.amt} <span style="color:${color}; float:right;">${d.status}</span></div>` + th.innerHTML; 
+                let clr = d.status === 'Approved' ? '#28a745' : (d.status === 'Rejected' ? '#ff0055' : '#ffc107');
+                th.innerHTML = `<div class="history-item">${d.type}: ₹${d.amt} <span style="color:${clr}; float:right;">${d.status}</span></div>` + th.innerHTML; 
             }); }
         });
     }
@@ -324,24 +324,16 @@
 
     function saveBetHistory(amt, mult, win) { if(currentUser) db.ref('users/' + currentUser.uid + '/bets').push({ amt: amt, mult: mult, win: win, time: Date.now() }); }
 
-    // --- ADMIN PANEL INTEGRATION START ---
+    // --- REFINED ADMIN HANDLERS (SAB REQUESTS ADMIN PANEL MEIN JAYENGI) ---
     function handleDeposit() { 
         let amt = document.getElementById('dep-amt-input').value; 
         let utr = document.getElementById('dep-utr-input').value;
         if(amt < 100) { alert("Min ₹100"); return; }
         if(utr.length < 10) { alert("Invalid UTR"); return; }
         
-        let txData = { 
-            type: "Deposit", 
-            amt: amt, 
-            status: "Pending", 
-            utr: utr, 
-            email: currentUser.email, 
-            uid: currentUser.uid, 
-            time: Date.now() 
-        };
-        db.ref('requests/deposits').push(txData);
-        db.ref('users/' + currentUser.uid + '/transactions').push(txData); 
+        let tx = { type: "Deposit", amt: amt, status: "Pending", utr: utr, email: currentUser.email, uid: currentUser.uid, time: Date.now() };
+        db.ref('requests/deposits').push(tx); // Sends to Admin
+        db.ref('users/' + currentUser.uid + '/transactions').push(tx); // Sends to User History
         alert("Deposit Request Sent!"); toggleDrop('dep-drop');
     }
 
@@ -349,27 +341,16 @@
         let amt = parseFloat(document.getElementById('with-amt-input').value); 
         let name = document.getElementById('with-name').value;
         let acc = document.getElementById('with-acc').value;
-        
         if(amt < 500) { alert("Min ₹500"); return; }
         if(amt > wallet) { alert("Insufficient Balance"); return; }
         
         wallet -= amt; 
         db.ref('users/'+currentUser.uid).update({balance:wallet}); 
-        
-        let txData = { 
-            type: "Withdrawal", 
-            amt: amt, 
-            status: "Pending", 
-            email: currentUser.email, 
-            uid: currentUser.uid, 
-            bankDetails: `Name: ${name}, Acc: ${acc}`,
-            time: Date.now() 
-        };
-        db.ref('requests/withdrawals').push(txData);
-        db.ref('users/' + currentUser.uid + '/transactions').push(txData); 
+        let tx = { type: "Withdrawal", amt: amt, status: "Pending", email: currentUser.email, uid: currentUser.uid, bankDetails: `Name: ${name}, Acc: ${acc}`, time: Date.now() };
+        db.ref('requests/withdrawals').push(tx); // Sends to Admin
+        db.ref('users/' + currentUser.uid + '/transactions').push(tx); 
         alert("Withdrawal Request Sent!"); toggleDrop('with-drop');
     }
-    // --- ADMIN PANEL INTEGRATION END ---
 
     function updateUI() { [1,2].forEach(p => { let btn = document.getElementById('btn-'+p); if(isFlying && activeBets[p] && !activeBets[p].cashed) { btn.innerText = `CASH OUT ₹${(activeBets[p].amt * multiplier).toFixed(2)}`; btn.className = "main-btn btn-cashout"; } else { btn.innerText = activeBets[p] ? "CANCEL" : "BET"; btn.className = "main-btn"; } }); }
     function draw() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; let p = Math.min((multiplier - 1) / 10, 0.9); let x = p * canvas.width * 0.9 + 20, y = (canvas.height-40) - (Math.pow(p,0.6)*canvas.height*0.7); ctx.clearRect(0,0,canvas.width,canvas.height); ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, canvas.height); ctx.quadraticCurveTo(x/2, canvas.height, x, y); ctx.stroke(); ctx.drawImage(planeImg, x-25, y-25, 50, 50); }
