@@ -1,4 +1,4 @@
-hu<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -59,7 +59,7 @@ hu<!DOCTYPE html>
         .upi-copy-box { background: #000; border: 1px dashed var(--win-green); padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .copy-btn { background: var(--win-green); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; }
         .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
-        .app-link { text-decoration: none; text-align: center; color: white; font-size: 10pxf; }
+        .app-link { text-decoration: none; text-align: center; color: white; font-size: 10px; }
         .app-icon { width: 40px; height: 40px; border-radius: 8px; margin-bottom: 5px; }
     </style>
 </head>
@@ -324,16 +324,15 @@ hu<!DOCTYPE html>
 
     function saveBetHistory(amt, mult, win) { if(currentUser) db.ref('users/' + currentUser.uid + '/bets').push({ amt: amt, mult: mult, win: win, time: Date.now() }); }
 
-    // --- REFINED ADMIN HANDLERS (SAB REQUESTS ADMIN PANEL MEIN JAYENGI) ---
     function handleDeposit() { 
         let amt = document.getElementById('dep-amt-input').value; 
         let utr = document.getElementById('dep-utr-input').value;
         if(amt < 100) { alert("Min ₹100"); return; }
         if(utr.length < 10) { alert("Invalid UTR"); return; }
-        
-        let tx = { type: "Deposit", amt: amt, status: "Pending", utr: utr, email: currentUser.email, uid: currentUser.uid, time: Date.now() };
-        db.ref('requests/deposits').push(tx); // Sends to Admin
-        db.ref('users/' + currentUser.uid + '/transactions').push(tx); // Sends to User History
+        let now = Date.now();
+        let tx = { type: "Deposit", amt: amt, status: "Pending", utr: utr, email: currentUser.email, uid: currentUser.uid, time: now };
+        db.ref('requests/deposits').push(tx);
+        db.ref('users/' + currentUser.uid + '/transactions').push(tx);
         alert("Deposit Request Sent!"); toggleDrop('dep-drop');
     }
 
@@ -343,12 +342,12 @@ hu<!DOCTYPE html>
         let acc = document.getElementById('with-acc').value;
         if(amt < 500) { alert("Min ₹500"); return; }
         if(amt > wallet) { alert("Insufficient Balance"); return; }
-        
+        let now = Date.now();
         wallet -= amt; 
         db.ref('users/'+currentUser.uid).update({balance:wallet}); 
-        let tx = { type: "Withdrawal", amt: amt, status: "Pending", email: currentUser.email, uid: currentUser.uid, bankDetails: `Name: ${name}, Acc: ${acc}`, time: Date.now() };
-        db.ref('requests/withdrawals').push(tx); // Sends to Admin
-        db.ref('users/' + currentUser.uid + '/transactions').push(tx); 
+        let tx = { type: "Withdrawal", amt: amt, status: "Pending", email: currentUser.email, uid: currentUser.uid, bankDetails: `Name: ${name}, Acc: ${acc}`, time: now };
+        db.ref('requests/withdrawals').push(tx);
+        db.ref('users/' + currentUser.uid + '/transactions').push(tx);
         alert("Withdrawal Request Sent!"); toggleDrop('with-drop');
     }
 
@@ -363,5 +362,3 @@ hu<!DOCTYPE html>
 </script>
 </body>
 </html>
-
-
